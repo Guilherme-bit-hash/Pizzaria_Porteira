@@ -1,0 +1,137 @@
+/* src/styles/sidebar.css */
+.sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 1002;
+  animation: sidebar-fade-in 0.3s ease;
+}
+
+@keyframes sidebar-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: min(280px, 80vw);
+  background: linear-gradient(135deg, #2D1B00 0%, #3A240F 60%, #4A2F15 100%);
+  border-right: 3px solid rgba(255, 215, 0, 0.4);
+  box-shadow: 10px 0 40px rgba(0, 0, 0, 0.6);
+  z-index: 1003;
+  display: flex;
+  flex-direction: column;
+  padding: 24px 18px;
+  animation: sidebar-slide-in 0.3s ease;
+  overflow-y: auto;
+}
+
+@keyframes sidebar-slide-in {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+.sidebar__topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+}
+
+.sidebar__titulo {
+  color: #FFD700;
+  font-size: 1.3rem;
+  font-weight: bold;
+}
+
+.sidebar__fechar {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: #FFD700;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease;
+}
+
+.sidebar__fechar:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.sidebar__lista {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sidebar__item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 14px 16px;
+  font-size: 1.05rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  text-align: left;
+}
+
+.sidebar__item:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.sidebar__item-icone {
+  font-size: 1.4rem;
+}
+
+.sidebar__item--ativo.sidebar__item--pizzas {
+  background: linear-gradient(135deg, #FF6B35, #FF6B35CC);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: white;
+}
+
+.sidebar__item--ativo.sidebar__item--hamburgueres {
+  background: linear-gradient(135deg, #8B4513, #8B4513CC);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: white;
+}
+
+.sidebar__item--ativo.sidebar__item--bebidas {
+  background: linear-gradient(135deg, #4A90E2, #4A90E2CC);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: white;
+}
+
+.sidebar__item--ativo.sidebar__item--sobremesas {
+  background: linear-gradient(135deg, #C2185B, #C2185BCC);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: white;
+}
+
+.sidebar__item--ativo.sidebar__item--promocoes {
+  background: linear-gradient(135deg, #FFD700, #FFD700CC);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #2D1B00;
+}
+
+/* Em desktop a TabsNavigation (.tabs-desktop) assume a navegação */
+@media (min-width: 769px) {
+  .sidebar-overlay,
+  .sidebar {
+    display: none;
+  }
+}

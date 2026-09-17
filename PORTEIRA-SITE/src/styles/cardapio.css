@@ -3,292 +3,694 @@
   min-height: 100vh;
   background: linear-gradient(135deg, #2D1B00 0%, #3A240F 30%, #4A2F15 60%, #5A3E2B 100%);
   background-attachment: fixed;
-  position: relative;
-  overflow-x: hidden;
   color: white;
   font-family: 'Montserrat', sans-serif;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  overflow-x: hidden;
 }
 
-/* BOTÃO VOLTAR */
-.btn-voltar {
-  position: fixed;
-  top: 20px;
-  left: 20px;
-  background: rgba(45, 27, 0, 0.9);
+.cardapio-conteudo {
+  padding-top: 180px;
+  padding-bottom: 40px;
+  width: 100%;
+  margin: 0;
+}
+
+.cardapio-titulo-wrap {
+  text-align: center;
+  margin-bottom: 2rem;
+  padding: 0 20px;
+}
+
+.cardapio-titulo {
   color: #FFD700;
-  padding: 0.8rem 1.5rem;
-  border-radius: 50px;
-  text-decoration: none;
+  font-size: clamp(1.8rem, 5vw, 3rem);
+  margin-bottom: 1rem;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.cardapio-subtitulo {
+  color: #ccc;
+  font-size: clamp(0.95rem, 2vw, 1.2rem);
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+/* Navegação de categorias: TabsNavigation em telas largas (Sidebar assume o mobile) */
+.tabs-desktop {
+  display: block;
+}
+
+@media (max-width: 768px) {
+  .tabs-desktop {
+    display: none;
+  }
+}
+
+/* ===== SEÇÃO PROMOÇÃO DO DIA ===== */
+.cardapio-promo-secao {
+  max-width: 900px;
+  margin: 0 auto 3rem auto;
+  padding: 0 20px;
+}
+
+.cardapio-promo-banner {
+  background: linear-gradient(
+    135deg,
+    var(--promo-cor) 0%,
+    color-mix(in srgb, var(--promo-cor) 80%, transparent) 55%,
+    #2D1B00 100%
+  );
+  border-radius: 25px;
+  padding: clamp(1.2rem, 5vw, 2.5rem);
+  border: 4px solid rgba(255, 215, 0, 0.6);
+  text-align: center;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 3rem;
+}
+
+.cardapio-promo-banner__brilho {
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transform: rotate(30deg);
+  animation: cardapio-brilho 3s infinite;
+}
+
+@keyframes cardapio-brilho {
+  0% { transform: rotate(30deg) translateX(-100%); }
+  100% { transform: rotate(30deg) translateX(100%); }
+}
+
+.cardapio-promo-banner__cabecalho {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(0.6rem, 3vw, 1.5rem);
+  margin-bottom: clamp(0.8rem, 3vw, 1.5rem);
+  position: relative;
+  z-index: 2;
+}
+
+.cardapio-promo-banner__emoji {
+  font-size: clamp(1.8rem, 7vw, 3.5rem);
+}
+
+.cardapio-promo-banner__dia-badge {
+  background: rgba(255, 255, 255, 0.25);
+  padding: clamp(0.5rem, 2vw, 0.8rem) clamp(1rem, 4vw, 2rem);
+  border-radius: 30px;
+  color: white;
   font-weight: bold;
-  z-index: 1000;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+  font-size: clamp(0.85rem, 3vw, 1.1rem);
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.cardapio-promo-banner__titulo {
+  color: #FFD700;
+  font-size: clamp(1.5rem, 6vw, 2.5rem);
+  margin-bottom: 1rem;
+  text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.8);
+  position: relative;
+  z-index: 2;
+}
+
+.cardapio-promo-banner__descricao {
+  color: white;
+  font-size: clamp(1rem, 4vw, 1.5rem);
+  opacity: 0.95;
+  max-width: 700px;
+  margin: 0 auto clamp(1rem, 4vw, 2rem) auto;
+  line-height: 1.6;
+  position: relative;
+  z-index: 2;
+}
+
+.cardapio-promo-banner__preco {
+  margin-bottom: clamp(1rem, 4vw, 2rem);
+  position: relative;
+  z-index: 2;
+}
+
+.cardapio-promo-banner__preco--valor {
+  font-size: clamp(1.8rem, 8vw, 3.5rem);
+  color: #FFD700;
+  font-weight: bold;
+  text-shadow: 3px 3px 8px rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.3);
+  display: inline-block;
+  padding: clamp(0.6rem, 3vw, 1rem) clamp(1.2rem, 6vw, 3rem);
+  border-radius: 20px;
+  border: 3px solid rgba(255, 215, 0, 0.4);
+}
+
+.cardapio-promo-banner__preco--especial {
+  font-size: clamp(1.3rem, 5vw, 2rem);
+  color: #FFD700;
+  font-weight: bold;
+  background: rgba(255, 215, 0, 0.2);
+  padding: 1rem 2rem;
+  border-radius: 15px;
+  border: 2px solid rgba(255, 215, 0, 0.4);
+}
+
+.cardapio-promo-banner__badges {
+  display: flex;
+  justify-content: center;
+  gap: clamp(0.6rem, 3vw, 1.5rem);
+  margin-top: clamp(1rem, 4vw, 2rem);
+  flex-wrap: wrap;
+  position: relative;
+  z-index: 2;
+}
+
+.cardapio-promo-banner__badge {
+  background: rgba(255, 255, 255, 0.15);
+  padding: clamp(0.5rem, 2vw, 0.8rem) clamp(0.9rem, 3vw, 1.8rem);
+  border-radius: 25px;
+  color: #FFD700;
+  font-weight: bold;
+  font-size: clamp(0.85rem, 3vw, 1rem);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 215, 0, 0.4);
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 1rem;
-  backdrop-filter: blur(10px);
-  border: 2px solid rgba(255, 215, 0, 0.4);
-  transition: all 0.3s ease;
 }
 
-.btn-voltar:hover {
-  background: rgba(58, 36, 15, 0.95);
-  transform: scale(1.05);
+.cardapio-promo-banner__acao {
+  margin-top: clamp(1.2rem, 5vw, 2.5rem);
+  position: relative;
+  z-index: 2;
 }
 
-/* LOGO TOPO */
-.logo-topo {
-  position: fixed;
-  top: 30px;
-  right: 30px;
-  z-index: 1000;
-  width: 100px;
-  height: 100px;
-  animation: float 6s ease-in-out infinite;
-}
-
-.logo-topo img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 50%;
-  border: 10px solid rgba(255, 215, 0, 0.6);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5),
-              0 0 40px rgba(255, 215, 0, 0.4),
-              inset 0 0 20px rgba(255, 215, 0, 0.2);
-}
-
-/* CABEÇALHO */
-.cardapio-header {
-  text-align: center;
-  padding: 6rem 1rem 2rem 1rem;
-  max-width: 800px;
-  margin: 0 auto;
-}
-
-.cardapio-header h1 {
-  color: #FFD700;
-  font-size: clamp(1.8rem, 4vw, 2.8rem);
-  font-weight: 800;
-  text-shadow: 0 2px 8px rgba(0,0,0,0.8);
-  margin-bottom: 0.5rem;
-}
-
-.cardapio-header h2 {
-  color: #FFFFFF;
-  font-size: clamp(2.2rem, 5vw, 3.5rem);
-  font-weight: 900;
-  text-shadow: 0 3px 10px rgba(0,0,0,0.9);
-  background: linear-gradient(45deg, #FFD700, #FFA500);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  margin-bottom: 1rem;
-}
-
-.slogan {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  background: rgba(255, 215, 0, 0.15);
-  padding: 0.8rem 1.5rem;
+.cardapio-promo-banner__botao {
+  background: linear-gradient(135deg, #FFD700, #FFA500);
+  color: #2D1B00;
+  border: none;
   border-radius: 50px;
-  border: 1px solid rgba(255, 215, 0, 0.3);
-  color: #FFD700;
-  font-weight: bold;
-}
-
-/* ABAS */
-.abas {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.8rem;
-  justify-content: center;
-  margin-bottom: 3rem;
-  padding: 0 1rem;
-  max-width: 1200px;
-  margin: 2rem auto;
-}
-
-.aba {
-  background: rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.8);
-  border: 2px solid rgba(255, 255, 255, 0.1);
-  padding: 1rem 2rem;
-  border-radius: 15px;
-  font-size: 1.1rem;
+  padding: clamp(0.8rem, 3vw, 1.2rem) clamp(1.5rem, 6vw, 3.5rem);
+  font-size: clamp(1rem, 4vw, 1.3rem);
   font-weight: bold;
   cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 10px;
-  backdrop-filter: blur(10px);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-  flex: 1 0 auto;
-  min-width: 180px;
-  justify-content: center;
+  gap: 15px;
+  transition: all 0.3s ease;
+  box-shadow: 0 10px 30px rgba(255, 215, 0, 0.6);
 }
 
-.aba:hover {
-  background: rgba(255, 255, 255, 0.15);
-  transform: translateY(-3px);
+.cardapio-promo-banner__botao:hover {
+  transform: scale(1.05);
+  box-shadow: 0 15px 40px rgba(255, 215, 0, 0.9);
 }
 
-.aba.ativa {
-  background: linear-gradient(135deg, #FF6B35, #FF8C42);
-  color: #FFFFFF;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 8px 25px rgba(255, 107, 53, 0.4);
+.cardapio-promo-banner__botao-icone {
+  font-size: 1.5rem;
 }
 
-.aba.ativa#hamburgueres {
-  background: linear-gradient(135deg, #8B4513, #A0522D);
+/* ===== PROMOÇÕES DA SEMANA ===== */
+.cardapio-semana {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 20px;
+  padding: clamp(1.2rem, 5vw, 2.5rem);
+  border: 2px solid rgba(255, 215, 0, 0.2);
 }
 
-.aba.ativa#bebidas {
-  background: linear-gradient(135deg, #4A90E2, #5DA8FF);
+.cardapio-semana__titulo {
+  color: #FFD700;
+  font-size: 2rem;
+  text-align: center;
+  margin-bottom: 2.5rem;
 }
 
-.aba.ativa#sobremesas {
-  background: linear-gradient(135deg, #C2185B, #E91E63);
-}
-
-.aba.ativa#promocoes {
-  background: linear-gradient(135deg, #FFD700, #FFC107);
-}
-
-/* LISTA DE ITENS */
-.lista {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 1rem 3rem 1rem;
+.cardapio-semana__grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 1.5rem;
 }
 
-.item {
+.cardapio-semana__card {
   background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 215, 0, 0.2);
   border-radius: 15px;
-  padding: 1.5rem;
-  border-left: 5px solid #FF6B35;
+  padding: 1.8rem;
   transition: all 0.3s ease;
   cursor: pointer;
+  position: relative;
+  overflow: hidden;
 }
 
-.item:hover {
-  background: rgba(255, 255, 255, 0.1);
-  transform: translateY(-5px);
-  box-shadow: 0 10px 25px rgba(255, 107, 53, 0.2);
+.cardapio-semana__card--hoje {
+  background: linear-gradient(135deg, var(--dia-cor), color-mix(in srgb, var(--dia-cor) 40%, transparent));
+  border: 3px solid #FFD700;
 }
 
-.item-topo {
+.cardapio-semana__card-badge-hoje {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: #FF4444;
+  color: white;
+  font-size: 0.8rem;
+  padding: 4px 12px;
+  border-radius: 15px;
+  font-weight: bold;
+  z-index: 2;
+  animation: cardapio-pulse 2s infinite;
+}
+
+@keyframes cardapio-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+.cardapio-semana__card-topo {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  margin-bottom: 1.2rem;
+}
+
+.cardapio-semana__card-emoji {
+  font-size: 2.5rem;
+  filter: opacity(0.8);
+}
+
+.cardapio-semana__card--hoje .cardapio-semana__card-emoji {
+  filter: none;
+}
+
+.cardapio-semana__card-dia {
+  font-weight: bold;
+  color: #FFA500;
+  font-size: 1.3rem;
+}
+
+.cardapio-semana__card--hoje .cardapio-semana__card-dia {
+  color: #FFD700;
+}
+
+.cardapio-semana__card-status {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.cardapio-semana__card--hoje .cardapio-semana__card-status {
+  color: white;
+}
+
+.cardapio-semana__card-descricao {
+  color: #ccc;
+  margin: 0;
+  font-size: 1.1rem;
+  line-height: 1.5;
+}
+
+.cardapio-semana__card--hoje .cardapio-semana__card-descricao {
+  color: white;
+}
+
+.cardapio-semana__card-rodape {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
   display: flex;
   justify-content: space-between;
+  align-items: center;
+}
+
+.cardapio-semana__card-disponivel {
+  font-size: 0.9rem;
+  color: #FFD700;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.cardapio-semana__card-adicionar {
+  background: rgba(255, 215, 0, 0.2);
+  color: #FFD700;
+  border: 1px solid rgba(255, 215, 0, 0.4);
+  padding: 6px 15px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.cardapio-semana__card-adicionar:hover {
+  background: rgba(255, 215, 0, 0.35);
+}
+
+/* ===== CONTADOR + GRID DE PRODUTOS ===== */
+.cardapio-contador {
+  text-align: center;
+  margin-bottom: 2rem;
+  color: #FFD700;
+  font-size: 1.2rem;
+}
+
+.cardapio-grid {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 20px 4rem 20px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 2.5rem;
+  width: 100%;
+}
+
+@media (max-width: 1024px) {
+  .cardapio-grid {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 2rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .cardapio-grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .cardapio-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+}
+
+.cardapio-card {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 20px;
+  overflow: hidden;
+  transition: all 0.4s ease;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.cardapio-card:hover {
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-10px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  border-color: rgba(255, 215, 0, 0.3);
+}
+
+.cardapio-card__imagem-wrap {
+  width: 100%;
+  height: 220px;
+  overflow: hidden;
+  position: relative;
+}
+
+@media (max-width: 768px) {
+  .cardapio-card__imagem-wrap {
+    height: 200px;
+  }
+}
+
+@media (max-width: 480px) {
+  .cardapio-card__imagem-wrap {
+    height: 180px;
+  }
+}
+
+.cardapio-card__imagem {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s ease;
+}
+
+.cardapio-card:hover .cardapio-card__imagem {
+  transform: scale(1.15);
+}
+
+.cardapio-card__imagem-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(to top, rgba(45, 27, 0, 0.8), transparent);
+}
+
+.cardapio-card__categoria-badge {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  background: rgba(255, 215, 0, 0.9);
+  color: #2D1B00;
+  padding: 6px 18px;
+  border-radius: 25px;
+  font-size: 0.9rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.cardapio-card__info {
+  padding: 1.8rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.cardapio-card__cabecalho {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
   align-items: flex-start;
+  gap: 0.8rem;
+  margin-bottom: 1.2rem;
+}
+
+.cardapio-card__nome {
+  color: #FFD700;
+  font-size: 1.6rem;
+  margin: 0 0 8px 0;
+  font-weight: bold;
+}
+
+.cardapio-card__badges {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 5px;
+}
+
+.cardapio-card__badge {
+  font-size: 0.9rem;
+  padding: 4px 10px;
+  border-radius: 15px;
+}
+
+.cardapio-card__badge--avaliacao {
+  color: #FF8C42;
+  background: rgba(255, 140, 66, 0.1);
+  border: 1px solid rgba(255, 140, 66, 0.3);
+}
+
+.cardapio-card__badge--tempo {
+  color: #4CAF50;
+  background: rgba(76, 175, 80, 0.1);
+  border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+.cardapio-card__preco {
+  color: #FF8C42;
+  font-size: clamp(1.3rem, 6vw, 2rem);
+  font-weight: bold;
+  background: rgba(0, 0, 0, 0.3);
+  padding: clamp(0.4rem, 2vw, 0.6rem) clamp(0.8rem, 4vw, 1.2rem);
+  border-radius: 12px;
+  min-width: 90px;
+  white-space: nowrap;
+  text-align: center;
+  border: 2px solid rgba(255, 140, 66, 0.2);
+}
+
+.cardapio-card__descricao {
+  color: rgba(255, 255, 255, 0.8);
+  margin: 0 0 1.8rem 0;
+  line-height: 1.6;
+  font-size: 1rem;
+  flex: 1;
+}
+
+.cardapio-card__botao {
+  background: linear-gradient(135deg, #FFD700, #FFA500);
+  color: #2D1B00;
+  border: none;
+  border-radius: 12px;
+  padding: 14px 25px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  transition: all 0.3s ease;
+  box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4);
+  width: 100%;
+  margin-top: auto;
+}
+
+.cardapio-card__botao:hover {
+  transform: scale(1.03);
+  box-shadow: 0 10px 30px rgba(255, 215, 0, 0.7);
+  background: linear-gradient(135deg, #FFE44D, #FFB347);
+}
+
+.cardapio-card__botao-icone {
+  font-size: 1.3rem;
+}
+
+/* ===== DICA DO CHEFE ===== */
+.cardapio-dica {
+  background: rgba(255, 215, 0, 0.1);
+  border: 2px solid rgba(255, 215, 0, 0.3);
+  border-radius: 20px;
+  padding: clamp(1.2rem, 5vw, 2.5rem);
+  margin: 3rem auto;
+  max-width: 1200px;
+  text-align: center;
+}
+
+.cardapio-dica__titulo {
+  color: #FFD700;
+  font-size: 2rem;
   margin-bottom: 1rem;
 }
 
-.item-topo strong {
+.cardapio-dica__texto {
+  color: #ccc;
+  font-size: 1.2rem;
+  margin-bottom: 1.5rem;
+}
+
+.cardapio-dica__badges {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.cardapio-dica__badge {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 10px 20px;
+  border-radius: 25px;
   color: #FFD700;
-  font-size: 1.4rem;
-  flex: 1;
-  padding-right: 1rem;
 }
 
-.item-topo span {
-  color: #FF8C42;
-  font-size: 1.6rem;
-  font-weight: bold;
-  background: rgba(0, 0, 0, 0.3);
-  padding: 0.5rem 1rem;
-  border-radius: 10px;
-  min-width: 100px;
+/* ===== RODAPÉ ===== */
+.cardapio-rodape {
   text-align: center;
-}
-
-.item p {
-  color: rgba(255, 255, 255, 0.8);
-  margin: 0;
-  line-height: 1.6;
-  padding-top: 0.8rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-/* RODAPÉ */
-.rodape {
-  text-align: center;
-  padding: 3rem 1rem;
+  padding: 3rem 20px;
   background: rgba(45, 27, 0, 0.95);
   border-top: 4px solid #FFD700;
   backdrop-filter: blur(20px);
   margin-top: 3rem;
+  width: 100%;
 }
 
-.rodape img {
-  width: 80px;
-  height: 80px;
+.cardapio-rodape__logo {
+  width: 100px;
+  height: 100px;
   border-radius: 50%;
   border: 3px solid rgba(255, 215, 0, 0.6);
   margin-bottom: 1rem;
 }
 
-.rodape p {
+@media (max-width: 768px) {
+  .cardapio-rodape__logo {
+    width: 80px;
+    height: 80px;
+  }
+}
+
+.cardapio-rodape__texto {
   color: rgba(255, 255, 255, 0.9);
   margin: 0.5rem 0;
   font-size: 1.1rem;
 }
 
-.btn-home {
+.cardapio-rodape__texto--final {
+  margin: 0.5rem 0 1.5rem 0;
+}
+
+.cardapio-rodape__redes {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.cardapio-rodape__rede-link {
+  color: #FFD700;
+  font-size: 1.5rem;
+}
+
+.cardapio-rodape__botao-home {
   display: inline-block;
   background: linear-gradient(135deg, #FFD700, #FFA500);
   color: #2D1B00;
   padding: 1rem 3rem;
-  border-radius: 50px;
+  border-radius: 25px;
   text-decoration: none;
   font-weight: bold;
   font-size: 1.2rem;
-  margin-top: 1.5rem;
   box-shadow: 0 10px 25px rgba(255, 215, 0, 0.4);
   transition: all 0.3s ease;
 }
 
-.btn-home:hover {
+.cardapio-rodape__botao-home:hover {
   transform: translateY(-3px);
   box-shadow: 0 15px 35px rgba(255, 215, 0, 0.6);
 }
 
-/* ANIMAÇÕES */
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
+/* ===== RESPONSIVIDADE GERAL ===== */
+@media (max-width: 768px) {
+  .cardapio-conteudo {
+    padding-top: 130px;
+  }
+
+  .cardapio-semana__card-emoji {
+    font-size: 2rem;
+  }
 }
 
-/* RESPONSIVIDADE */
-@media (max-width: 768px) {
-  .abas {
-    gap: 0.5rem;
+@media (max-width: 480px) {
+  .cardapio-conteudo {
+    padding-top: 110px;
   }
-  
-  .aba {
-    min-width: 140px;
-    padding: 0.8rem 1rem;
-    font-size: 1rem;
+
+  .cardapio-card__nome {
+    font-size: 1.4rem;
   }
-  
-  .lista {
-    grid-template-columns: 1fr;
-    padding: 0 0.5rem;
+
+  .cardapio-semana__card-emoji {
+    font-size: 1.8rem;
   }
-  
-  .logo-topo {
-    width: 70px;
-    height: 70px;
-  }
-  
-  .btn-voltar {
-    padding: 0.6rem 1rem;
-    font-size: 0.9rem;
+
+  .cardapio-promo-banner__botao-icone {
+    font-size: 1.3rem;
   }
 }

@@ -1,0 +1,157 @@
+/* src/styles/tabsNavigation.css */
+.tabs-navigation {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin: 2rem auto 3rem auto;
+  padding: 0 20px;
+  max-width: 1400px;
+  width: 100%;
+}
+
+.tabs-scroll-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  justify-content: center;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-behavior: smooth;
+  padding-bottom: 0.5rem;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 215, 0, 0.3) transparent;
+}
+
+.tabs-scroll-container::-webkit-scrollbar {
+  height: 4px;
+}
+
+.tabs-scroll-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.tabs-scroll-container::-webkit-scrollbar-thumb {
+  background: rgba(255, 215, 0, 0.3);
+  border-radius: 2px;
+}
+
+.tabs-scroll-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 215, 0, 0.5);
+}
+
+.tab-button {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.8);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  padding: 1rem 2rem;
+  border-radius: 15px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  flex: 1 0 auto;
+  min-width: 180px;
+  justify-content: center;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.tab-button__icone {
+  font-size: 1.5rem;
+}
+
+.tab-button--ativa {
+  color: #FFFFFF;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.tab-button--ativa.tab-button--pizzas {
+  background: linear-gradient(135deg, #FF6B35, #FF6B35CC);
+  box-shadow: 0 8px 25px #FF6B3566;
+}
+
+.tab-button--ativa.tab-button--hamburgueres {
+  background: linear-gradient(135deg, #8B4513, #8B4513CC);
+  box-shadow: 0 8px 25px #8B451366;
+}
+
+.tab-button--ativa.tab-button--bebidas {
+  background: linear-gradient(135deg, #4A90E2, #4A90E2CC);
+  box-shadow: 0 8px 25px #4A90E266;
+}
+
+.tab-button--ativa.tab-button--sobremesas {
+  background: linear-gradient(135deg, #C2185B, #C2185BCC);
+  box-shadow: 0 8px 25px #C2185B66;
+}
+
+.tab-button--ativa.tab-button--promocoes {
+  background: linear-gradient(135deg, #FFD700, #FFD700CC);
+  box-shadow: 0 8px 25px #FFD70066;
+}
+
+.tab-label {
+  display: inline;
+}
+
+.scroll-hint {
+  text-align: center;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.6);
+  display: none;
+}
+
+@media (max-width: 1024px) {
+  .tab-button {
+    min-width: 160px;
+    padding: 0.9rem 1.5rem;
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .tabs-scroll-container {
+    justify-content: flex-start;
+    overflow-x: auto;
+    padding: 0.5rem 0;
+    gap: 0.6rem;
+  }
+
+  .tab-button {
+    min-width: 140px;
+    padding: 0.8rem 1.2rem;
+    font-size: 0.95rem;
+    flex-shrink: 0;
+  }
+
+  .scroll-hint {
+    display: block;
+  }
+}
+
+@media (max-width: 480px) {
+  .tabs-scroll-container {
+    gap: 0.5rem;
+  }
+
+  .tab-button {
+    min-width: 120px;
+    padding: 0.7rem 1rem;
+    font-size: 0.85rem;
+  }
+
+  .tab-label {
+    display: none;
+  }
+
+  .scroll-hint {
+    display: block;
+    font-size: 0.75rem;
+  }
+}

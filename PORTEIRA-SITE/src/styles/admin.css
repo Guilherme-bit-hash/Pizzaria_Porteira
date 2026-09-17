@@ -1,0 +1,303 @@
+/* src/styles/admin.css - compartilhado entre AdminLogin, AdminPedidos e AdminPromocoes */
+.admin-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #2D1B00 0%, #3A240F 30%, #4A2F15 60%, #5A3E2B 100%);
+  color: white;
+  font-family: 'Montserrat', sans-serif;
+  padding: 20px;
+}
+
+.admin-page--login {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.admin-form {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 20px;
+  padding: 2.5rem;
+  max-width: 400px;
+  width: 100%;
+  border: 2px solid rgba(255, 215, 0, 0.3);
+}
+
+.admin-form__titulo {
+  color: #FFD700;
+  font-size: 1.8rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.admin-campo {
+  margin-bottom: 1.2rem;
+}
+
+.admin-campo--ultimo {
+  margin-bottom: 1.5rem;
+}
+
+.admin-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #FFD700;
+}
+
+.admin-input {
+  width: 100%;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  border-radius: 8px;
+  color: white;
+  font-size: 1rem;
+}
+
+.admin-botao-primario {
+  width: 100%;
+  background: linear-gradient(135deg, #FFD700, #FFA500);
+  color: #2D1B00;
+  border: none;
+  padding: 1rem;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.admin-botao-primario:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* Cabeçalho comum das telas internas (AdminPedidos, AdminPromocoes) */
+.admin-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1000px;
+  margin: 0 auto 2rem;
+  padding-top: 20px;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.admin-header__titulo {
+  color: #FFD700;
+  font-size: 2rem;
+}
+
+.admin-header__acoes {
+  display: flex;
+  gap: 0.8rem;
+}
+
+.admin-botao-secundario {
+  background: rgba(255, 215, 0, 0.15);
+  color: #FFD700;
+  border: 1px solid rgba(255, 215, 0, 0.4);
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.admin-botao-perigo {
+  background: rgba(255, 68, 68, 0.2);
+  color: #FF8888;
+  border: 1px solid rgba(255, 68, 68, 0.4);
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.admin-conteudo {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.admin-mensagem-erro {
+  color: #FF8888;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.admin-mensagem-neutra {
+  text-align: center;
+  color: #ccc;
+}
+
+/* Cards de pedido */
+.admin-pedido-card {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 1.2rem;
+  border: 1px solid rgba(255, 215, 0, 0.2);
+}
+
+.admin-pedido-card__topo {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.admin-pedido-card__titulo {
+  color: #FFD700;
+  margin: 0;
+}
+
+.admin-pedido-card__info {
+  color: #aaa;
+  margin: 0.3rem 0 0;
+  font-size: 0.9rem;
+}
+
+.admin-pedido-card__data {
+  color: #888;
+  margin: 0.3rem 0 0;
+  font-size: 0.85rem;
+}
+
+.admin-status-badge {
+  padding: 6px 14px;
+  border-radius: 20px;
+  background: rgba(255, 215, 0, 0.15);
+  color: #FFD700;
+  font-weight: bold;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.admin-pedido-card__itens {
+  margin: 0 0 1rem;
+  padding-left: 1.2rem;
+  color: #ddd;
+}
+
+.admin-pedido-card__observacoes {
+  color: #FFA500;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.admin-pedido-card__rodape {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.admin-pedido-card__total {
+  color: #FFD700;
+  font-size: 1.2rem;
+}
+
+.admin-pedido-card__acoes {
+  display: flex;
+  gap: 0.8rem;
+}
+
+.admin-botao-avancar {
+  background: linear-gradient(135deg, #FFD700, #FFA500);
+  color: #2D1B00;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.admin-botao-cancelar {
+  background: rgba(255, 68, 68, 0.15);
+  color: #FF8888;
+  border: 1px solid rgba(255, 68, 68, 0.3);
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.admin-botao-avancar:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* Variante mais estreita usada pela tela de Promoções */
+.admin-header--estreito,
+.admin-conteudo--estreito {
+  max-width: 900px;
+}
+
+/* Cards do formulário de promoções */
+.admin-promo-card {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 1.2rem;
+  border: 1px solid rgba(255, 215, 0, 0.2);
+}
+
+.admin-promo-card__titulo {
+  color: #FFD700;
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
+.admin-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.admin-campo-simples {
+  margin-bottom: 1rem;
+}
+
+.admin-campo-simples--final {
+  margin-bottom: 1.2rem;
+}
+
+.admin-textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.admin-color-input {
+  padding: 4px;
+  height: 42px;
+}
+
+.admin-checkbox-campo {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.admin-checkbox-label {
+  color: #FFD700;
+  font-size: 0.85rem;
+  margin-bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.admin-promo-card__rodape {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.admin-mensagem-status {
+  font-size: 0.9rem;
+  color: #8BFF8B;
+}
+
+.admin-mensagem-status--erro {
+  color: #FF8888;
+}

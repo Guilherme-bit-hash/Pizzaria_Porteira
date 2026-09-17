@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { listarPromocoes } from '../services/promocaoService'
 
 export interface Promocao {
   nome: string
@@ -11,7 +12,8 @@ export interface Promocao {
   emailBody?: string
 }
 
-const promocoes: Record<number, Promocao> = {
+// Usadas quando o backend está indisponível, ou como valor inicial antes da resposta da API.
+export const promocoesPadrao: Record<number, Promocao> = {
   0: {
     nome: '🍕 Domingo em Família',
     descricao: '2 Pizzas Grandes + Refri 2L por R$ 89,90',
@@ -85,52 +87,68 @@ const promocoes: Record<number, Promocao> = {
 }
 
 export const usePromocaoDoDia = () => {
-  const [promocaoAtual, setPromocaoAtual] = useState<Promocao | null>(null)
-  const [diaDaSemana, setDiaDaSemana] = useState<number>(0)
+  const [todasAsPromocoes, setTodasAsPromocoes] = useState<Record<number, Promocao>>(promocoesPadrao)
+  const [diaDaSemana, setDiaDaSemana] = useState<number>(() => new Date().getDay())
   const [nomeDia, setNomeDia] = useState<string>('')
 
+  // Busca as promoções cadastradas no painel admin, mantendo os valores padrão como fallback.
   useEffect(() => {
-    const atualizarPromocao = () => {
-      const hoje = new Date()
-      const dia = hoje.getDay()
-      const nomesDias = [
-        'Domingo',
-        'Segunda-feira',
-        'Terça-feira',
-        'Quarta-feira',
-        'Quinta-feira',
-        'Sexta-feira',
-        'Sábado'
-      ]
+    let cancelado = false
 
-      setDiaDaSemana(dia)
-      setNomeDia(nomesDias[dia])
-      setPromocaoAtual(promocoes[dia])
+    listarPromocoes().then((promocoesApi) => {
+      if (cancelado || !promocoesApi) return
+
+      setTodasAsPromocoes((atuais) => {
+        const atualizadas = { ...atuais }
+        for (const promocao of promocoesApi) {
+          atualizadas[promocao.diaSemana] = {
+            nome: promocao.nome,
+            descricao: promocao.descricao,
+            preco: promocao.preco,
+            destaque: promocao.destaque,
+            cor: promocao.cor,
+            whatsappMessage: promocao.whatsappMessage ?? undefined,
+            emailSubject: promocao.emailSubject ?? undefined,
+            emailBody: promocao.emailBody ?? undefined,
+          }
+        }
+        return atualizadas
+      })
+    })
+
+    return () => {
+      cancelado = true
     }
+  }, [])
 
-    atualizarPromocao()
+  // Mantém o dia da semana em dia, atualizando à meia-noite.
+  useEffect(() => {
+    const nomesDias = [
+      'Domingo',
+      'Segunda-feira',
+      'Terça-feira',
+      'Quarta-feira',
+      'Quinta-feira',
+      'Sexta-feira',
+      'Sábado'
+    ]
+    setNomeDia(nomesDias[diaDaSemana])
 
-    // Atualizar a meia-noite
     const agora = new Date()
     const amanha = new Date(agora)
     amanha.setDate(amanha.getDate() + 1)
     amanha.setHours(0, 0, 0, 0)
-
     const msAteAmanha = amanha.getTime() - agora.getTime()
-    const timeout = setTimeout(() => {
-      atualizarPromocao()
-      // Configurar para atualizar diariamente
-      setInterval(atualizarPromocao, 24 * 60 * 60 * 1000)
-    }, msAteAmanha)
 
+    const timeout = setTimeout(() => setDiaDaSemana(new Date().getDay()), msAteAmanha)
     return () => clearTimeout(timeout)
-  }, [])
+  }, [diaDaSemana])
 
   return {
-    promocaoAtual,
+    promocaoAtual: todasAsPromocoes[diaDaSemana] ?? null,
     diaDaSemana,
     nomeDia,
-    todasAsPromocoes: promocoes
+    todasAsPromocoes
   }
 }
 

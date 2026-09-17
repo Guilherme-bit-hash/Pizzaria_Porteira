@@ -8,6 +8,8 @@ import {
   type Pedido,
   type StatusPedido,
 } from '../services/pedidoService'
+import { showToast } from '../components/Toast'
+import '../styles/admin.css'
 
 const STATUS_LABEL: Record<StatusPedido, string> = {
   recebido: '🆕 Recebido',
@@ -64,8 +66,18 @@ export default function AdminPedidos() {
     try {
       await atualizarStatusPedido(pedido.id, proximo)
       carregarPedidos()
+      showToast({
+        message: `Pedido #${pedido.id} atualizado para "${STATUS_LABEL[proximo]}"`,
+        type: 'success',
+        emoji: '✅',
+        duration: 2500,
+      })
     } catch (error) {
-      setErro(error instanceof Error ? error.message : 'Erro ao atualizar status.')
+      showToast({
+        message: error instanceof Error ? error.message : 'Erro ao atualizar status.',
+        type: 'error',
+        emoji: '⚠️',
+      })
     }
   }
 
@@ -73,8 +85,18 @@ export default function AdminPedidos() {
     try {
       await atualizarStatusPedido(pedido.id, 'cancelado')
       carregarPedidos()
+      showToast({
+        message: `Pedido #${pedido.id} cancelado`,
+        type: 'warning',
+        emoji: '❌',
+        duration: 2500,
+      })
     } catch (error) {
-      setErro(error instanceof Error ? error.message : 'Erro ao cancelar pedido.')
+      showToast({
+        message: error instanceof Error ? error.message : 'Erro ao cancelar pedido.',
+        type: 'error',
+        emoji: '⚠️',
+      })
     }
   }
 
@@ -84,95 +106,47 @@ export default function AdminPedidos() {
   }
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: 'linear-gradient(135deg, #2D1B00 0%, #3A240F 30%, #4A2F15 60%, #5A3E2B 100%)',
-      color: 'white',
-      fontFamily: "'Montserrat', sans-serif",
-      padding: '20px',
-    }}>
-      <header style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        maxWidth: '1000px',
-        margin: '0 auto 2rem',
-        paddingTop: '20px',
-        flexWrap: 'wrap',
-        gap: '1rem',
-      }}>
-        <h1 style={{ color: '#FFD700', fontSize: '2rem' }}>📋 Pedidos</h1>
-        <button
-          onClick={handleSair}
-          style={{
-            background: 'rgba(255, 68, 68, 0.2)',
-            color: '#FF8888',
-            border: '1px solid rgba(255, 68, 68, 0.4)',
-            padding: '10px 20px',
-            borderRadius: '8px',
-            cursor: 'pointer',
-          }}
-        >
-          Sair
-        </button>
+    <div className="admin-page">
+      <header className="admin-header">
+        <h1 className="admin-header__titulo">📋 Pedidos</h1>
+        <div className="admin-header__acoes">
+          <button onClick={() => navigate('/admin/promocoes')} className="admin-botao-secundario">
+            🎯 Promoções
+          </button>
+          <button onClick={handleSair} className="admin-botao-perigo">
+            Sair
+          </button>
+        </div>
       </header>
 
-      <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
-        {erro && (
-          <p style={{ color: '#FF8888', marginBottom: '1.5rem', textAlign: 'center' }}>{erro}</p>
-        )}
+      <div className="admin-conteudo">
+        {erro && <p className="admin-mensagem-erro">{erro}</p>}
 
-        {carregando && <p style={{ textAlign: 'center', color: '#ccc' }}>Carregando pedidos...</p>}
+        {carregando && <p className="admin-mensagem-neutra">Carregando pedidos...</p>}
 
         {!carregando && pedidos.length === 0 && !erro && (
-          <p style={{ textAlign: 'center', color: '#ccc' }}>Nenhum pedido registrado ainda.</p>
+          <p className="admin-mensagem-neutra">Nenhum pedido registrado ainda.</p>
         )}
 
         {pedidos.map((pedido) => (
-          <div
-            key={pedido.id}
-            style={{
-              background: 'rgba(255, 255, 255, 0.05)',
-              borderRadius: '16px',
-              padding: '1.5rem',
-              marginBottom: '1.2rem',
-              border: '1px solid rgba(255, 215, 0, 0.2)',
-            }}
-          >
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'flex-start',
-              flexWrap: 'wrap',
-              gap: '1rem',
-              marginBottom: '1rem',
-            }}>
+          <div key={pedido.id} className="admin-pedido-card">
+            <div className="admin-pedido-card__topo">
               <div>
-                <h3 style={{ color: '#FFD700', margin: 0 }}>
+                <h3 className="admin-pedido-card__titulo">
                   Pedido #{pedido.id} — {pedido.cliente_nome}
                 </h3>
-                <p style={{ color: '#aaa', margin: '0.3rem 0 0', fontSize: '0.9rem' }}>
+                <p className="admin-pedido-card__info">
                   {pedido.cliente_telefone} · {pedido.endereco}
                   {pedido.complemento ? ` (${pedido.complemento})` : ''}
                 </p>
-                <p style={{ color: '#888', margin: '0.3rem 0 0', fontSize: '0.85rem' }}>
+                <p className="admin-pedido-card__data">
                   {new Date(pedido.criado_em).toLocaleString('pt-BR')}
                 </p>
               </div>
-              <span style={{
-                padding: '6px 14px',
-                borderRadius: '20px',
-                background: 'rgba(255, 215, 0, 0.15)',
-                color: '#FFD700',
-                fontWeight: 'bold',
-                fontSize: '0.9rem',
-                whiteSpace: 'nowrap',
-              }}>
-                {STATUS_LABEL[pedido.status]}
-              </span>
+              <span className="admin-status-badge">{STATUS_LABEL[pedido.status]}</span>
             </div>
 
-            <ul style={{ margin: '0 0 1rem', paddingLeft: '1.2rem', color: '#ddd' }}>
+            <ul className="admin-pedido-card__itens">
               {pedido.itens.map((item, index) => (
                 <li key={index}>
                   {item.quantidade}x {item.nome}
@@ -182,51 +156,24 @@ export default function AdminPedidos() {
             </ul>
 
             {pedido.observacoes && (
-              <p style={{ color: '#FFA500', fontSize: '0.9rem', marginBottom: '1rem' }}>
+              <p className="admin-pedido-card__observacoes">
                 Observações do pedido: {pedido.observacoes}
               </p>
             )}
 
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              flexWrap: 'wrap',
-              gap: '1rem',
-            }}>
-              <strong style={{ color: '#FFD700', fontSize: '1.2rem' }}>
+            <div className="admin-pedido-card__rodape">
+              <strong className="admin-pedido-card__total">
                 Total: R$ {Number(pedido.total).toFixed(2).replace('.', ',')}
               </strong>
 
-              <div style={{ display: 'flex', gap: '0.8rem' }}>
+              <div className="admin-pedido-card__acoes">
                 {PROXIMOS_STATUS[pedido.status] && (
-                  <button
-                    onClick={() => handleAvancarStatus(pedido)}
-                    style={{
-                      background: 'linear-gradient(135deg, #FFD700, #FFA500)',
-                      color: '#2D1B00',
-                      border: 'none',
-                      padding: '8px 16px',
-                      borderRadius: '8px',
-                      fontWeight: 'bold',
-                      cursor: 'pointer',
-                    }}
-                  >
+                  <button onClick={() => handleAvancarStatus(pedido)} className="admin-botao-avancar">
                     Avançar → {STATUS_LABEL[PROXIMOS_STATUS[pedido.status]!]}
                   </button>
                 )}
                 {pedido.status !== 'entregue' && pedido.status !== 'cancelado' && (
-                  <button
-                    onClick={() => handleCancelar(pedido)}
-                    style={{
-                      background: 'rgba(255, 68, 68, 0.15)',
-                      color: '#FF8888',
-                      border: '1px solid rgba(255, 68, 68, 0.3)',
-                      padding: '8px 16px',
-                      borderRadius: '8px',
-                      cursor: 'pointer',
-                    }}
-                  >
+                  <button onClick={() => handleCancelar(pedido)} className="admin-botao-cancelar">
                     Cancelar
                   </button>
                 )}

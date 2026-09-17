@@ -7,6 +7,28 @@ export const pedidosRouter = Router()
 
 const STATUS_VALIDOS = ['recebido', 'preparando', 'saiu_para_entrega', 'entregue', 'cancelado']
 
+const CUPOM_PRIMEIRA_COMPRA = 'BEMVINDO10'
+const CUPOM_PERCENTUAL = 0.1
+const CUPOM_VALOR_MINIMO = 80
+
+function normalizarTelefone(telefone) {
+  return String(telefone || '').replace(/\D/g, '')
+}
+
+// Cupom de primeira compra é válido apenas para telefones que nunca fizeram um pedido antes.
+// A checagem é sempre feita no servidor (nunca confiando no cliente) para não poder ser
+// burlada limpando o localStorage do navegador.
+async function elegivelCupomPrimeiraCompra(telefone) {
+  const telefoneNormalizado = normalizarTelefone(telefone)
+  if (!telefoneNormalizado) return false
+
+  const [linhas] = await pool.query(
+    `SELECT id FROM pedidos WHERE REGEXP_REPLACE(cliente_telefone, '[^0-9]', '') = ? LIMIT 1`,
+    [telefoneNormalizado]
+  )
+  return linhas.length === 0
+}
+
 function validarItens(itens) {
   if (!Array.isArray(itens) || itens.length === 0) return null
 
@@ -26,7 +48,7 @@ function validarItens(itens) {
 
 // Criar pedido (usado pelo checkout do site, sem autenticação)
 pedidosRouter.post('/', asyncHandler(async (req, res) => {
-  const { nome, telefone, endereco, complemento, observacoes, itens } = req.body || {}
+  const { nome, telefone, endereco, complemento, observacoes, itens, cupom } = req.body || {}
 
   if (!nome || !telefone || !endereco) {
     return res.status(400).json({ erro: 'Nome, telefone e endereço são obrigatórios.' })
@@ -37,15 +59,60 @@ pedidosRouter.post('/', asyncHandler(async (req, res) => {
     return res.status(400).json({ erro: 'A lista de itens do pedido é inválida ou está vazia.' })
   }
 
-  const total = itensValidos.reduce((acc, item) => acc + item.preco * item.quantidade, 0)
+  const subtotal = itensValidos.reduce((acc, item) => acc + item.preco * item.quantidade, 0)
+
+  // O desconto é sempre recalculado aqui, ignorando qualquer valor vindo do cliente:
+  // um cupom inválido/já usado simplesmente não gera desconto, mas não impede o pedido.
+  let desconto = 0
+  let cupomAplicado = null
+
+  if (cupom === CUPOM_PRIMEIRA_COMPRA && subtotal >= CUPOM_VALOR_MINIMO) {
+    const elegivel = await elegivelCupomPrimeiraCompra(telefone)
+    if (elegivel) {
+      desconto = Number((subtotal * CUPOM_PERCENTUAL).toFixed(2))
+      cupomAplicado = CUPOM_PRIMEIRA_COMPRA
+    }
+  }
+
+  const total = Number((subtotal - desconto).toFixed(2))
 
   const [resultado] = await pool.query(
-    `INSERT INTO pedidos (cliente_nome, cliente_telefone, endereco, complemento, observacoes, itens, total)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    [nome, telefone, endereco, complemento || null, observacoes || null, JSON.stringify(itensValidos), total]
+    `INSERT INTO pedidos (cliente_nome, cliente_telefone, endereco, complemento, observacoes, itens, subtotal, desconto, cupom, total)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      nome,
+      telefone,
+      endereco,
+      complemento || null,
+      observacoes || null,
+      JSON.stringify(itensValidos),
+      subtotal,
+      desconto,
+      cupomAplicado,
+      total,
+    ]
   )
 
-  res.status(201).json({ id: resultado.insertId, total, status: 'recebido' })
+  res.status(201).json({
+    id: resultado.insertId,
+    subtotal,
+    desconto,
+    cupom: cupomAplicado,
+    total,
+    status: 'recebido',
+  })
+}))
+
+// Verifica, em tempo real, se o telefone informado ainda tem direito ao cupom de primeira
+// compra. Usado no checkout para mostrar o desconto antes de finalizar o pedido.
+pedidosRouter.get('/cupom-primeira-compra/elegivel', asyncHandler(async (req, res) => {
+  const elegivel = await elegivelCupomPrimeiraCompra(req.query.telefone)
+  res.json({
+    elegivel,
+    codigo: CUPOM_PRIMEIRA_COMPRA,
+    percentual: CUPOM_PERCENTUAL,
+    valorMinimo: CUPOM_VALOR_MINIMO,
+  })
 }))
 
 // Listar pedidos (painel admin)

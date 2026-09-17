@@ -40,7 +40,7 @@ Feito com **React + TypeScript + Vite**.
 npm run dev
 ```
 
-Acesse `http://localhost:5173`.
+Acesse `http://localhost:5273`.
 
 ## Build de produção
 

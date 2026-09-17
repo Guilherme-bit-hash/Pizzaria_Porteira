@@ -1,0 +1,19 @@
+/* src/styles/botoesFlutuantes.css */
+.botoes-flutuantes {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 14px;
+}
+
+@media (max-width: 480px) {
+  .botoes-flutuantes {
+    bottom: 15px;
+    right: 15px;
+    gap: 10px;
+  }
+}

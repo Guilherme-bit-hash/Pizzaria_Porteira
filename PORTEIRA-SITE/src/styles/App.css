@@ -33,6 +33,12 @@ html, body, #root {
   justify-content: center;
 }
 
+/* Páginas simples que ficam direto sob a Navbar (sem .main-content) */
+.page-container--com-navbar {
+  padding-top: 180px;
+  min-height: 100vh;
+}
+
 .page-title {
   text-align: center;
   font-size: 2.5rem;

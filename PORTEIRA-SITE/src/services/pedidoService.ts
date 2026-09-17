@@ -2,6 +2,13 @@ import type { ItemCarrinho } from '../contexts/CarrinhoContexts'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
 const TOKEN_KEY = 'pizzaria-porteira:admin-token'
+const PEDIDO_REALIZADO_KEY = 'pizzaria-porteira:pedido-realizado'
+
+// Precisam bater com as constantes equivalentes em backend/src/routes/pedidos.js —
+// o backend é quem decide de fato se o desconto é aplicado, isso aqui é só para exibição.
+export const CUPOM_PRIMEIRA_COMPRA = 'BEMVINDO10'
+export const CUPOM_PERCENTUAL = 0.1
+export const CUPOM_VALOR_MINIMO = 80
 
 export type StatusPedido = 'recebido' | 'preparando' | 'saiu_para_entrega' | 'entregue' | 'cancelado'
 
@@ -26,6 +33,16 @@ export interface DadosNovoPedido {
   complemento?: string
   observacoes?: string
   itens: ItemCarrinho[]
+  cupom?: string
+}
+
+export interface RespostaNovoPedido {
+  id: number
+  subtotal: number
+  desconto: number
+  cupom: string | null
+  total: number
+  status: StatusPedido
 }
 
 export function getAdminToken() {
@@ -40,6 +57,16 @@ export function limparAdminToken() {
   localStorage.removeItem(TOKEN_KEY)
 }
 
+// Usado para saber se o cliente já finalizou algum pedido neste navegador,
+// e assim decidir se ainda vale mostrar a promoção de primeira compra.
+export function jaFezPedido() {
+  return localStorage.getItem(PEDIDO_REALIZADO_KEY) === 'true'
+}
+
+export function marcarPedidoRealizado() {
+  localStorage.setItem(PEDIDO_REALIZADO_KEY, 'true')
+}
+
 async function tratarResposta(resposta: Response) {
   const dados = await resposta.json().catch(() => null)
   if (!resposta.ok) {
@@ -50,7 +77,7 @@ async function tratarResposta(resposta: Response) {
 
 // Registra o pedido no backend. Usado no checkout antes de redirecionar ao WhatsApp.
 // Retorna null (em vez de lançar erro) quando o backend está indisponível, para não travar o pedido via WhatsApp.
-export async function criarPedido(dados: DadosNovoPedido) {
+export async function criarPedido(dados: DadosNovoPedido): Promise<RespostaNovoPedido | null> {
   try {
     const resposta = await fetch(`${API_URL}/pedidos`, {
       method: 'POST',
@@ -61,6 +88,22 @@ export async function criarPedido(dados: DadosNovoPedido) {
   } catch (error) {
     console.error('Não foi possível registrar o pedido no backend:', error)
     return null
+  }
+}
+
+// Verifica no backend se o telefone informado ainda tem direito ao cupom de primeira
+// compra (nunca fez pedido antes). Usado só para dar feedback visual no checkout —
+// a validação que realmente vale é feita de novo no servidor ao criar o pedido.
+export async function verificarCupomPrimeiraCompra(telefone: string): Promise<boolean> {
+  try {
+    const resposta = await fetch(
+      `${API_URL}/pedidos/cupom-primeira-compra/elegivel?telefone=${encodeURIComponent(telefone)}`
+    )
+    const dados = await tratarResposta(resposta)
+    return Boolean(dados?.elegivel)
+  } catch (error) {
+    console.error('Não foi possível verificar o cupom de primeira compra:', error)
+    return false
   }
 }
 

@@ -1,16 +1,17 @@
 // src/App.tsx - VERSÃO CORRIGIDA
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { CarrinhoProvider } from './contexts/CarrinhoContexts'
-import CarrinhoFlutuante from './components/CarrinhoFlutuante'
-import WhatsAppFlutuante from './components/WhatsaapFlutuante'
+import BotoesFlutuantes from './components/BotoesFlutuantes'
 import { ToastContainer } from './components/Toast'
 import Navbar from './components/Navbar'
 import PromocaoDiaToast from './components/PromocaoDiaToast'
+import PrimeiraCompraToast from './components/PrimeiraCompraToast'
 import Home from './Pages/Home'
 import Cardapio from './Pages/Cardapio'
 import Pedido from './Pages/Pedido'
 import AdminLogin from './Pages/AdminLogin'
 import AdminPedidos from './Pages/AdminPedidos'
+import AdminPromocoes from './Pages/AdminPromocoes'
 
 // Importação de estilos
 import './styles/App.css'
@@ -31,13 +32,13 @@ function App() {
             <Route path="/pedido" element={<Pedido />} />
             <Route path="/admin" element={<AdminLogin />} />
             <Route path="/admin/pedidos" element={<AdminPedidos />} />
+            <Route path="/admin/promocoes" element={<AdminPromocoes />} />
             
             {/* Páginas adicionais */}
             <Route path="/promocoes" element={
               <>
                 <Navbar showBackButton={true} backTo="/" />
-                <PromocaoDiaToast />
-                <div className="page-container" style={{ paddingTop: '180px', minHeight: '100vh' }}>
+                <div className="page-container page-container--com-navbar">
                   <h1 className="page-title">🎪 Promoções Exclusivas</h1>
                   <p className="page-subtitle">Aproveite nossas ofertas especiais!</p>
                   {/* Aqui você pode adicionar o BannerPromocoes */}
@@ -48,8 +49,7 @@ function App() {
             <Route path="/sobre" element={
               <>
                 <Navbar showBackButton={true} backTo="/" />
-                <PromocaoDiaToast />
-                <div className="page-container" style={{ paddingTop: '180px', minHeight: '100vh' }}>
+                <div className="page-container page-container--com-navbar">
                   <h1 className="page-title">ℹ️ Sobre a Pizzaria Porteira</h1>
                   <div className="sobre-content">
                     <p>
@@ -65,8 +65,7 @@ function App() {
             <Route path="/contato" element={
               <>
                 <Navbar showBackButton={true} backTo="/" />
-                <PromocaoDiaToast />
-                <div className="page-container" style={{ paddingTop: '180px', minHeight: '100vh' }}>
+                <div className="page-container page-container--com-navbar">
                   <h1 className="page-title">📞 Entre em Contato</h1>
                   <div className="contato-info">
                     <p>WhatsApp: (11) 99999-9999</p>
@@ -79,8 +78,9 @@ function App() {
           </Routes>
           
           {/* Componentes Flutuantes */}
-          <WhatsAppFlutuante />
-          <CarrinhoFlutuante />
+          <BotoesFlutuantes />
+          <PromocaoDiaToast />
+          <PrimeiraCompraToast />
         </div>
       </BrowserRouter>
     </CarrinhoProvider>

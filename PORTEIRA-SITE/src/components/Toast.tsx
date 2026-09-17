@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { sendPromoEmail, sendWhatsAppMessage, copyToClipboard } from '../services/emailService'
+import '../styles/toast.css'
 
 export interface ToastProps {
   id: string
@@ -93,206 +94,48 @@ export function ToastContainer() {
   }
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        top: '20px',
-        right: '20px',
-        zIndex: 9999,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '12px',
-        maxWidth: '400px',
-        pointerEvents: 'none'
-      }}
-    >
-      {Array.from(toastList.values()).map((toast) => {
-        const bgColors = {
-          success: '#4CAF50',
-          info: '#2196F3',
-          warning: '#FF9800',
-          error: '#F44336',
-          promocao: '#FFD700'
-        }
+    <div className="toast-container">
+      {Array.from(toastList.values()).map((toast) => (
+        <div
+          key={toast.id}
+          className={`toast toast--${toast.type}${toast.isExiting ? ' toast--exiting' : ''}`}
+        >
+          {/* EMOJI */}
+          <span className="toast__emoji">
+            {toast.emoji || (toast.type === 'promocao' ? '🎯' : '✓')}
+          </span>
 
-        const textColors = {
-          success: 'white',
-          info: 'white',
-          warning: 'white',
-          error: 'white',
-          promocao: '#2D1B00'
-        }
+          {/* CONTEÚDO */}
+          <div className="toast__conteudo">
+            <div>{toast.message}</div>
 
-        return (
-          <div
-            key={toast.id}
-            style={{
-              background: bgColors[toast.type],
-              color: textColors[toast.type],
-              padding: '16px 20px',
-              borderRadius: '12px',
-              boxShadow: '0 8px 24px rgba(0,0,0,0.25)',
-              animation: toast.isExiting
-                ? 'slideOut 0.3s ease forwards'
-                : 'slideIn 0.3s ease',
-              pointerEvents: 'auto',
-              display: 'flex',
-              alignItems: 'flex-start',
-              gap: '12px',
-              fontWeight: 'bold',
-              fontSize: '0.95rem',
-              lineHeight: '1.4'
-            }}
-          >
-            {/* EMOJI */}
-            <span style={{ fontSize: '1.5rem', flexShrink: 0 }}>
-              {toast.emoji || (toast.type === 'promocao' ? '🎯' : '✓')}
-            </span>
+            {/* BOTÕES DE COMPARTILHAMENTO */}
+            {toast.showShareButtons && toast.type === 'promocao' && (
+              <div className="toast__acoes">
+                <button className="toast__botao-acao" onClick={() => sendWhatsApp(toast)}>
+                  📱 WhatsApp
+                </button>
 
-            {/* CONTEÚDO */}
-            <div style={{ flex: 1 }}>
-              <div>{toast.message}</div>
+                <button className="toast__botao-acao" onClick={() => sendEmail(toast)}>
+                  ✉️ Email
+                </button>
 
-              {/* BOTÕES DE COMPARTILHAMENTO */}
-              {toast.showShareButtons && toast.type === 'promocao' && (
-                <div style={{
-                  display: 'flex',
-                  gap: '8px',
-                  marginTop: '10px',
-                  flexWrap: 'wrap'
-                }}>
-                  <button
-                    onClick={() => sendWhatsApp(toast)}
-                    style={{
-                      background: 'rgba(255, 255, 255, 0.2)',
-                      border: '1px solid rgba(255, 255, 255, 0.3)',
-                      color: textColors[toast.type],
-                      padding: '6px 12px',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      fontSize: '0.85rem',
-                      fontWeight: 'bold',
-                      transition: 'all 0.2s ease'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)'
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)'
-                    }}
-                  >
-                    📱 WhatsApp
-                  </button>
-
-                  <button
-                    onClick={() => sendEmail(toast)}
-                    style={{
-                      background: 'rgba(255, 255, 255, 0.2)',
-                      border: '1px solid rgba(255, 255, 255, 0.3)',
-                      color: textColors[toast.type],
-                      padding: '6px 12px',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      fontSize: '0.85rem',
-                      fontWeight: 'bold',
-                      transition: 'all 0.2s ease'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)'
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)'
-                    }}
-                  >
-                    ✉️ Email
-                  </button>
-
-                  <button
-                    onClick={() => handleCopyToClipboard(toast.promoDetails?.whatsappMessage || toast.message)}
-                    style={{
-                      background: 'rgba(255, 255, 255, 0.2)',
-                      border: '1px solid rgba(255, 255, 255, 0.3)',
-                      color: textColors[toast.type],
-                      padding: '6px 12px',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      fontSize: '0.85rem',
-                      fontWeight: 'bold',
-                      transition: 'all 0.2s ease'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)'
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)'
-                    }}
-                  >
-                    📋 Copiar
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* BOTÃO FECHAR */}
-            <button
-              onClick={() => removeToast(toast.id)}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: textColors[toast.type],
-                fontSize: '1.3rem',
-                cursor: 'pointer',
-                padding: '0',
-                opacity: 0.7,
-                transition: 'opacity 0.2s ease',
-                flexShrink: 0
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.opacity = '1'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.opacity = '0.7'
-              }}
-            >
-              ✕
-            </button>
+                <button
+                  className="toast__botao-acao"
+                  onClick={() => handleCopyToClipboard(toast.promoDetails?.whatsappMessage || toast.message)}
+                >
+                  📋 Copiar
+                </button>
+              </div>
+            )}
           </div>
-        )
-      })}
 
-      <style>{`
-        @keyframes slideIn {
-          from {
-            transform: translateX(400px);
-            opacity: 0;
-          }
-          to {
-            transform: translateX(0);
-            opacity: 1;
-          }
-        }
-
-        @keyframes slideOut {
-          from {
-            transform: translateX(0);
-            opacity: 1;
-          }
-          to {
-            transform: translateX(400px);
-            opacity: 0;
-          }
-        }
-
-        @media (max-width: 480px) {
-          [style*="position: fixed"] {
-            left: 10px !important;
-            right: 10px !important;
-            max-width: none !important;
-            width: auto !important;
-          }
-        }
-      `}</style>
+          {/* BOTÃO FECHAR */}
+          <button className="toast__botao-fechar" onClick={() => removeToast(toast.id)}>
+            ✕
+          </button>
+        </div>
+      ))}
     </div>
   )
 }
-

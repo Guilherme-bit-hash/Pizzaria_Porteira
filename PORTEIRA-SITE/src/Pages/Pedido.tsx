@@ -1,21 +1,49 @@
 // src/Pages/Pedidos.tsx - VERSÃO COMPLETA
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useCarrinho } from '../contexts/CarrinhoContexts'
+import { useCarrinho, type ItemCarrinho } from '../contexts/CarrinhoContexts'
 import Navbar from '../components/Navbar'
-import PromocaoDiaToast from '../components/PromocaoDiaToast'
-import { criarPedido } from '../services/pedidoService'
+import { showToast } from '../components/Toast'
+import {
+  criarPedido,
+  marcarPedidoRealizado,
+  verificarCupomPrimeiraCompra,
+  CUPOM_PRIMEIRA_COMPRA,
+  CUPOM_PERCENTUAL,
+  CUPOM_VALOR_MINIMO,
+} from '../services/pedidoService'
+import '../styles/pedido.css'
 
 export default function Pedidos() {
-  const { 
-    itens, 
-    total, 
-    quantidadeTotal, 
-    removerItem, 
+  const {
+    itens,
+    total,
+    quantidadeTotal,
+    removerItem,
     atualizarQuantidade,
-    limparCarrinho 
+    limparCarrinho
   } = useCarrinho()
-  
+
+  // Feedback em toast para as ações do carrinho (remover, limpar, mudar quantidade)
+  const handleRemoverItem = (item: ItemCarrinho) => {
+    removerItem(item.id)
+    showToast({ message: `${item.nome} removido do carrinho`, type: 'info', emoji: '🗑️', duration: 2000 })
+  }
+
+  const handleLimparCarrinho = () => {
+    limparCarrinho()
+    showToast({ message: 'Carrinho esvaziado', type: 'info', emoji: '🧹', duration: 2000 })
+  }
+
+  const handleAtualizarQuantidade = (item: ItemCarrinho, novaQuantidade: number) => {
+    atualizarQuantidade(item.id, novaQuantidade)
+    if (novaQuantidade < 1) {
+      showToast({ message: `${item.nome} removido do carrinho`, type: 'info', emoji: '🗑️', duration: 2000 })
+    } else {
+      showToast({ message: `${item.nome}: ${novaQuantidade}x`, type: 'info', emoji: '🔢', duration: 1200 })
+    }
+  }
+
   const [etapa, setEtapa] = useState<'carrinho' | 'entrega'>('carrinho')
   const [dadosCliente, setDadosCliente] = useState({
     nome: '',
@@ -25,62 +53,60 @@ export default function Pedidos() {
     observacoes: ''
   })
   const [enviando, setEnviando] = useState(false)
+  const [cupomElegivel, setCupomElegivel] = useState<boolean | null>(null)
+
+  const telefoneDigits = dadosCliente.telefone.replace(/\D/g, '')
+  const cupomDesbloqueadoPeloValor = total >= CUPOM_VALOR_MINIMO
+
+  // Reconsulta o backend sempre que o telefone muda, com um pequeno atraso para não
+  // disparar uma requisição a cada tecla digitada. A verdade definitiva sobre o cupom
+  // só é decidida no servidor ao finalizar o pedido — isso aqui é só feedback visual.
+  useEffect(() => {
+    if (!cupomDesbloqueadoPeloValor || telefoneDigits.length < 10) {
+      setCupomElegivel(null)
+      return
+    }
+
+    let cancelado = false
+    const timer = setTimeout(() => {
+      verificarCupomPrimeiraCompra(dadosCliente.telefone).then((elegivel) => {
+        if (!cancelado) setCupomElegivel(elegivel)
+      })
+    }, 600)
+
+    return () => {
+      cancelado = true
+      clearTimeout(timer)
+    }
+  }, [telefoneDigits, cupomDesbloqueadoPeloValor, dadosCliente.telefone])
+
+  const cupomConfirmado = cupomDesbloqueadoPeloValor && cupomElegivel === true
+  const descontoPrevisto = cupomConfirmado ? Number((total * CUPOM_PERCENTUAL).toFixed(2)) : 0
+  const totalComDesconto = Number((total - descontoPrevisto).toFixed(2))
 
   // Se carrinho vazio
   if (quantidadeTotal === 0) {
     return (
       <>
         <Navbar showBackButton={true} backTo="/cardapio" />
-        <PromocaoDiaToast />
-        <div style={{
-        minHeight: '100vh',
-        background: 'linear-gradient(135deg, #2D1B00 0%, #3A240F 30%, #4A2F15 60%, #5A3E2B 100%)',
-        color: 'white',
-        fontFamily: "'Montserrat', sans-serif",
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '20px',
-        textAlign: 'center'
-      }}>
-        <div style={{
-          background: 'rgba(255, 255, 255, 0.05)',
-          borderRadius: '20px',
-          padding: '3rem',
-          maxWidth: '500px',
-          border: '2px solid rgba(255, 215, 0, 0.3)'
-        }}>
-          <h1 style={{ color: '#FFD700', fontSize: '2.5rem', marginBottom: '1rem' }}>
-            🛒 Carrinho Vazio
-          </h1>
-          <p style={{ fontSize: '1.2rem', marginBottom: '2rem', color: '#ccc' }}>
-            Seu carrinho está vazio. Adicione alguns itens deliciosos!
-          </p>
-          <Link
-            to="/cardapio"
-            style={{
-              display: 'inline-block',
-              background: 'linear-gradient(135deg, #FFD700, #FFA500)',
-              color: '#2D1B00',
-              padding: '1rem 2rem',
-              borderRadius: '25px',
-              textDecoration: 'none',
-              fontWeight: 'bold',
-              fontSize: '1.1rem',
-              transition: 'all 0.3s ease'
-            }}
-          >
-            Ver Cardápio
-          </Link>
+        <div className="pedido-vazio-page">
+          <div className="pedido-vazio-card">
+            <h1 className="pedido-vazio-titulo">🛒 Carrinho Vazio</h1>
+            <p className="pedido-vazio-texto">
+              Seu carrinho está vazio. Adicione alguns itens deliciosos!
+            </p>
+            <Link to="/cardapio" className="pedido-vazio-botao">
+              Ver Cardápio
+            </Link>
+          </div>
         </div>
-      </div>
       </>
     )
   }
 
-  // Gerar mensagem do WhatsApp
-  const gerarMensagemWhatsApp = () => {
+  // Gerar mensagem do WhatsApp a partir do resumo confirmado pelo backend
+  // (subtotal/desconto/total ali já refletem se o cupom foi de fato aplicado)
+  const gerarMensagemWhatsApp = (resumo: { subtotal: number; desconto: number; total: number; cupom: string | null }) => {
     let mensagem = `*NOVO PEDIDO - PIZZARIA PORTEIRA*%0A%0A`
     mensagem += `*Cliente:* ${dadosCliente.nome}%0A`
     mensagem += `*Telefone:* ${dadosCliente.telefone}%0A`
@@ -89,42 +115,65 @@ export default function Pedidos() {
       mensagem += `*Complemento:* ${dadosCliente.complemento}%0A`
     }
     mensagem += `%0A*ITENS DO PEDIDO:*%0A`
-    
+
     itens.forEach((item, index) => {
       mensagem += `${index + 1}. ${item.quantidade}x ${item.nome} - R$ ${(item.preco * item.quantidade).toFixed(2)}%0A`
       if (item.observacoes) {
         mensagem += `   Obs: ${item.observacoes}%0A`
       }
     })
-    
-    mensagem += `%0A*TOTAL: R$ ${total.toFixed(2)}*%0A%0A`
-    
+
+    mensagem += `%0A*Subtotal: R$ ${resumo.subtotal.toFixed(2)}*%0A`
+    if (resumo.cupom) {
+      mensagem += `*Cupom ${resumo.cupom}: -R$ ${resumo.desconto.toFixed(2)} (10% OFF primeira compra)*%0A`
+    }
+    mensagem += `*TOTAL: R$ ${resumo.total.toFixed(2)}*%0A%0A`
+
     if (dadosCliente.observacoes) {
       mensagem += `*Observações do pedido:*%0A${dadosCliente.observacoes}%0A%0A`
     }
-    
+
     mensagem += `Pedido realizado via Site Pizzaria Porteira`
-    
+
     return mensagem
   }
 
-  // URL do WhatsApp
-  const whatsappUrl = `https://wa.me/5511999999999?text=${gerarMensagemWhatsApp()}`
-
-  // Registra o pedido no backend (se disponível) e então abre o WhatsApp para confirmação
+  // Registra o pedido no backend (se disponível) e então abre o WhatsApp para confirmação.
+  // O desconto do cupom só é considerado "de verdade" aplicado quando o backend confirma —
+  // se o backend estiver fora do ar ou recusar o cupom, o pedido segue sem desconto.
   const handleFinalizarPedido = async () => {
     setEnviando(true)
+
+    let resumoFinal: { subtotal: number; desconto: number; total: number; cupom: string | null } = {
+      subtotal: total,
+      desconto: 0,
+      total,
+      cupom: null,
+    }
+
     try {
-      await criarPedido({
+      const resultado = await criarPedido({
         nome: dadosCliente.nome,
         telefone: dadosCliente.telefone,
         endereco: dadosCliente.endereco,
         complemento: dadosCliente.complemento,
         observacoes: dadosCliente.observacoes,
-        itens
+        itens,
+        cupom: cupomDesbloqueadoPeloValor ? CUPOM_PRIMEIRA_COMPRA : undefined,
       })
+
+      if (resultado) {
+        resumoFinal = {
+          subtotal: resultado.subtotal,
+          desconto: resultado.desconto,
+          total: resultado.total,
+          cupom: resultado.cupom,
+        }
+      }
     } finally {
       setEnviando(false)
+      marcarPedidoRealizado()
+      const whatsappUrl = `https://wa.me/5511999999999?text=${gerarMensagemWhatsApp(resumoFinal)}`
       window.open(whatsappUrl, '_blank', 'noopener,noreferrer')
     }
   }
@@ -132,545 +181,258 @@ export default function Pedidos() {
   return (
     <>
       <Navbar showBackButton={true} backTo="/cardapio" />
-      <PromocaoDiaToast />
-      <div style={{
-      minHeight: '100vh',
-      background: 'linear-gradient(135deg, #2D1B00 0%, #3A240F 30%, #4A2F15 60%, #5A3E2B 100%)',
-      color: 'white',
-      fontFamily: "'Montserrat', sans-serif",
-      padding: '20px'
-    }}>
-      
-      {/* CABEÇALHO */}
-      <header style={{
-        textAlign: 'center',
-        marginBottom: '3rem',
-        paddingTop: '20px'
-      }}>
-        <h1 style={{
-          color: '#FFD700',
-          fontSize: '2.8rem',
-          marginBottom: '0.5rem'
-        }}>
-          {etapa === 'carrinho' ? '🛒 Seu Carrinho' : '📍 Dados de Entrega'}
-        </h1>
-        <div style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          gap: '20px',
-          marginTop: '1rem'
-        }}>
-          <div style={{
-            padding: '8px 20px',
-            background: etapa === 'carrinho' ? '#FFD700' : 'rgba(255, 215, 0, 0.2)',
-            color: etapa === 'carrinho' ? '#2D1B00' : '#FFD700',
-            borderRadius: '20px',
-            fontWeight: 'bold'
-          }}>
-            1. Carrinho
-          </div>
-          <div style={{ fontSize: '1.5rem' }}>→</div>
-          <div style={{
-            padding: '8px 20px',
-            background: etapa === 'entrega' ? '#FFD700' : 'rgba(255, 215, 0, 0.2)',
-            color: etapa === 'entrega' ? '#2D1B00' : '#FFD700',
-            borderRadius: '20px',
-            fontWeight: 'bold'
-          }}>
-            2. Entrega
-          </div>
-        </div>
-      </header>
+      <div className="pedido-page">
 
-      {/* CONTEÚDO */}
-      <div style={{
-        display: 'flex',
-        flexDirection: 'column',
-        maxWidth: '1000px',
-        margin: '0 auto',
-        gap: '2rem'
-      }}>
-        
-        {/* ETAPA 1: CARRINHO */}
-        {etapa === 'carrinho' && (
-          <>
-            <div style={{
-              background: 'rgba(255, 255, 255, 0.05)',
-              borderRadius: '20px',
-              padding: '2rem',
-              border: '2px solid rgba(255, 215, 0, 0.2)'
-            }}>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '1.5rem'
-              }}>
-                <h2 style={{ color: '#FFD700', fontSize: '1.8rem' }}>
-                  Itens no Carrinho ({quantidadeTotal})
-                </h2>
-                <button
-                  onClick={limparCarrinho}
-                  style={{
-                    background: 'rgba(255, 68, 68, 0.2)',
-                    color: '#FF8888',
-                    border: '1px solid rgba(255, 68, 68, 0.4)',
-                    padding: '8px 16px',
-                    borderRadius: '8px',
-                    fontSize: '0.9rem',
-                    cursor: 'pointer'
-                  }}
-                >
-                  🗑️ Limpar Tudo
+        {/* CABEÇALHO */}
+        <header className="pedido-cabecalho">
+          <h1 className="pedido-cabecalho__titulo">
+            {etapa === 'carrinho' ? '🛒 Seu Carrinho' : '📍 Dados de Entrega'}
+          </h1>
+          <div className="pedido-cabecalho__etapas">
+            <div className={`pedido-etapa-badge${etapa === 'carrinho' ? ' pedido-etapa-badge--ativa' : ''}`}>
+              1. Carrinho
+            </div>
+            <div className="pedido-cabecalho__seta">→</div>
+            <div className={`pedido-etapa-badge${etapa === 'entrega' ? ' pedido-etapa-badge--ativa' : ''}`}>
+              2. Entrega
+            </div>
+          </div>
+        </header>
+
+        {/* CONTEÚDO */}
+        <div className="pedido-conteudo">
+
+          {/* ETAPA 1: CARRINHO */}
+          {etapa === 'carrinho' && (
+            <>
+              <div className="pedido-card">
+                <div className="pedido-card__topo">
+                  <h2 className="pedido-card__titulo">
+                    Itens no Carrinho ({quantidadeTotal})
+                  </h2>
+                  <button onClick={handleLimparCarrinho} className="pedido-botao-limpar">
+                    🗑️ Limpar Tudo
+                  </button>
+                </div>
+
+                {/* LISTA DE ITENS */}
+                <div className="pedido-itens-lista">
+                  {itens.map((item) => (
+                    <div key={item.id} className="pedido-item">
+                      <div className="pedido-item__info">
+                        <div className="pedido-item__cabecalho">
+                          <h3 className="pedido-item__nome">{item.nome}</h3>
+                          <span className="pedido-item__preco">
+                            R$ {(item.preco * item.quantidade).toFixed(2).replace('.', ',')}
+                          </span>
+                        </div>
+                        <p className="pedido-item__descricao">{item.descricao}</p>
+                        {item.observacoes && (
+                          <p className="pedido-item__observacao">
+                            <strong>Obs:</strong> {item.observacoes}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* CONTROLES DE QUANTIDADE */}
+                      <div className="pedido-item__controles">
+                        <div className="pedido-item__quantidade-grupo">
+                          <button
+                            onClick={() => handleAtualizarQuantidade(item, item.quantidade - 1)}
+                            className="pedido-item__botao-qtd"
+                          >
+                            -
+                          </button>
+
+                          <span className="pedido-item__quantidade-valor">{item.quantidade}</span>
+
+                          <button
+                            onClick={() => handleAtualizarQuantidade(item, item.quantidade + 1)}
+                            className="pedido-item__botao-qtd"
+                          >
+                            +
+                          </button>
+                        </div>
+
+                        <button onClick={() => handleRemoverItem(item)} className="pedido-item__botao-remover">
+                          Remover
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* CUPOM DE PRIMEIRA COMPRA */}
+                {cupomDesbloqueadoPeloValor && (
+                  <div className="pedido-cupom-banner">
+                    <span className="pedido-cupom-banner__icone">🎁</span>
+                    <span>
+                      Cupom <strong>{CUPOM_PRIMEIRA_COMPRA}</strong> desbloqueado: {(CUPOM_PERCENTUAL * 100).toFixed(0)}% OFF na primeira compra.
+                      Informe seu telefone na próxima etapa para aplicar.
+                    </span>
+                  </div>
+                )}
+
+                {/* RESUMO */}
+                <div className="pedido-resumo">
+                  <div className="pedido-resumo__linha">
+                    <span>Subtotal ({quantidadeTotal} itens):</span>
+                    <span>R$ {total.toFixed(2).replace('.', ',')}</span>
+                  </div>
+                  <div className="pedido-resumo__linha">
+                    <span>Taxa de entrega:</span>
+                    <span>Grátis</span>
+                  </div>
+                  <div className="pedido-resumo__total">
+                    <span>Total:</span>
+                    <span>R$ {total.toFixed(2).replace('.', ',')}</span>
+                  </div>
+                </div>
+
+                <button onClick={() => setEtapa('entrega')} className="pedido-botao-continuar">
+                  Continuar para Entrega →
                 </button>
               </div>
 
-              {/* LISTA DE ITENS */}
-              <div style={{ marginBottom: '2rem' }}>
-                {itens.map((item) => (
-                  <div 
-                    key={item.id}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '1.2rem',
-                      background: 'rgba(255, 255, 255, 0.03)',
-                      borderRadius: '12px',
-                      marginBottom: '1rem',
-                      border: '1px solid rgba(255, 255, 255, 0.05)'
-                    }}
-                  >
-                    <div style={{ flex: 1 }}>
-                      <div style={{ 
-                        display: 'flex', 
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        marginBottom: '0.5rem'
-                      }}>
-                        <h3 style={{ 
-                          color: '#FFD700', 
-                          margin: 0, 
-                          fontSize: '1.3rem'
-                        }}>
-                          {item.nome}
-                        </h3>
-                        <span style={{
-                          color: '#FF8C42',
-                          fontSize: '1.4rem',
-                          fontWeight: 'bold'
-                        }}>
-                          R$ {(item.preco * item.quantidade).toFixed(2).replace('.', ',')}
-                        </span>
-                      </div>
-                      <p style={{ color: '#aaa', margin: '0 0 0.5rem 0', fontSize: '0.9rem' }}>
-                        {item.descricao}
-                      </p>
-                      {item.observacoes && (
-                        <p style={{ 
-                          color: '#FFA500', 
-                          margin: 0, 
-                          fontSize: '0.85rem',
-                          fontStyle: 'italic'
-                        }}>
-                          <strong>Obs:</strong> {item.observacoes}
-                        </p>
-                      )}
-                    </div>
+              <Link to="/cardapio" className="pedido-link-voltar-cardapio">
+                ← Adicionar mais itens ao carrinho
+              </Link>
+            </>
+          )}
 
-                    {/* CONTROLES DE QUANTIDADE */}
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '15px',
-                      marginLeft: '1rem'
-                    }}>
-                      <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '10px',
-                        background: 'rgba(0, 0, 0, 0.3)',
-                        padding: '5px 15px',
-                        borderRadius: '20px'
-                      }}>
-                        <button
-                          onClick={() => atualizarQuantidade(item.id, item.quantidade - 1)}
-                          style={{
-                            background: 'rgba(255, 255, 255, 0.1)',
-                            color: 'white',
-                            border: 'none',
-                            width: '28px',
-                            height: '28px',
-                            borderRadius: '50%',
-                            cursor: 'pointer',
-                            fontSize: '1.2rem',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                          }}
-                        >
-                          -
-                        </button>
-                        
-                        <span style={{ 
-                          fontSize: '1.2rem', 
-                          fontWeight: 'bold',
-                          minWidth: '30px',
-                          textAlign: 'center'
-                        }}>
-                          {item.quantidade}
-                        </span>
+          {/* ETAPA 2: ENTREGA */}
+          {etapa === 'entrega' && (
+            <div className="pedido-card">
+              <h2 className="pedido-card__titulo">📍 Dados para Entrega</h2>
 
-                        <button
-                          onClick={() => atualizarQuantidade(item.id, item.quantidade + 1)}
-                          style={{
-                            background: 'rgba(255, 255, 255, 0.1)',
-                            color: 'white',
-                            border: 'none',
-                            width: '28px',
-                            height: '28px',
-                            borderRadius: '50%',
-                            cursor: 'pointer',
-                            fontSize: '1.2rem',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                          }}
-                        >
-                          +
-                        </button>
-                      </div>
+              <form className="pedido-form">
+                <div className="pedido-campo">
+                  <label className="pedido-label">Nome Completo *</label>
+                  <input
+                    type="text"
+                    required
+                    value={dadosCliente.nome}
+                    onChange={(e) => setDadosCliente({...dadosCliente, nome: e.target.value})}
+                    className="pedido-input"
+                    placeholder="Digite seu nome completo"
+                  />
+                </div>
 
-                      <button
-                        onClick={() => removerItem(item.id)}
-                        style={{
-                          background: 'rgba(255, 68, 68, 0.1)',
-                          color: '#FF8888',
-                          border: '1px solid rgba(255, 68, 68, 0.3)',
-                          padding: '8px 15px',
-                          borderRadius: '8px',
-                          cursor: 'pointer',
-                          fontSize: '0.9rem'
-                        }}
-                      >
-                        Remover
-                      </button>
-                    </div>
+                <div className="pedido-campo">
+                  <label className="pedido-label">Telefone (WhatsApp) *</label>
+                  <input
+                    type="tel"
+                    required
+                    value={dadosCliente.telefone}
+                    onChange={(e) => setDadosCliente({...dadosCliente, telefone: e.target.value})}
+                    className="pedido-input"
+                    placeholder="(11) 99999-9999"
+                  />
+                  {cupomDesbloqueadoPeloValor && telefoneDigits.length >= 10 && (
+                    <p
+                      className={`pedido-cupom-feedback${cupomElegivel === false ? ' pedido-cupom-feedback--indisponivel' : ''}`}
+                    >
+                      {cupomElegivel === null && 'Verificando cupom BEMVINDO10...'}
+                      {cupomElegivel === true && `✅ Cupom BEMVINDO10 aplicado: -R$ ${descontoPrevisto.toFixed(2).replace('.', ',')} (10% OFF)`}
+                      {cupomElegivel === false && '⚠️ O cupom BEMVINDO10 é válido só na primeira compra — este telefone já fez um pedido antes.'}
+                    </p>
+                  )}
+                </div>
+
+                <div className="pedido-campo">
+                  <label className="pedido-label">Endereço Completo *</label>
+                  <input
+                    type="text"
+                    required
+                    value={dadosCliente.endereco}
+                    onChange={(e) => setDadosCliente({...dadosCliente, endereco: e.target.value})}
+                    className="pedido-input"
+                    placeholder="Rua, número, bairro"
+                  />
+                </div>
+
+                <div className="pedido-campo">
+                  <label className="pedido-label">Complemento</label>
+                  <input
+                    type="text"
+                    value={dadosCliente.complemento}
+                    onChange={(e) => setDadosCliente({...dadosCliente, complemento: e.target.value})}
+                    className="pedido-input"
+                    placeholder="Apto, bloco, ponto de referência"
+                  />
+                </div>
+
+                <div className="pedido-campo pedido-campo--ultimo">
+                  <label className="pedido-label">Observações do Pedido</label>
+                  <textarea
+                    value={dadosCliente.observacoes}
+                    onChange={(e) => setDadosCliente({...dadosCliente, observacoes: e.target.value})}
+                    className="pedido-input pedido-textarea"
+                    placeholder="Sem cebola, maionese à parte, trocar batata por salada..."
+                  />
+                </div>
+              </form>
+
+              {/* RESUMO FINAL */}
+              <div className="pedido-resumo">
+                <h3 className="pedido-resumo__titulo">Resumo do Pedido</h3>
+                <div className="pedido-resumo__itens">
+                  <strong>Itens:</strong>
+                  <ul className="pedido-resumo__lista">
+                    {itens.map((item, index) => (
+                      <li key={index} className="pedido-resumo__lista-item">
+                        {item.quantidade}x {item.nome} - R$ {(item.preco * item.quantidade).toFixed(2)}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="pedido-resumo__linha pedido-resumo__linha--compacta">
+                  <span>Subtotal:</span>
+                  <span>R$ {total.toFixed(2).replace('.', ',')}</span>
+                </div>
+                {cupomConfirmado && (
+                  <div className="pedido-resumo__linha pedido-resumo__linha--compacta pedido-resumo__linha--desconto">
+                    <span>Cupom {CUPOM_PRIMEIRA_COMPRA} (10% OFF):</span>
+                    <span>-R$ {descontoPrevisto.toFixed(2).replace('.', ',')}</span>
                   </div>
-                ))}
-              </div>
-
-              {/* RESUMO */}
-              <div style={{
-                padding: '1.5rem',
-                background: 'rgba(0, 0, 0, 0.2)',
-                borderRadius: '12px',
-                marginBottom: '1.5rem'
-              }}>
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  marginBottom: '0.8rem'
-                }}>
-                  <span>Subtotal ({quantidadeTotal} itens):</span>
-                  <span>R$ {total.toFixed(2).replace('.', ',')}</span>
-                </div>
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  marginBottom: '0.8rem'
-                }}>
-                  <span>Taxa de entrega:</span>
-                  <span>Grátis</span>
-                </div>
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  fontSize: '1.3rem',
-                  fontWeight: 'bold',
-                  color: '#FFD700',
-                  paddingTop: '0.8rem',
-                  borderTop: '1px solid rgba(255, 255, 255, 0.1)'
-                }}>
-                  <span>Total:</span>
-                  <span>R$ {total.toFixed(2).replace('.', ',')}</span>
+                )}
+                <div className="pedido-resumo__total">
+                  <span>Total a pagar:</span>
+                  <span>R$ {totalComDesconto.toFixed(2).replace('.', ',')}</span>
                 </div>
               </div>
 
-              <button
-                onClick={() => setEtapa('entrega')}
-                style={{
-                  background: 'linear-gradient(135deg, #FFD700, #FFA500)',
-                  color: '#2D1B00',
-                  border: 'none',
-                  padding: '1rem 2rem',
-                  borderRadius: '12px',
-                  fontSize: '1.1rem',
-                  fontWeight: 'bold',
-                  cursor: 'pointer',
-                  width: '100%',
-                  transition: 'all 0.3s ease'
-                }}
-              >
-                Continuar para Entrega →
-              </button>
+              {/* BOTÕES DE AÇÃO */}
+              <div className="pedido-acoes">
+                <button onClick={() => setEtapa('carrinho')} className="pedido-botao-voltar-carrinho">
+                  ← Voltar ao Carrinho
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleFinalizarPedido}
+                  disabled={enviando}
+                  className="pedido-botao-finalizar"
+                >
+                  {enviando ? 'Enviando...' : '💬 Finalizar Pedido no WhatsApp'}
+                </button>
+              </div>
+
+              <p className="pedido-aviso-whatsapp">
+                ⚠️ Ao clicar em "Finalizar Pedido", você será redirecionado para o WhatsApp
+                para confirmar seu pedido e combinar a forma de pagamento.
+              </p>
             </div>
+          )}
+        </div>
 
-            <Link
-              to="/cardapio"
-              style={{
-                display: 'block',
-                textAlign: 'center',
-                color: '#FFD700',
-                textDecoration: 'none',
-                fontSize: '1.1rem',
-                padding: '1rem'
-              }}
-            >
-              ← Adicionar mais itens ao carrinho
-            </Link>
-          </>
-        )}
-
-        {/* ETAPA 2: ENTREGA */}
-        {etapa === 'entrega' && (
-          <div style={{
-            background: 'rgba(255, 255, 255, 0.05)',
-            borderRadius: '20px',
-            padding: '2rem',
-            border: '2px solid rgba(255, 215, 0, 0.2)'
-          }}>
-            <h2 style={{ color: '#FFD700', fontSize: '1.8rem', marginBottom: '1.5rem' }}>
-              📍 Dados para Entrega
-            </h2>
-
-            <form style={{ marginBottom: '2rem' }}>
-              <div style={{ marginBottom: '1.2rem' }}>
-                <label style={{ display: 'block', marginBottom: '0.5rem', color: '#FFD700' }}>
-                  Nome Completo *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={dadosCliente.nome}
-                  onChange={(e) => setDadosCliente({...dadosCliente, nome: e.target.value})}
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    background: 'rgba(0, 0, 0, 0.3)',
-                    border: '1px solid rgba(255, 215, 0, 0.3)',
-                    borderRadius: '8px',
-                    color: 'white',
-                    fontSize: '1rem'
-                  }}
-                  placeholder="Digite seu nome completo"
-                />
-              </div>
-
-              <div style={{ marginBottom: '1.2rem' }}>
-                <label style={{ display: 'block', marginBottom: '0.5rem', color: '#FFD700' }}>
-                  Telefone (WhatsApp) *
-                </label>
-                <input
-                  type="tel"
-                  required
-                  value={dadosCliente.telefone}
-                  onChange={(e) => setDadosCliente({...dadosCliente, telefone: e.target.value})}
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    background: 'rgba(0, 0, 0, 0.3)',
-                    border: '1px solid rgba(255, 215, 0, 0.3)',
-                    borderRadius: '8px',
-                    color: 'white',
-                    fontSize: '1rem'
-                  }}
-                  placeholder="(11) 99999-9999"
-                />
-              </div>
-
-              <div style={{ marginBottom: '1.2rem' }}>
-                <label style={{ display: 'block', marginBottom: '0.5rem', color: '#FFD700' }}>
-                  Endereço Completo *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={dadosCliente.endereco}
-                  onChange={(e) => setDadosCliente({...dadosCliente, endereco: e.target.value})}
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    background: 'rgba(0, 0, 0, 0.3)',
-                    border: '1px solid rgba(255, 215, 0, 0.3)',
-                    borderRadius: '8px',
-                    color: 'white',
-                    fontSize: '1rem'
-                  }}
-                  placeholder="Rua, número, bairro"
-                />
-              </div>
-
-              <div style={{ marginBottom: '1.2rem' }}>
-                <label style={{ display: 'block', marginBottom: '0.5rem', color: '#FFD700' }}>
-                  Complemento
-                </label>
-                <input
-                  type="text"
-                  value={dadosCliente.complemento}
-                  onChange={(e) => setDadosCliente({...dadosCliente, complemento: e.target.value})}
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    background: 'rgba(0, 0, 0, 0.3)',
-                    border: '1px solid rgba(255, 215, 0, 0.3)',
-                    borderRadius: '8px',
-                    color: 'white',
-                    fontSize: '1rem'
-                  }}
-                  placeholder="Apto, bloco, ponto de referência"
-                />
-              </div>
-
-              <div style={{ marginBottom: '1.5rem' }}>
-                <label style={{ display: 'block', marginBottom: '0.5rem', color: '#FFD700' }}>
-                  Observações do Pedido
-                </label>
-                <textarea
-                  value={dadosCliente.observacoes}
-                  onChange={(e) => setDadosCliente({...dadosCliente, observacoes: e.target.value})}
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    background: 'rgba(0, 0, 0, 0.3)',
-                    border: '1px solid rgba(255, 215, 0, 0.3)',
-                    borderRadius: '8px',
-                    color: 'white',
-                    fontSize: '1rem',
-                    minHeight: '100px',
-                    resize: 'vertical'
-                  }}
-                  placeholder="Sem cebola, maionese à parte, trocar batata por salada..."
-                />
-              </div>
-            </form>
-
-            {/* RESUMO FINAL */}
-            <div style={{
-              padding: '1.5rem',
-              background: 'rgba(0, 0, 0, 0.2)',
-              borderRadius: '12px',
-              marginBottom: '1.5rem'
-            }}>
-              <h3 style={{ color: '#FFD700', marginBottom: '1rem' }}>
-                Resumo do Pedido
-              </h3>
-              <div style={{ marginBottom: '0.8rem' }}>
-                <strong>Itens:</strong>
-                <ul style={{ margin: '0.5rem 0 0 1rem', padding: 0 }}>
-                  {itens.map((item, index) => (
-                    <li key={index} style={{ marginBottom: '0.3rem' }}>
-                      {item.quantidade}x {item.nome} - R$ {(item.preco * item.quantidade).toFixed(2)}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                fontSize: '1.3rem',
-                fontWeight: 'bold',
-                color: '#FFD700',
-                paddingTop: '0.8rem',
-                borderTop: '1px solid rgba(255, 255, 255, 0.1)'
-              }}>
-                <span>Total a pagar:</span>
-                <span>R$ {total.toFixed(2).replace('.', ',')}</span>
-              </div>
-            </div>
-
-            {/* BOTÕES DE AÇÃO */}
-            <div style={{
-              display: 'flex',
-              gap: '1rem',
-              flexWrap: 'wrap'
-            }}>
-              <button
-                onClick={() => setEtapa('carrinho')}
-                style={{
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  color: '#FFD700',
-                  border: '1px solid rgba(255, 215, 0, 0.3)',
-                  padding: '1rem 2rem',
-                  borderRadius: '12px',
-                  fontSize: '1rem',
-                  fontWeight: 'bold',
-                  cursor: 'pointer',
-                  flex: 1,
-                  minWidth: '200px'
-                }}
-              >
-                ← Voltar ao Carrinho
-              </button>
-
-              <button
-                type="button"
-                onClick={handleFinalizarPedido}
-                disabled={enviando}
-                style={{
-                  background: 'linear-gradient(135deg, #25D366, #128C7E)',
-                  color: 'white',
-                  border: 'none',
-                  padding: '1rem 2rem',
-                  borderRadius: '12px',
-                  fontSize: '1.1rem',
-                  fontWeight: 'bold',
-                  cursor: enviando ? 'not-allowed' : 'pointer',
-                  opacity: enviando ? 0.7 : 1,
-                  textAlign: 'center',
-                  flex: 2,
-                  minWidth: '200px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '10px'
-                }}
-              >
-                {enviando ? 'Enviando...' : '💬 Finalizar Pedido no WhatsApp'}
-              </button>
-            </div>
-
-            <p style={{
-              textAlign: 'center',
-              color: '#aaa',
-              fontSize: '0.9rem',
-              marginTop: '1.5rem',
-              padding: '1rem',
-              background: 'rgba(0, 0, 0, 0.2)',
-              borderRadius: '8px'
-            }}>
-              ⚠️ Ao clicar em "Finalizar Pedido", você será redirecionado para o WhatsApp 
-              para confirmar seu pedido e combinar a forma de pagamento.
-            </p>
-          </div>
-        )}
-      </div>
-
-      {/* RODAPÉ */}
-      <footer style={{
-        textAlign: 'center',
-        marginTop: '3rem',
-        padding: '2rem',
-        color: '#888',
-        fontSize: '0.9rem',
-        borderTop: '1px solid rgba(255, 215, 0, 0.2)'
-      }}>
-        <p>© 2024 Pizzaria Porteira - Sistema de Pedidos</p>
-        <p style={{ marginTop: '0.5rem' }}>
-          Dúvidas? WhatsApp: (11) 99999-9999
-        </p>
-      </footer>
+        {/* RODAPÉ */}
+        <footer className="pedido-rodape">
+          <p>© 2024 Pizzaria Porteira - Sistema de Pedidos</p>
+          <p className="pedido-rodape__texto--espacado">
+            Dúvidas? WhatsApp: (11) 99999-9999
+          </p>
+        </footer>
       </div>
     </>
   )

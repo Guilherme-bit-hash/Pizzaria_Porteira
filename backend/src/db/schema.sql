@@ -11,9 +11,60 @@ CREATE TABLE IF NOT EXISTS pedidos (
   complemento VARCHAR(150) NULL,
   observacoes TEXT NULL,
   itens JSON NOT NULL,
+  subtotal DECIMAL(10, 2) NOT NULL DEFAULT 0,
+  desconto DECIMAL(10, 2) NOT NULL DEFAULT 0,
+  cupom VARCHAR(50) NULL,
   total DECIMAL(10, 2) NOT NULL,
   status ENUM('recebido', 'preparando', 'saiu_para_entrega', 'entregue', 'cancelado')
     NOT NULL DEFAULT 'recebido',
   criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   atualizado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS promocoes (
+  dia_semana TINYINT PRIMARY KEY,
+  nome VARCHAR(150) NOT NULL,
+  descricao VARCHAR(255) NOT NULL,
+  preco DECIMAL(10, 2) NOT NULL DEFAULT 0,
+  destaque BOOLEAN NOT NULL DEFAULT TRUE,
+  cor VARCHAR(20) NOT NULL DEFAULT '#FFD700',
+  whatsapp_message TEXT NULL,
+  email_subject VARCHAR(255) NULL,
+  email_body TEXT NULL,
+  atualizado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT chk_promocoes_dia_semana CHECK (dia_semana BETWEEN 0 AND 6)
+);
+
+-- Semente com as promoções padrão de cada dia da semana (0 = domingo ... 6 = sábado).
+-- INSERT IGNORE preserva edições já feitas pelo painel admin em migrações futuras.
+INSERT IGNORE INTO promocoes
+  (dia_semana, nome, descricao, preco, destaque, cor, whatsapp_message, email_subject, email_body)
+VALUES
+  (0, '🍕 Domingo em Família', '2 Pizzas Grandes + Refri 2L por R$ 89,90', 89.90, TRUE, '#FF6B35',
+   '🍕 PROMOÇÃO DOMINGO EM FAMÍLIA! 👨‍👩‍👧‍👦\n\n2 Pizzas Grandes + Refri 2L por R$ 89,90\n\nVenha aproveitar esta oferta especial! 😋\n\nPizzaria Porteira\n📞 (11) 99999-9999',
+   'Promoção Domingo em Família - Pizzaria Porteira 🍕',
+   'Olá! Este domingo aproveite nossa promoção especial:\n\n2 Pizzas Grandes + Refri 2L por R$ 89,90\n\nIdeall para reunir a família! Aproveite!'),
+  (1, '🎯 Segunda da Pizza', 'Todas as pizzas com 20% OFF', 0, TRUE, '#4A90E2',
+   '🍕 SEGUNDA DA PIZZA! 🎯\n\n20% OFF em TODAS as pizzas\n\nNão perca! Aproveite os melhores sabores com desconto especial 🔥\n\nPizzaria Porteira\n📞 (11) 99999-9999',
+   'Segunda da Pizza - 20% OFF em Todas as Pizzas 🍕',
+   'Ótima notícia! Toda segunda-feira temos:\n\n20% OFF em TODAS as pizzas\n\nAproveite para experimentar nossos sabores especiais com desconto!'),
+  (2, '🍔 Terça do Hambúrguer', 'Hambúrguer + Batata + Refri por R$ 29,90', 29.90, TRUE, '#8B4513',
+   '🍔 TERÇA DO HAMBÚRGUER! 😋\n\nHambúrguer + Batata + Refri por R$ 29,90\n\nNossos hamburgueres são irresistíveis! Aproveite este preço especial 🔥\n\nPizzaria Porteira\n📞 (11) 99999-9999',
+   'Terça do Hambúrguer - Combo Especial 🍔',
+   'Toda terça-feira temos a Terça do Hambúrguer:\n\nHambúrguer + Batata + Refri por R$ 29,90\n\nNão deixe de experimentar!'),
+  (3, '🎪 Quarta do Rodízio', 'Rodízio de Pizza por R$ 39,90', 39.90, TRUE, '#9C27B0',
+   '🎪 QUARTA DO RODÍZIO! 🍕\n\nRodízio de Pizza por R$ 39,90\n\nVenha experimentar diversos sabores! É festa garantida! 🎉\n\nPizzaria Porteira\n📞 (11) 99999-9999',
+   'Quarta do Rodízio - Rodízio de Pizza 🎪',
+   'Toda quarta-feira temos a promoção do Rodízio de Pizza:\n\nRodízio de Pizza por R$ 39,90\n\nVenha com a família e aproveite!'),
+  (4, '🥤 Quinta da Bebida', 'Refrigerante 2L por R$ 8,90', 8.90, TRUE, '#2196F3',
+   '🥤 QUINTA DA BEBIDA! 🍹\n\nRefrigerante 2L por R$ 8,90\n\nAcompanhe sua pizza ou hambúrguer com nossas bebidas especiais! 😋\n\nPizzaria Porteira\n📞 (11) 99999-9999',
+   'Quinta da Bebida - Refrigerante com Desconto 🥤',
+   'Toda quinta-feira aproveite nossas bebidas em promoção:\n\nRefrigerante 2L por R$ 8,90\n\nPerfecto para acompanhar seus pedidos!'),
+  (5, '🎉 Sexta Feliz', 'Combo Casal: Pizza + 2 Refris por R$ 59,90', 59.90, TRUE, '#FF9800',
+   '🎉 SEXTA FELIZ! 💑\n\nCombo Casal: Pizza + 2 Refris por R$ 59,90\n\nBeijo na testa e aproveite nosso combo perfeito! 😘\n\nPizzaria Porteira\n📞 (11) 99999-9999',
+   'Sexta Feliz - Combo Casal Especial 🎉',
+   'Toda sexta-feira temos a Sexta Feliz:\n\nCombo Casal: Pizza + 2 Refris por R$ 59,90\n\nPerfecto para começar o fim de semana com a pessoa especial!'),
+  (6, '🌟 Sábado Especial', 'Promoção surpresa! Pergunte no WhatsApp', 0, TRUE, '#FFD700',
+   '🌟 SÁBADO ESPECIAL! 🎊\n\nPromoção SURPRESA este sábado! 🎁\n\nEntre em contato conosco e descubra a oferta exclusiva de hoje! 🔥\n\nPizzaria Porteira\n📞 (11) 99999-9999',
+   'Sábado Especial - Promoção Surpresa 🌟',
+   'Este sábado temos uma promoção SURPRESA para você!\n\nEntre em contato conosco pelo WhatsApp para descobrir a oferta exclusiva!');

@@ -1,0 +1,75 @@
+/* src/styles/home.css */
+.home {
+  height: 100vh;
+  background-image: url('/fundo.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.home__overlay {
+  position: absolute;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.45);
+}
+
+.home__conteudo {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  padding: 2rem;
+  width: 100%;
+  max-width: 800px;
+}
+
+.home__logo {
+  width: clamp(200px, 40vw, 400px);
+  height: clamp(200px, 40vw, 400px);
+  object-fit: cover;
+  border-radius: 50%;
+  margin: 0 auto 2rem;
+  box-shadow: 0 20px 40px rgba(255, 238, 88, 0.6);
+  display: block;
+  animation: home-float 6s ease-in-out infinite;
+}
+
+@keyframes home-float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-15px); }
+}
+
+.home__botao {
+  background-color: #5a3e2b;
+  color: #ffffff;
+  padding: 1.2rem 3rem;
+  border-radius: 50px;
+  text-decoration: none;
+  font-size: 1.3rem;
+  font-weight: bold;
+  letter-spacing: 1px;
+  box-shadow: 0 10px 30px rgba(255, 215, 0, 0.6);
+  transition: all 0.3s ease;
+  display: inline-block;
+  margin-top: 1rem;
+}
+
+.home__botao:hover {
+  background-color: #6d4c3a;
+  box-shadow: 0 20px 40px rgba(255, 215, 0, 0.8);
+}
+
+.home__dica {
+  margin-top: 2rem;
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.8);
+  animation: home-pulse 2s infinite;
+}
+
+@keyframes home-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}

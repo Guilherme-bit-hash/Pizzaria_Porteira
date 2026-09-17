@@ -126,7 +126,7 @@ Se quiser promoções especiais em datas:
 
 ## 🧪 Teste Agora
 
-1. Abra http://localhost:5174/cardapio
+1. Abra http://localhost:5273/cardapio
 2. Veja o toast da promoção aparecer
 3. Clique em "WhatsApp" para testar
 4. Clique em "Email" e digite seu email

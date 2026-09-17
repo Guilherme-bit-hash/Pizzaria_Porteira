@@ -1,12 +1,17 @@
 import { useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 import { usePromocaoDoDia } from '../hooks/usePromocaoDoDia'
 import { showToast } from './Toast'
 
+// Renderizado uma única vez, globalmente, em App.tsx — assim aparece em
+// qualquer página do site (exceto no painel admin, onde não faz sentido).
 export default function PromocaoDiaToast() {
-  const { promocaoAtual, nomeDia } = usePromocaoDoDia()
+  const { promocaoAtual } = usePromocaoDoDia()
+  const location = useLocation()
+  const isAdmin = location.pathname.startsWith('/admin')
 
   useEffect(() => {
-    if (promocaoAtual) {
+    if (promocaoAtual && !isAdmin) {
       // Mostrar toast apenas uma vez por sessão
       const toastMostrado = sessionStorage.getItem('promocao-toast-mostrado')
       if (!toastMostrado) {
@@ -31,7 +36,7 @@ export default function PromocaoDiaToast() {
         return () => clearTimeout(timer)
       }
     }
-  }, [promocaoAtual])
+  }, [promocaoAtual, isAdmin])
 
   // Este componente não renderiza nada visualmente
   return null
