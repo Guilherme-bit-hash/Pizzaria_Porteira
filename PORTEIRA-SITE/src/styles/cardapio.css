@@ -201,6 +201,7 @@
   padding: clamp(0.8rem, 3vw, 1.2rem) clamp(1.5rem, 6vw, 3.5rem);
   font-size: clamp(1rem, 4vw, 1.3rem);
   font-weight: bold;
+  text-decoration: none;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -237,6 +238,14 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 1.5rem;
+}
+
+/* Dentro do card de "Promoções da Semana" a margem negativa do .cardapio-paginacao base
+   ficaria estranha (esse container já tem padding próprio) — reseta pra um espaçamento
+   normal acima da paginação. */
+.cardapio-semana .cardapio-paginacao {
+  margin: 2rem 0 0;
+  padding: 0;
 }
 
 .cardapio-semana__card {
@@ -338,12 +347,14 @@
 }
 
 .cardapio-semana__card-adicionar {
+  display: inline-block;
   background: rgba(255, 215, 0, 0.2);
   color: #FFD700;
   border: 1px solid rgba(255, 215, 0, 0.4);
   padding: 6px 15px;
   border-radius: 20px;
   font-size: 0.9rem;
+  text-decoration: none;
   cursor: pointer;
   transition: all 0.3s ease;
 }
@@ -388,6 +399,65 @@
   .cardapio-grid {
     grid-template-columns: 1fr;
     gap: 1.5rem;
+  }
+}
+
+/* ===== PAGINAÇÃO (usada nas abas do cardápio e na grade de promoções da semana) ===== */
+.cardapio-paginacao {
+  max-width: 1400px;
+  /* Margem negativa no topo "puxa" a paginação pra mais perto da grade acima, já que
+     .cardapio-grid já tem 4rem de padding-bottom próprio. Dentro de .cardapio-semana
+     (que não tem esse padding) essa regra é sobrescrita logo abaixo. */
+  margin: -1.5rem auto 3rem;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+}
+
+.cardapio-paginacao__botao {
+  background: rgba(255, 215, 0, 0.1);
+  color: #FFD700;
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  border-radius: 50px;
+  padding: 0.6rem 1.4rem;
+  font-weight: bold;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.cardapio-paginacao__botao:hover:not(:disabled) {
+  background: rgba(255, 215, 0, 0.2);
+  transform: scale(1.05);
+}
+
+/* Botão "Anterior"/"Próxima" desabilitado na primeira/última página */
+.cardapio-paginacao__botao:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.cardapio-paginacao__info {
+  color: #ccc;
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  .cardapio-paginacao {
+    gap: 0.8rem;
+  }
+
+  .cardapio-paginacao__botao {
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+  }
+
+  .cardapio-paginacao__info {
+    font-size: 0.85rem;
   }
 }
 

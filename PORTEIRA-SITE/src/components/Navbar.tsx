@@ -31,7 +31,12 @@ export default function Navbar({ logo = '/logo.jpeg', showBackButton = false, ba
         </div>
 
         {/* HAMBURGER MENU - MOBILE */}
-        <button onClick={toggleMenu} className="navbar-hamburger">
+        <button
+          onClick={toggleMenu}
+          className="navbar-hamburger"
+          aria-label={isMenuOpen ? 'Fechar menu' : 'Abrir menu'}
+          aria-expanded={isMenuOpen}
+        >
           {isMenuOpen ? '✕' : '☰'}
         </button>
       </header>

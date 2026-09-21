@@ -16,8 +16,11 @@ export default function PrimeiraCompraToast() {
     if (jaFezPedido()) return
     if (sessionStorage.getItem(SESSION_STORAGE_KEY)) return
 
+    // O desconto só é confirmado de fato no passo "Entrega" (depois de informar o telefone
+    // e o backend validar que é a primeira compra) — o texto abaixo não pode prometer que
+    // já foi aplicado, senão o cliente acha que o carrinho está errado.
     showToast({
-      message: `🎁 Primeira Compra!\nUse o cupom BEMVINDO10 e ganhe 10% OFF neste pedido (compras acima de R$ ${CUPOM_VALOR_MINIMO.toFixed(2).replace('.', ',')}). Aplicado automaticamente no carrinho!`,
+      message: `🎁 Primeira Compra!\nCupom BEMVINDO10: 10% OFF em compras acima de R$ ${CUPOM_VALOR_MINIMO.toFixed(2).replace('.', ',')}. Informe seu telefone na etapa de entrega para aplicar.`,
       type: 'promocao',
       emoji: '🎁',
       duration: 0,

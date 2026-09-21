@@ -1,5 +1,6 @@
 // src/components/WhatsAppFlutuante.tsx
 import '../styles/whatsappFlutuante.css'
+import { WHATSAPP_NUMBER } from '../config/whatsapp'
 
 export default function WhatsAppFlutuante() {
   const mensagemPadrao = encodeURIComponent(
@@ -8,7 +9,7 @@ export default function WhatsAppFlutuante() {
 
   return (
     <a
-      href={`https://wa.me/5511999999999?text=${mensagemPadrao}`}
+      href={`https://wa.me/${WHATSAPP_NUMBER}?text=${mensagemPadrao}`}
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Falar no WhatsApp"

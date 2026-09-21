@@ -1,6 +1,6 @@
 /* src/styles/home.css */
 .home {
-  height: 100vh;
+  min-height: 100vh;
   background-image: url('/fundo.png');
   background-size: cover;
   background-position: center;
@@ -9,6 +9,7 @@
   align-items: center;
   justify-content: center;
   position: relative;
+  padding: 2rem 0;
 }
 
 .home__overlay {
@@ -27,8 +28,8 @@
 }
 
 .home__logo {
-  width: clamp(200px, 40vw, 400px);
-  height: clamp(200px, 40vw, 400px);
+  width: clamp(160px, min(40vw, 32vh), 400px);
+  height: clamp(160px, min(40vw, 32vh), 400px);
   object-fit: cover;
   border-radius: 50%;
   margin: 0 auto 2rem;

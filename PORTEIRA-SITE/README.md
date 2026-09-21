@@ -28,11 +28,8 @@ Feito com **React + TypeScript + Vite**.
    cp .env.example .env
    ```
    - `VITE_API_URL`: URL da API do backend (padrão `http://localhost:3001/api`)
-3. Configure o número de WhatsApp da pizzaria e o Formspree (veja [CONFIG_EMAIL.md](./CONFIG_EMAIL.md)) — atualmente usam valores de exemplo em:
-   - `src/Pages/Pedido.tsx`
-   - `src/components/WhatsaapFlutuante.tsx`
-   - `src/components/Toast.tsx`
-   - `src/services/emailService.ts`
+   - `VITE_WHATSAPP_NUMBER`: número de WhatsApp da pizzaria, formato internacional sem símbolos (ex: `5511999999999`). Usado em `src/config/whatsapp.ts`, de onde é importado por todo o app.
+3. Configure o Formspree para o envio de promoções por email (veja [CONFIG_EMAIL.md](./CONFIG_EMAIL.md)) — atualmente usa um valor de exemplo em `src/services/emailService.ts` (`FORMSPREE_ID`).
 
 ## Rodando localmente
 
@@ -69,4 +66,4 @@ src/
 ## O que ainda falta / próximos passos
 
 - Pagamento online (hoje o pagamento é combinado manualmente pelo WhatsApp)
-- Configurar o número de WhatsApp e o Formspree reais da pizzaria (veja acima)
+- Configurar o `VITE_WHATSAPP_NUMBER` e o Formspree reais da pizzaria (veja acima)

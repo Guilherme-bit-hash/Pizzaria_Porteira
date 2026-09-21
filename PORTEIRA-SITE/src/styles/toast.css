@@ -77,6 +77,26 @@
   background: rgba(255, 255, 255, 0.3);
 }
 
+/* Formulário inline que substitui o prompt() nativo do navegador no botão "Email" do toast
+   de promoção — mesmo espaço do .toast__acoes, mas com um campo de email + Enviar/Cancelar. */
+.toast__form-email {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.toast__input-email {
+  flex: 1;
+  min-width: 140px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #2D1B00;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+}
+
 .toast__botao-fechar {
   background: none;
   border: none;

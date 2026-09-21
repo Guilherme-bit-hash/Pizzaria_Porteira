@@ -12,6 +12,7 @@ import {
   CUPOM_PERCENTUAL,
   CUPOM_VALOR_MINIMO,
 } from '../services/pedidoService'
+import { WHATSAPP_NUMBER } from '../config/whatsapp'
 import '../styles/pedido.css'
 
 export default function Pedidos() {
@@ -107,30 +108,30 @@ export default function Pedidos() {
   // Gerar mensagem do WhatsApp a partir do resumo confirmado pelo backend
   // (subtotal/desconto/total ali já refletem se o cupom foi de fato aplicado)
   const gerarMensagemWhatsApp = (resumo: { subtotal: number; desconto: number; total: number; cupom: string | null }) => {
-    let mensagem = `*NOVO PEDIDO - PIZZARIA PORTEIRA*%0A%0A`
-    mensagem += `*Cliente:* ${dadosCliente.nome}%0A`
-    mensagem += `*Telefone:* ${dadosCliente.telefone}%0A`
-    mensagem += `*Endereço:* ${dadosCliente.endereco}%0A`
+    let mensagem = `*NOVO PEDIDO - PIZZARIA PORTEIRA*\n\n`
+    mensagem += `*Cliente:* ${dadosCliente.nome}\n`
+    mensagem += `*Telefone:* ${dadosCliente.telefone}\n`
+    mensagem += `*Endereço:* ${dadosCliente.endereco}\n`
     if (dadosCliente.complemento) {
-      mensagem += `*Complemento:* ${dadosCliente.complemento}%0A`
+      mensagem += `*Complemento:* ${dadosCliente.complemento}\n`
     }
-    mensagem += `%0A*ITENS DO PEDIDO:*%0A`
+    mensagem += `\n*ITENS DO PEDIDO:*\n`
 
     itens.forEach((item, index) => {
-      mensagem += `${index + 1}. ${item.quantidade}x ${item.nome} - R$ ${(item.preco * item.quantidade).toFixed(2)}%0A`
+      mensagem += `${index + 1}. ${item.quantidade}x ${item.nome} - R$ ${(item.preco * item.quantidade).toFixed(2)}\n`
       if (item.observacoes) {
-        mensagem += `   Obs: ${item.observacoes}%0A`
+        mensagem += `   Obs: ${item.observacoes}\n`
       }
     })
 
-    mensagem += `%0A*Subtotal: R$ ${resumo.subtotal.toFixed(2)}*%0A`
+    mensagem += `\n*Subtotal: R$ ${resumo.subtotal.toFixed(2)}*\n`
     if (resumo.cupom) {
-      mensagem += `*Cupom ${resumo.cupom}: -R$ ${resumo.desconto.toFixed(2)} (10% OFF primeira compra)*%0A`
+      mensagem += `*Cupom ${resumo.cupom}: -R$ ${resumo.desconto.toFixed(2)} (10% OFF primeira compra)*\n`
     }
-    mensagem += `*TOTAL: R$ ${resumo.total.toFixed(2)}*%0A%0A`
+    mensagem += `*TOTAL: R$ ${resumo.total.toFixed(2)}*\n\n`
 
     if (dadosCliente.observacoes) {
-      mensagem += `*Observações do pedido:*%0A${dadosCliente.observacoes}%0A%0A`
+      mensagem += `*Observações do pedido:*\n${dadosCliente.observacoes}\n\n`
     }
 
     mensagem += `Pedido realizado via Site Pizzaria Porteira`
@@ -173,7 +174,7 @@ export default function Pedidos() {
     } finally {
       setEnviando(false)
       marcarPedidoRealizado()
-      const whatsappUrl = `https://wa.me/5511999999999?text=${gerarMensagemWhatsApp(resumoFinal)}`
+      const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(gerarMensagemWhatsApp(resumoFinal))}`
       window.open(whatsappUrl, '_blank', 'noopener,noreferrer')
     }
   }

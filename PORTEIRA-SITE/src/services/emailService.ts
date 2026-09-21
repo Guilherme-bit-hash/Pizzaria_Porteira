@@ -1,4 +1,5 @@
 import { showToast } from '../components/Toast'
+import { WHATSAPP_NUMBER } from '../config/whatsapp'
 
 // Substitua com seu ID de formulário do Formspree
 const FORMSPREE_ID = 'xyzabc123' // Obter em: https://formspree.io/
@@ -65,7 +66,7 @@ export async function sendPromoEmail(payload: EmailPayload) {
 
 export async function sendWhatsAppMessage(
   message: string,
-  phone: string = '5511999999999'
+  phone: string = WHATSAPP_NUMBER
 ) {
   try {
     const encodedMessage = encodeURIComponent(message)

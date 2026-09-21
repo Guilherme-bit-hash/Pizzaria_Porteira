@@ -8,15 +8,77 @@ import { usePromocaoDoDia } from '../hooks/usePromocaoDoDia'
 import { showToast } from '../components/Toast'
 import Sidebar from '../components/Sidebar'
 import MenuButton from '../components/MenuButton'
+import { WHATSAPP_NUMBER } from '../config/whatsapp'
 import '../styles/cardapio.css'
 
 type TabType = 'pizzas' | 'hamburgueres' | 'bebidas' | 'sobremesas' | 'promocoes'
 
+// Menor que a quantidade de itens de qualquer aba hoje (a maior tem 6), pra garantir que a
+// paginação sempre apareça de fato — com um valor igual ou maior, uma aba com poucos itens
+// nunca teria uma segunda página e os controles simplesmente não apareciam.
+const ITENS_POR_PAGINA = 3
+const PROMOCOES_POR_PAGINA = 4
+
+const DIAS_SEMANA_PROMOCOES = [
+  { dia: 'Domingo', promocao: '2 Pizzas + Refri 2L por R$ 89,90', emoji: '👨‍👩‍👧‍👦', cor: '#FF6B35' },
+  { dia: 'Segunda', promocao: '20% OFF em todas as pizzas', emoji: '🎯', cor: '#4A90E2' },
+  { dia: 'Terça', promocao: 'Hambúrguer + Batata + Refri R$ 29,90', emoji: '🍔', cor: '#8B4513' },
+  { dia: 'Quarta', promocao: 'Rodízio de Pizza R$ 39,90', emoji: '🎪', cor: '#9C27B0' },
+  { dia: 'Quinta', promocao: 'Refri 2L por R$ 8,90', emoji: '🥤', cor: '#2196F3' },
+  { dia: 'Sexta', promocao: 'Combo Casal R$ 59,90', emoji: '🎉', cor: '#FF9800' },
+  { dia: 'Sábado', promocao: 'Promoção surpresa!', emoji: '🌟', cor: '#FFD700' }
+]
+
+function ControlesPaginacao({
+  paginaAtual,
+  totalPaginas,
+  onMudarPagina
+}: {
+  paginaAtual: number
+  totalPaginas: number
+  onMudarPagina: (pagina: number) => void
+}) {
+  if (totalPaginas <= 1) return null
+
+  return (
+    <div className="cardapio-paginacao">
+      <button
+        type="button"
+        onClick={() => onMudarPagina(paginaAtual - 1)}
+        disabled={paginaAtual === 1}
+        className="cardapio-paginacao__botao"
+        aria-label="Página anterior"
+      >
+        ← Anterior
+      </button>
+      <span className="cardapio-paginacao__info">
+        Página {paginaAtual} de {totalPaginas}
+      </span>
+      <button
+        type="button"
+        onClick={() => onMudarPagina(paginaAtual + 1)}
+        disabled={paginaAtual === totalPaginas}
+        className="cardapio-paginacao__botao"
+        aria-label="Próxima página"
+      >
+        Próxima →
+      </button>
+    </div>
+  )
+}
+
 export default function Cardapio() {
   const [abaAtiva, setAbaAtiva] = useState<TabType>('pizzas')
   const [sidebarAberta, setSidebarAberta] = useState(false)
+  const [paginaAtual, setPaginaAtual] = useState(1)
+  const [paginaPromocoes, setPaginaPromocoes] = useState(1)
   const { adicionarItem } = useCarrinho()
   const { promocaoAtual: promocaoDoDia, nomeDia: nomeDiaAtual } = usePromocaoDoDia()
+
+  // Volta para a primeira página sempre que trocar de aba
+  useEffect(() => {
+    setPaginaAtual(1)
+  }, [abaAtiva])
 
   // Função para gerar imagens placeholder dinâmicas
   const getPlaceholderImage = (nome: string, categoria: TabType) => {
@@ -157,27 +219,9 @@ export default function Cardapio() {
         preco: 14,
         imagem: getPlaceholderImage('Cheesecake', 'sobremesas')
       }
-    ],
-    promocoes: [
-      {
-        nome: 'Pizza + Refri 2L',
-        descricao: 'Pizza média + refrigerante 2 litros',
-        preco: 59.9,
-        imagem: getPlaceholderImage('Pizza + Refri', 'promocoes')
-      },
-      {
-        nome: 'Combo Família',
-        descricao: '2 pizzas grandes + 2 refrigerantes 2L',
-        preco: 99.9,
-        imagem: getPlaceholderImage('Combo Família', 'promocoes')
-      },
-      {
-        nome: 'Hambúrguer + Batata',
-        descricao: 'Hambúrguer + porção de batata frita + refri lata',
-        preco: 34.9,
-        imagem: getPlaceholderImage('Combo Hamburguer', 'promocoes')
-      }
     ]
+    // Sem chave "promocoes" aqui: a aba de promoções não usa esta lista — ela renderiza o
+    // banner de `promocaoDoDia` (vindo do backend) e a grade semanal mais abaixo.
   }
 
   const abas: { id: TabType; label: string; icon: string }[] = [
@@ -320,28 +364,42 @@ export default function Cardapio() {
 
               {/* BOTÃO DE AÇÃO */}
               <div className="cardapio-promo-banner__acao">
-                <button
-                  onClick={() => {
-                    adicionarItem({
-                      nome: promocaoDoDia.nome,
-                      descricao: promocaoDoDia.descricao,
-                      preco: promocaoDoDia.preco > 0 ? promocaoDoDia.preco : 0,
-                      categoria: 'promocao'
-                    })
+                {promocaoDoDia.preco > 0 ? (
+                  <button
+                    onClick={() => {
+                      adicionarItem({
+                        nome: promocaoDoDia.nome,
+                        descricao: promocaoDoDia.descricao,
+                        preco: promocaoDoDia.preco,
+                        categoria: 'promocao'
+                      })
 
-                    // Feedback visual com novo sistema
-                    showToast({
-                      message: `${promocaoDoDia.nome} adicionada ao carrinho!`,
-                      type: 'success',
-                      emoji: '🎉',
-                      duration: 3000
-                    })
-                  }}
-                  className="cardapio-promo-banner__botao"
-                >
-                  <span className="cardapio-promo-banner__botao-icone">🛒</span>
-                  Adicionar Promoção ao Carrinho
-                </button>
+                      // Feedback visual com novo sistema
+                      showToast({
+                        message: `${promocaoDoDia.nome} adicionada ao carrinho!`,
+                        type: 'success',
+                        emoji: '🎉',
+                        duration: 3000
+                      })
+                    }}
+                    className="cardapio-promo-banner__botao"
+                  >
+                    <span className="cardapio-promo-banner__botao-icone">🛒</span>
+                    Adicionar Promoção ao Carrinho
+                  </button>
+                ) : (
+                  // Promoção sem preço fixo (ex: desconto percentual, "oferta surpresa") não
+                  // pode virar um item de carrinho com preço 0 — combina direto no WhatsApp.
+                  <a
+                    href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(`Olá! Quero saber mais sobre a promoção "${promocaoDoDia.nome}": ${promocaoDoDia.descricao}`)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="cardapio-promo-banner__botao"
+                  >
+                    <span className="cardapio-promo-banner__botao-icone">💬</span>
+                    Combinar no WhatsApp
+                  </a>
+                )}
               </div>
             </div>
 
@@ -350,26 +408,27 @@ export default function Cardapio() {
               <h3 className="cardapio-semana__titulo">📅 Promoções da Semana</h3>
 
               <div className="cardapio-semana__grid">
-                {[
-                  { dia: 'Domingo', promocao: '2 Pizzas + Refri 2L por R$ 89,90', emoji: '👨‍👩‍👧‍👦', cor: '#FF6B35' },
-                  { dia: 'Segunda', promocao: '20% OFF em todas as pizzas', emoji: '🎯', cor: '#4A90E2' },
-                  { dia: 'Terça', promocao: 'Hambúrguer + Batata + Refri R$ 29,90', emoji: '🍔', cor: '#8B4513' },
-                  { dia: 'Quarta', promocao: 'Rodízio de Pizza R$ 39,90', emoji: '🎪', cor: '#9C27B0' },
-                  { dia: 'Quinta', promocao: 'Refri 2L por R$ 8,90', emoji: '🥤', cor: '#2196F3' },
-                  { dia: 'Sexta', promocao: 'Combo Casal R$ 59,90', emoji: '🎉', cor: '#FF9800' },
-                  { dia: 'Sábado', promocao: 'Promoção surpresa!', emoji: '🌟', cor: '#FFD700' }
-                ].map((item, index) => {
+                {DIAS_SEMANA_PROMOCOES
+                  .map((item, index) => ({ ...item, indiceDia: index }))
+                  .slice((paginaPromocoes - 1) * PROMOCOES_POR_PAGINA, paginaPromocoes * PROMOCOES_POR_PAGINA)
+                  .map((item) => {
                   const hoje = new Date().getDay()
-                  const ehHoje = index === hoje
+                  const ehHoje = item.indiceDia === hoje
                   return (
                     <div
                       key={item.dia}
                       className={`cardapio-semana__card${ehHoje ? ' cardapio-semana__card--hoje' : ''}`}
                       style={{ '--dia-cor': item.cor } as React.CSSProperties}
                       onClick={() => {
-                        // Se clicar em um dia futuro, mostra mensagem
+                        // Se clicar em um dia futuro, mostra mensagem (toast em vez de
+                        // alert() nativo, pra manter a mesma UI usada no resto do site)
                         if (!ehHoje) {
-                          alert(`Esta promoção estará disponível na ${item.dia}!`)
+                          showToast({
+                            message: `Esta promoção estará disponível na ${item.dia}!`,
+                            type: 'info',
+                            emoji: '📅',
+                            duration: 3000
+                          })
                         }
                       }}
                     >
@@ -391,28 +450,46 @@ export default function Cardapio() {
                       {ehHoje && (
                         <div className="cardapio-semana__card-rodape">
                           <span className="cardapio-semana__card-disponivel">⏰ Disponível agora</span>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              adicionarItem({
-                                nome: `${item.dia} - ${item.promocao.split(' por')[0]}`,
-                                descricao: item.promocao,
-                                preco: item.promocao.includes('R$')
-                                  ? parseFloat(item.promocao.match(/R\$ (\d+[,.]\d+)/)?.[1].replace(',', '.') || '0')
-                                  : 0,
-                                categoria: 'promocao'
-                              })
-                            }}
-                            className="cardapio-semana__card-adicionar"
-                          >
-                            Adicionar
-                          </button>
+                          {item.promocao.includes('R$') ? (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                adicionarItem({
+                                  nome: `${item.dia} - ${item.promocao.split(' por')[0]}`,
+                                  descricao: item.promocao,
+                                  preco: parseFloat(item.promocao.match(/R\$ (\d+[,.]\d+)/)?.[1].replace(',', '.') || '0'),
+                                  categoria: 'promocao'
+                                })
+                              }}
+                              className="cardapio-semana__card-adicionar"
+                            >
+                              Adicionar
+                            </button>
+                          ) : (
+                            // Sem preço fixo (desconto percentual, promoção surpresa) — não dá
+                            // pra virar item de carrinho a R$0, então direciona pro WhatsApp.
+                            <a
+                              href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(`Olá! Quero saber mais sobre a promoção de ${item.dia}: ${item.promocao}`)}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="cardapio-semana__card-adicionar"
+                            >
+                              WhatsApp
+                            </a>
+                          )}
                         </div>
                       )}
                     </div>
                   )
                 })}
               </div>
+
+              <ControlesPaginacao
+                paginaAtual={paginaPromocoes}
+                totalPaginas={Math.ceil(DIAS_SEMANA_PROMOCOES.length / PROMOCOES_POR_PAGINA)}
+                onMudarPagina={setPaginaPromocoes}
+              />
             </div>
           </div>
         )}
@@ -430,7 +507,9 @@ export default function Cardapio() {
 
             {/* LISTA DE ITENS COM IMAGENS */}
             <div className="cardapio-grid">
-              {cardapio[abaAtiva].map((item) => (
+              {cardapio[abaAtiva]
+                .slice((paginaAtual - 1) * ITENS_POR_PAGINA, paginaAtual * ITENS_POR_PAGINA)
+                .map((item) => (
                 <div key={item.nome} className="cardapio-card">
                   {/* IMAGEM DO PRODUTO */}
                   <div className="cardapio-card__imagem-wrap">
@@ -483,6 +562,12 @@ export default function Cardapio() {
                 </div>
               ))}
             </div>
+
+            <ControlesPaginacao
+              paginaAtual={paginaAtual}
+              totalPaginas={Math.ceil(cardapio[abaAtiva].length / ITENS_POR_PAGINA)}
+              onMudarPagina={setPaginaAtual}
+            />
           </>
         )}
 
@@ -510,11 +595,12 @@ export default function Cardapio() {
           <p className="cardapio-rodape__texto cardapio-rodape__texto--final">
             ⏰ 18h às 23h • Todos os dias
           </p>
+          {/* TODO: trocar href="#" pelos links reais das redes sociais da pizzaria */}
           <div className="cardapio-rodape__redes">
-            <a href="#" className="cardapio-rodape__rede-link">📱</a>
-            <a href="#" className="cardapio-rodape__rede-link">📸</a>
-            <a href="#" className="cardapio-rodape__rede-link">📘</a>
-            <a href="#" className="cardapio-rodape__rede-link">🐦</a>
+            <a href="#" className="cardapio-rodape__rede-link" aria-label="WhatsApp">📱</a>
+            <a href="#" className="cardapio-rodape__rede-link" aria-label="Instagram">📸</a>
+            <a href="#" className="cardapio-rodape__rede-link" aria-label="Facebook">📘</a>
+            <a href="#" className="cardapio-rodape__rede-link" aria-label="Twitter">🐦</a>
           </div>
           <Link to="/" className="cardapio-rodape__botao-home">
             Voltar para Home
