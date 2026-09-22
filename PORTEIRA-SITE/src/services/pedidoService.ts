@@ -22,6 +22,8 @@ export interface Pedido {
   itens: ItemCarrinho[]
   total: string
   status: StatusPedido
+  forma_pagamento: 'whatsapp' | 'pix'
+  pagamento_status: 'pendente' | 'aprovado' | 'recusado' | 'expirado' | null
   criado_em: string
   atualizado_em: string
 }

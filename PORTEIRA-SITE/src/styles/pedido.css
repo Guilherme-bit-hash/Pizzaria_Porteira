@@ -436,6 +436,95 @@
   opacity: 0.7;
 }
 
+/* ===== FORMA DE PAGAMENTO ===== */
+.pedido-forma-pagamento {
+  margin-bottom: 1.5rem;
+}
+
+.pedido-forma-pagamento__opcoes {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.pedido-forma-pagamento__opcao {
+  flex: 1;
+  min-width: 200px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #ccc;
+  border: 2px solid rgba(255, 215, 0, 0.2);
+  padding: 1rem;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pedido-forma-pagamento__opcao--ativa {
+  background: rgba(255, 215, 0, 0.15);
+  color: #FFD700;
+  border-color: #FFD700;
+}
+
+/* ===== PAGAMENTO PIX ===== */
+.pedido-pix {
+  text-align: center;
+}
+
+.pedido-pix__instrucao {
+  color: #ccc;
+  margin-bottom: 1.5rem;
+}
+
+.pedido-pix__qrcode {
+  width: 220px;
+  height: 220px;
+  background: white;
+  padding: 12px;
+  border-radius: 12px;
+  margin: 0 auto 1.5rem;
+  display: block;
+}
+
+.pedido-pix__copia-cola {
+  display: flex;
+  gap: 0.8rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.pedido-pix__copia-cola .pedido-input {
+  flex: 1;
+  min-width: 200px;
+  text-align: center;
+  font-size: 0.8rem;
+}
+
+.pedido-pix__botao-copiar {
+  background: linear-gradient(135deg, #FFD700, #FFA500);
+  color: #2D1B00;
+  border: none;
+  padding: 0 1.5rem;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.pedido-pix__aguardando {
+  color: #FFD700;
+  font-weight: bold;
+  margin-bottom: 1.5rem;
+}
+
+.pedido-pix__resultado {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
 .pedido-aviso-whatsapp {
   text-align: center;
   color: #aaa;

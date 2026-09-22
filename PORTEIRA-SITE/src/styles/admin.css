@@ -161,6 +161,13 @@
   font-size: 0.85rem;
 }
 
+.admin-pedido-card__badges {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
 .admin-status-badge {
   padding: 6px 14px;
   border-radius: 20px;
@@ -169,6 +176,21 @@
   font-weight: bold;
   font-size: 0.9rem;
   white-space: nowrap;
+}
+
+.admin-status-badge--sucesso {
+  background: rgba(124, 252, 148, 0.15);
+  color: #7CFC94;
+}
+
+.admin-status-badge--alerta {
+  background: rgba(255, 165, 0, 0.15);
+  color: #FFA500;
+}
+
+.admin-status-badge--erro {
+  background: rgba(255, 68, 68, 0.15);
+  color: #FF8888;
 }
 
 .admin-pedido-card__itens {

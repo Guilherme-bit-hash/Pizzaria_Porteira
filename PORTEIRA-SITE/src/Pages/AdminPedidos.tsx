@@ -27,6 +27,21 @@ const PROXIMOS_STATUS: Record<StatusPedido, StatusPedido | null> = {
   cancelado: null,
 }
 
+function pagamentoBadge(pedido: Pedido) {
+  if (pedido.forma_pagamento !== 'pix') return { texto: '💬 WhatsApp', classe: '' }
+
+  switch (pedido.pagamento_status) {
+    case 'aprovado':
+      return { texto: '⚡ PIX pago', classe: 'admin-status-badge--sucesso' }
+    case 'recusado':
+      return { texto: '⚡ PIX recusado', classe: 'admin-status-badge--erro' }
+    case 'expirado':
+      return { texto: '⚡ PIX expirado', classe: 'admin-status-badge--erro' }
+    default:
+      return { texto: '⚡ PIX pendente', classe: 'admin-status-badge--alerta' }
+  }
+}
+
 export default function AdminPedidos() {
   const navigate = useNavigate()
   const [pedidos, setPedidos] = useState<Pedido[]>([])
@@ -143,7 +158,12 @@ export default function AdminPedidos() {
                   {new Date(pedido.criado_em).toLocaleString('pt-BR')}
                 </p>
               </div>
-              <span className="admin-status-badge">{STATUS_LABEL[pedido.status]}</span>
+              <div className="admin-pedido-card__badges">
+                <span className="admin-status-badge">{STATUS_LABEL[pedido.status]}</span>
+                <span className={`admin-status-badge ${pagamentoBadge(pedido).classe}`}>
+                  {pagamentoBadge(pedido).texto}
+                </span>
+              </div>
             </div>
 
             <ul className="admin-pedido-card__itens">

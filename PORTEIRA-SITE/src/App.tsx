@@ -12,6 +12,7 @@ import Pedido from './Pages/Pedido'
 import AdminLogin from './Pages/AdminLogin'
 import AdminPedidos from './Pages/AdminPedidos'
 import AdminPromocoes from './Pages/AdminPromocoes'
+import { WHATSAPP_NUMBER, formatarWhatsApp } from './config/whatsapp'
 
 // Importação de estilos
 import './styles/App.css'
@@ -68,7 +69,7 @@ function App() {
                 <div className="page-container page-container--com-navbar">
                   <h1 className="page-title">📞 Entre em Contato</h1>
                   <div className="contato-info">
-                    <p>WhatsApp: (11) 99999-9999</p>
+                    <p>WhatsApp: {formatarWhatsApp(WHATSAPP_NUMBER)}</p>
                     <p>Telefone: (11) 9999-9998</p>
                     <p>Endereço: Rua das Pizzas, 123 - Centro, São Paulo, SP</p>
                   </div>

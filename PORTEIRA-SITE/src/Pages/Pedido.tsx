@@ -12,7 +12,13 @@ import {
   CUPOM_PERCENTUAL,
   CUPOM_VALOR_MINIMO,
 } from '../services/pedidoService'
-import { WHATSAPP_NUMBER } from '../config/whatsapp'
+import {
+  criarPagamentoPix,
+  consultarStatusPagamento,
+  type PagamentoPix,
+  type StatusPagamento,
+} from '../services/pagamentoService'
+import { WHATSAPP_NUMBER, formatarWhatsApp } from '../config/whatsapp'
 import '../styles/pedido.css'
 
 export default function Pedidos() {
@@ -45,7 +51,7 @@ export default function Pedidos() {
     }
   }
 
-  const [etapa, setEtapa] = useState<'carrinho' | 'entrega'>('carrinho')
+  const [etapa, setEtapa] = useState<'carrinho' | 'entrega' | 'pagamento'>('carrinho')
   const [dadosCliente, setDadosCliente] = useState({
     nome: '',
     telefone: '',
@@ -55,6 +61,12 @@ export default function Pedidos() {
   })
   const [enviando, setEnviando] = useState(false)
   const [cupomElegivel, setCupomElegivel] = useState<boolean | null>(null)
+  const [formaPagamento, setFormaPagamento] = useState<'whatsapp' | 'pix'>('whatsapp')
+  const [emailCliente, setEmailCliente] = useState('')
+  const [pedidoId, setPedidoId] = useState<number | null>(null)
+  const [pixData, setPixData] = useState<PagamentoPix | null>(null)
+  const [statusPagamento, setStatusPagamento] = useState<StatusPagamento>('pendente')
+  const [erroPix, setErroPix] = useState('')
 
   const telefoneDigits = dadosCliente.telefone.replace(/\D/g, '')
   const cupomDesbloqueadoPeloValor = total >= CUPOM_VALOR_MINIMO
@@ -85,8 +97,34 @@ export default function Pedidos() {
   const descontoPrevisto = cupomConfirmado ? Number((total * CUPOM_PERCENTUAL).toFixed(2)) : 0
   const totalComDesconto = Number((total - descontoPrevisto).toFixed(2))
 
+  // Enquanto aprovado, o pagamento PIX esvazia o carrinho — sem essa exceção, a tela de
+  // sucesso seria substituída pela de "carrinho vazio" assim que isso acontecesse.
+  useEffect(() => {
+    if (statusPagamento === 'aprovado') {
+      marcarPedidoRealizado()
+      limparCarrinho()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [statusPagamento])
+
+  // Consulta o status do PIX periodicamente enquanto o pedido estiver pendente de pagamento.
+  useEffect(() => {
+    if (etapa !== 'pagamento' || !pedidoId || statusPagamento !== 'pendente') return
+
+    const intervalo = setInterval(async () => {
+      try {
+        const status = await consultarStatusPagamento(pedidoId)
+        setStatusPagamento(status)
+      } catch {
+        // Falha pontual de rede no polling — tenta de novo no próximo tick.
+      }
+    }, 4000)
+
+    return () => clearInterval(intervalo)
+  }, [etapa, pedidoId, statusPagamento])
+
   // Se carrinho vazio
-  if (quantidadeTotal === 0) {
+  if (quantidadeTotal === 0 && etapa !== 'pagamento') {
     return (
       <>
         <Navbar showBackButton={true} backTo="/cardapio" />
@@ -176,6 +214,45 @@ export default function Pedidos() {
       marcarPedidoRealizado()
       const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(gerarMensagemWhatsApp(resumoFinal))}`
       window.open(whatsappUrl, '_blank', 'noopener,noreferrer')
+    }
+  }
+
+  // Registra o pedido no backend e, em seguida, gera a cobrança PIX no Mercado Pago.
+  // Diferente do fluxo por WhatsApp, aqui o pedido só avança se o backend confirmar —
+  // sem um id de pedido real não há como cobrar o PIX.
+  const handleGerarPix = async () => {
+    setEnviando(true)
+    setErroPix('')
+
+    try {
+      const resultado = await criarPedido({
+        nome: dadosCliente.nome,
+        telefone: dadosCliente.telefone,
+        endereco: dadosCliente.endereco,
+        complemento: dadosCliente.complemento,
+        observacoes: dadosCliente.observacoes,
+        itens,
+        cupom: cupomDesbloqueadoPeloValor ? CUPOM_PRIMEIRA_COMPRA : undefined,
+      })
+
+      if (!resultado) {
+        setErroPix('Não foi possível registrar o pedido agora. Tente novamente ou finalize pelo WhatsApp.')
+        return
+      }
+
+      setPedidoId(resultado.id)
+      const pix = await criarPagamentoPix(resultado.id, emailCliente || undefined)
+      setPixData(pix)
+      setStatusPagamento(pix.status)
+      setEtapa('pagamento')
+    } catch (error) {
+      setErroPix(
+        error instanceof Error
+          ? error.message
+          : 'Não foi possível gerar o PIX. Tente novamente ou finalize pelo WhatsApp.'
+      )
+    } finally {
+      setEnviando(false)
     }
   }
 
@@ -403,26 +480,170 @@ export default function Pedidos() {
                 </div>
               </div>
 
+              {/* FORMA DE PAGAMENTO */}
+              <div className="pedido-forma-pagamento">
+                <h3 className="pedido-resumo__titulo">Como você quer pagar?</h3>
+                <div className="pedido-forma-pagamento__opcoes">
+                  <button
+                    type="button"
+                    onClick={() => setFormaPagamento('whatsapp')}
+                    className={`pedido-forma-pagamento__opcao${formaPagamento === 'whatsapp' ? ' pedido-forma-pagamento__opcao--ativa' : ''}`}
+                  >
+                    💬 Combinar no WhatsApp
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFormaPagamento('pix')}
+                    className={`pedido-forma-pagamento__opcao${formaPagamento === 'pix' ? ' pedido-forma-pagamento__opcao--ativa' : ''}`}
+                  >
+                    ⚡ Pagar agora com PIX
+                  </button>
+                </div>
+
+                {formaPagamento === 'pix' && (
+                  <div className="pedido-campo pedido-campo--ultimo">
+                    <label className="pedido-label">Email (opcional, para o recibo do pagamento)</label>
+                    <input
+                      type="email"
+                      value={emailCliente}
+                      onChange={(e) => setEmailCliente(e.target.value)}
+                      className="pedido-input"
+                      placeholder="seuemail@exemplo.com"
+                    />
+                  </div>
+                )}
+              </div>
+
               {/* BOTÕES DE AÇÃO */}
               <div className="pedido-acoes">
                 <button onClick={() => setEtapa('carrinho')} className="pedido-botao-voltar-carrinho">
                   ← Voltar ao Carrinho
                 </button>
 
-                <button
-                  type="button"
-                  onClick={handleFinalizarPedido}
-                  disabled={enviando}
-                  className="pedido-botao-finalizar"
-                >
-                  {enviando ? 'Enviando...' : '💬 Finalizar Pedido no WhatsApp'}
-                </button>
+                {formaPagamento === 'whatsapp' ? (
+                  <button
+                    type="button"
+                    onClick={handleFinalizarPedido}
+                    disabled={enviando}
+                    className="pedido-botao-finalizar"
+                  >
+                    {enviando ? 'Enviando...' : '💬 Finalizar Pedido no WhatsApp'}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleGerarPix}
+                    disabled={enviando}
+                    className="pedido-botao-finalizar pedido-botao-finalizar--pix"
+                  >
+                    {enviando ? 'Gerando PIX...' : '⚡ Gerar PIX e Pagar'}
+                  </button>
+                )}
               </div>
 
+              {erroPix && (
+                <p className="pedido-cupom-feedback pedido-cupom-feedback--indisponivel">{erroPix}</p>
+              )}
+
               <p className="pedido-aviso-whatsapp">
-                ⚠️ Ao clicar em "Finalizar Pedido", você será redirecionado para o WhatsApp
-                para confirmar seu pedido e combinar a forma de pagamento.
+                {formaPagamento === 'whatsapp'
+                  ? '⚠️ Ao clicar em "Finalizar Pedido", você será redirecionado para o WhatsApp para confirmar seu pedido e combinar a forma de pagamento.'
+                  : '⚡ Você vai receber um QR code PIX pra pagar na hora. Assim que o pagamento for confirmado, o pedido já entra como pago.'}
               </p>
+            </div>
+          )}
+
+          {/* ETAPA 3: PAGAMENTO PIX */}
+          {etapa === 'pagamento' && pixData && (
+            <div className="pedido-card pedido-pix">
+              {statusPagamento === 'pendente' && (
+                <>
+                  <h2 className="pedido-card__titulo">⚡ Pague com PIX</h2>
+                  <p className="pedido-pix__instrucao">
+                    Escaneie o QR code no app do seu banco ou copie o código abaixo.
+                  </p>
+
+                  {pixData.qrCodeBase64 && (
+                    <img
+                      className="pedido-pix__qrcode"
+                      src={`data:image/png;base64,${pixData.qrCodeBase64}`}
+                      alt="QR code do PIX"
+                    />
+                  )}
+
+                  {pixData.qrCode && (
+                    <div className="pedido-pix__copia-cola">
+                      <input
+                        readOnly
+                        value={pixData.qrCode}
+                        className="pedido-input"
+                        onFocus={(e) => e.target.select()}
+                      />
+                      <button
+                        type="button"
+                        className="pedido-pix__botao-copiar"
+                        onClick={() => {
+                          navigator.clipboard.writeText(pixData.qrCode || '')
+                          showToast({ message: 'Código PIX copiado!', type: 'success', emoji: '📋', duration: 2000 })
+                        }}
+                      >
+                        Copiar código
+                      </button>
+                    </div>
+                  )}
+
+                  <p className="pedido-pix__aguardando">⏳ Aguardando confirmação do pagamento...</p>
+
+                  <div className="pedido-resumo">
+                    <div className="pedido-resumo__total">
+                      <span>Total:</span>
+                      <span>R$ {totalComDesconto.toFixed(2).replace('.', ',')}</span>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {statusPagamento === 'aprovado' && (
+                <div className="pedido-pix__resultado">
+                  <h2 className="pedido-card__titulo">✅ Pagamento confirmado!</h2>
+                  <p>Seu pedido #{pedidoId} foi pago com sucesso. Já vamos começar a preparar!</p>
+                  <a
+                    href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(`Olá! Acabei de pagar o pedido #${pedidoId} via PIX no site. 🍕`)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="pedido-botao-finalizar"
+                  >
+                    💬 Avisar a pizzaria no WhatsApp
+                  </a>
+                  <Link to="/cardapio" className="pedido-link-voltar-cardapio">
+                    Voltar ao cardápio
+                  </Link>
+                </div>
+              )}
+
+              {(statusPagamento === 'recusado' || statusPagamento === 'expirado') && (
+                <div className="pedido-pix__resultado">
+                  <h2 className="pedido-card__titulo">⚠️ Pagamento não concluído</h2>
+                  <p>
+                    O PIX {statusPagamento === 'expirado' ? 'expirou' : 'foi recusado'}. Você pode tentar
+                    novamente ou finalizar pelo WhatsApp.
+                  </p>
+                  <div className="pedido-acoes">
+                    <button
+                      type="button"
+                      className="pedido-botao-voltar-carrinho"
+                      onClick={() => {
+                        setEtapa('entrega')
+                        setPixData(null)
+                        setPedidoId(null)
+                        setStatusPagamento('pendente')
+                      }}
+                    >
+                      ← Tentar de novo
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -431,7 +652,7 @@ export default function Pedidos() {
         <footer className="pedido-rodape">
           <p>© 2024 Pizzaria Porteira - Sistema de Pedidos</p>
           <p className="pedido-rodape__texto--espacado">
-            Dúvidas? WhatsApp: (11) 99999-9999
+            Dúvidas? WhatsApp: {formatarWhatsApp(WHATSAPP_NUMBER)}
           </p>
         </footer>
       </div>

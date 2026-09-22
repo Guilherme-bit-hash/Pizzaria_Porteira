@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { pool } from '../db/pool.js'
 import { exigirAdmin } from '../middleware/auth.js'
 import { asyncHandler } from '../middleware/asyncHandler.js'
+import { getPaymentClient } from '../services/mercadoPago.js'
 
 export const pedidosRouter = Router()
 
@@ -113,6 +114,103 @@ pedidosRouter.get('/cupom-primeira-compra/elegivel', asyncHandler(async (req, re
     percentual: CUPOM_PERCENTUAL,
     valorMinimo: CUPOM_VALOR_MINIMO,
   })
+}))
+
+// Traduz o status de pagamento do Mercado Pago para o nosso enum interno.
+function mapearStatusPagamento(statusMp) {
+  switch (statusMp) {
+    case 'approved':
+      return 'aprovado'
+    case 'rejected':
+      return 'recusado'
+    case 'cancelled':
+      return 'expirado'
+    default:
+      // pending, in_process, authorized, in_mediation etc.
+      return 'pendente'
+  }
+}
+
+// Gera a cobrança PIX no Mercado Pago para um pedido já criado.
+pedidosRouter.post('/:id/pagamento/pix', asyncHandler(async (req, res) => {
+  const { email } = req.body || {}
+
+  const [linhas] = await pool.query(
+    'SELECT id, cliente_nome, total, forma_pagamento, pagamento_status FROM pedidos WHERE id = ?',
+    [req.params.id]
+  )
+  if (linhas.length === 0) {
+    return res.status(404).json({ erro: 'Pedido não encontrado.' })
+  }
+  const pedido = linhas[0]
+
+  if (pedido.pagamento_status === 'aprovado') {
+    return res.status(400).json({ erro: 'Este pedido já foi pago.' })
+  }
+
+  const client = getPaymentClient()
+  const [primeiroNome, ...resto] = pedido.cliente_nome.trim().split(/\s+/)
+
+  const resultado = await client.create({
+    body: {
+      transaction_amount: Number(pedido.total),
+      description: `Pedido #${pedido.id} - Pizzaria Porteira`,
+      payment_method_id: 'pix',
+      external_reference: String(pedido.id),
+      notification_url: process.env.MP_NOTIFICATION_URL || undefined,
+      payer: {
+        email: email && email.includes('@') ? email : `pedido${pedido.id}@pizzariaporteira.com.br`,
+        first_name: primeiroNome || 'Cliente',
+        last_name: resto.join(' ') || 'Pizzaria Porteira',
+      },
+    },
+  })
+
+  const dadosPix = resultado.point_of_interaction?.transaction_data
+
+  await pool.query(
+    'UPDATE pedidos SET forma_pagamento = ?, pagamento_status = ?, mp_payment_id = ? WHERE id = ?',
+    ['pix', mapearStatusPagamento(resultado.status), String(resultado.id), pedido.id]
+  )
+
+  res.status(201).json({
+    paymentId: resultado.id,
+    status: mapearStatusPagamento(resultado.status),
+    qrCode: dadosPix?.qr_code || null,
+    qrCodeBase64: dadosPix?.qr_code_base64 || null,
+  })
+}))
+
+// Consulta o status atual do pagamento de um pedido, revalidando com o Mercado Pago
+// (útil em desenvolvimento local, onde o webhook não consegue alcançar o localhost).
+pedidosRouter.get('/:id/pagamento/status', asyncHandler(async (req, res) => {
+  const [linhas] = await pool.query(
+    'SELECT id, forma_pagamento, pagamento_status, mp_payment_id FROM pedidos WHERE id = ?',
+    [req.params.id]
+  )
+  if (linhas.length === 0) {
+    return res.status(404).json({ erro: 'Pedido não encontrado.' })
+  }
+  const pedido = linhas[0]
+
+  if (pedido.forma_pagamento !== 'pix' || !pedido.mp_payment_id) {
+    return res.json({ status: pedido.pagamento_status })
+  }
+
+  // Já está num estado final — não precisa consultar o Mercado Pago de novo.
+  if (pedido.pagamento_status === 'aprovado' || pedido.pagamento_status === 'recusado') {
+    return res.json({ status: pedido.pagamento_status })
+  }
+
+  const client = getPaymentClient()
+  const resultado = await client.get({ id: pedido.mp_payment_id })
+  const statusAtual = mapearStatusPagamento(resultado.status)
+
+  if (statusAtual !== pedido.pagamento_status) {
+    await pool.query('UPDATE pedidos SET pagamento_status = ? WHERE id = ?', [statusAtual, pedido.id])
+  }
+
+  res.json({ status: statusAtual })
 }))
 
 // Listar pedidos (painel admin)

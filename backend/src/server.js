@@ -4,6 +4,7 @@ import 'dotenv/config'
 import { pedidosRouter } from './routes/pedidos.js'
 import { authRouter } from './routes/auth.js'
 import { promocoesRouter } from './routes/promocoes.js'
+import { pagamentosRouter } from './routes/pagamentos.js'
 
 const app = express()
 
@@ -14,6 +15,7 @@ app.get('/api/health', (req, res) => res.json({ status: 'ok' }))
 app.use('/api/auth', authRouter)
 app.use('/api/pedidos', pedidosRouter)
 app.use('/api/promocoes', promocoesRouter)
+app.use('/api/pagamentos', pagamentosRouter)
 
 app.use((err, req, res, next) => {
   console.error(err)

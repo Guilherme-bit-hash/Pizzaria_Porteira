@@ -17,6 +17,9 @@ CREATE TABLE IF NOT EXISTS pedidos (
   total DECIMAL(10, 2) NOT NULL,
   status ENUM('recebido', 'preparando', 'saiu_para_entrega', 'entregue', 'cancelado')
     NOT NULL DEFAULT 'recebido',
+  forma_pagamento ENUM('whatsapp', 'pix') NOT NULL DEFAULT 'whatsapp',
+  pagamento_status ENUM('pendente', 'aprovado', 'recusado', 'expirado') NULL,
+  mp_payment_id VARCHAR(50) NULL,
   criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   atualizado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
