@@ -3,6 +3,8 @@ import { pool } from '../db/pool.js'
 import { exigirAdmin } from '../middleware/auth.js'
 import { asyncHandler } from '../middleware/asyncHandler.js'
 import { getPaymentClient } from '../services/mercadoPago.js'
+import { criarPedidoLimiter, elegibilidadeCupomLimiter } from '../middleware/rateLimit.js'
+import { PRECOS_CARDAPIO } from '../data/cardapio.js'
 
 export const pedidosRouter = Router()
 
@@ -16,98 +18,166 @@ function normalizarTelefone(telefone) {
   return String(telefone || '').replace(/\D/g, '')
 }
 
+// Garante que nome/telefone/endereço/complemento/observações cabem nas colunas do banco
+// (VARCHAR(150)/VARCHAR(255)/VARCHAR(30)) e que o telefone tem uma quantidade plausível de
+// dígitos — sem isso, um valor grande ou "abc" só estourava no INSERT como um 500 genérico.
+function validarDadosCliente({ nome, telefone, endereco, complemento, observacoes }) {
+  if (typeof nome !== 'string' || !nome.trim() || nome.trim().length > 150) return null
+  if (typeof endereco !== 'string' || !endereco.trim() || endereco.trim().length > 255) return null
+  if (complemento !== undefined && complemento !== null) {
+    if (typeof complemento !== 'string' || complemento.length > 150) return null
+  }
+  if (observacoes !== undefined && observacoes !== null) {
+    if (typeof observacoes !== 'string' || observacoes.length > 2000) return null
+  }
+
+  const telefoneNormalizado = normalizarTelefone(telefone)
+  if (telefoneNormalizado.length < 10 || telefoneNormalizado.length > 15) return null
+
+  return true
+}
+
 // Cupom de primeira compra é válido apenas para telefones que nunca fizeram um pedido antes.
 // A checagem é sempre feita no servidor (nunca confiando no cliente) para não poder ser
 // burlada limpando o localStorage do navegador.
-async function elegivelCupomPrimeiraCompra(telefone) {
+// Recebe `executor` (pool ou uma connection já travada com GET_LOCK) em vez de usar `pool`
+// fixo, pra permitir travar a checagem + o INSERT do pedido como uma operação só (ver
+// pedidosRouter.post abaixo) e assim fechar a race condition de duas requisições simultâneas.
+async function elegivelCupomPrimeiraCompra(executor, telefone) {
   const telefoneNormalizado = normalizarTelefone(telefone)
   if (!telefoneNormalizado) return false
 
-  const [linhas] = await pool.query(
+  const [linhas] = await executor.query(
     `SELECT id FROM pedidos WHERE REGEXP_REPLACE(cliente_telefone, '[^0-9]', '') = ? LIMIT 1`,
     [telefoneNormalizado]
   )
   return linhas.length === 0
 }
 
-function validarItens(itens) {
+// Preços de promoção mudam de acordo com o dia/edição do admin e nem sempre chegam com o
+// mesmo nome usado no cardápio fixo (a "Promoção do Dia" tem nomes livres). Por isso, para
+// itens de promoção aceitamos qualquer preço que hoje exista de fato na tabela `promocoes`
+// (ou 0, para promoções "combinar no WhatsApp"), em vez de exigir um nome exato.
+async function precosPromocoesValidos() {
+  const [linhas] = await pool.query('SELECT preco FROM promocoes')
+  return new Set(linhas.map((linha) => Number(linha.preco)))
+}
+
+// Nunca confia no preço enviado pelo cliente: itens que batem com um nome do cardápio fixo
+// (src/data/cardapio.js) têm o preço comparado com o catálogo; os demais (promoções) só são
+// aceitos se o preço enviado corresponder a um preço de promoção realmente cadastrado.
+function validarItens(itens, precosPromocoes) {
   if (!Array.isArray(itens) || itens.length === 0) return null
+
+  const itensValidados = []
 
   for (const item of itens) {
     if (
-      typeof item.nome !== 'string' ||
-      typeof item.preco !== 'number' ||
-      typeof item.quantidade !== 'number' ||
-      item.preco < 0 ||
-      item.quantidade < 1
+      typeof item.nome !== 'string' || !item.nome.trim() ||
+      typeof item.preco !== 'number' || Number.isNaN(item.preco) || item.preco < 0 ||
+      !Number.isInteger(item.quantidade) || item.quantidade < 1 || item.quantidade > 50
     ) {
       return null
     }
+
+    const precoCatalogo = PRECOS_CARDAPIO.get(item.nome.trim())
+    if (precoCatalogo !== undefined) {
+      if (Math.abs(precoCatalogo - item.preco) > 0.001) return null
+      itensValidados.push({ ...item, preco: precoCatalogo })
+    } else if (item.preco === 0 || precosPromocoes.has(item.preco)) {
+      itensValidados.push(item)
+    } else {
+      return null
+    }
   }
-  return itens
+  return itensValidados
 }
 
 // Criar pedido (usado pelo checkout do site, sem autenticação)
-pedidosRouter.post('/', asyncHandler(async (req, res) => {
+pedidosRouter.post('/', criarPedidoLimiter, asyncHandler(async (req, res) => {
   const { nome, telefone, endereco, complemento, observacoes, itens, cupom } = req.body || {}
 
   if (!nome || !telefone || !endereco) {
     return res.status(400).json({ erro: 'Nome, telefone e endereço são obrigatórios.' })
   }
 
-  const itensValidos = validarItens(itens)
+  if (!validarDadosCliente({ nome, telefone, endereco, complemento, observacoes })) {
+    return res.status(400).json({ erro: 'Dados do cliente inválidos. Confira nome, telefone e endereço informados.' })
+  }
+
+  const precosPromocoes = await precosPromocoesValidos()
+  const itensValidos = validarItens(itens, precosPromocoes)
   if (!itensValidos) {
-    return res.status(400).json({ erro: 'A lista de itens do pedido é inválida ou está vazia.' })
+    return res.status(400).json({ erro: 'A lista de itens do pedido é inválida ou os preços não conferem com o cardápio.' })
   }
 
   const subtotal = itensValidos.reduce((acc, item) => acc + item.preco * item.quantidade, 0)
 
-  // O desconto é sempre recalculado aqui, ignorando qualquer valor vindo do cliente:
-  // um cupom inválido/já usado simplesmente não gera desconto, mas não impede o pedido.
-  let desconto = 0
-  let cupomAplicado = null
-
-  if (cupom === CUPOM_PRIMEIRA_COMPRA && subtotal >= CUPOM_VALOR_MINIMO) {
-    const elegivel = await elegivelCupomPrimeiraCompra(telefone)
-    if (elegivel) {
-      desconto = Number((subtotal * CUPOM_PERCENTUAL).toFixed(2))
-      cupomAplicado = CUPOM_PRIMEIRA_COMPRA
+  // Trava por telefone (GET_LOCK do MySQL) durante a checagem de elegibilidade + o INSERT:
+  // sem isso, dois pedidos do mesmo telefone enviados ao mesmo tempo podiam passar juntos
+  // na checagem "ainda não tem pedido" antes de qualquer um gravar, e os dois ganhavam o
+  // cupom de primeira compra. Com o lock, o segundo espera o primeiro terminar de gravar
+  // antes de checar, e aí já não é mais elegível.
+  const nomeLock = `pedido:${normalizarTelefone(telefone)}`
+  const conn = await pool.getConnection()
+  try {
+    const [[lock]] = await conn.query('SELECT GET_LOCK(?, 5) AS obtido', [nomeLock])
+    if (!lock.obtido) {
+      return res.status(503).json({ erro: 'Sistema ocupado processando outro pedido seu. Tente novamente em instantes.' })
     }
-  }
 
-  const total = Number((subtotal - desconto).toFixed(2))
+    // O desconto é sempre recalculado aqui, ignorando qualquer valor vindo do cliente:
+    // um cupom inválido/já usado simplesmente não gera desconto, mas não impede o pedido.
+    let desconto = 0
+    let cupomAplicado = null
 
-  const [resultado] = await pool.query(
-    `INSERT INTO pedidos (cliente_nome, cliente_telefone, endereco, complemento, observacoes, itens, subtotal, desconto, cupom, total)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [
-      nome,
-      telefone,
-      endereco,
-      complemento || null,
-      observacoes || null,
-      JSON.stringify(itensValidos),
+    if (cupom === CUPOM_PRIMEIRA_COMPRA && subtotal >= CUPOM_VALOR_MINIMO) {
+      const elegivel = await elegivelCupomPrimeiraCompra(conn, telefone)
+      if (elegivel) {
+        desconto = Number((subtotal * CUPOM_PERCENTUAL).toFixed(2))
+        cupomAplicado = CUPOM_PRIMEIRA_COMPRA
+      }
+    }
+
+    const total = Number((subtotal - desconto).toFixed(2))
+
+    const [resultado] = await conn.query(
+      `INSERT INTO pedidos (cliente_nome, cliente_telefone, endereco, complemento, observacoes, itens, subtotal, desconto, cupom, total)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        nome,
+        telefone,
+        endereco,
+        complemento || null,
+        observacoes || null,
+        JSON.stringify(itensValidos),
+        subtotal,
+        desconto,
+        cupomAplicado,
+        total,
+      ]
+    )
+
+    res.status(201).json({
+      id: resultado.insertId,
       subtotal,
       desconto,
-      cupomAplicado,
+      cupom: cupomAplicado,
       total,
-    ]
-  )
-
-  res.status(201).json({
-    id: resultado.insertId,
-    subtotal,
-    desconto,
-    cupom: cupomAplicado,
-    total,
-    status: 'recebido',
-  })
+      status: 'recebido',
+    })
+  } finally {
+    await conn.query('SELECT RELEASE_LOCK(?)', [nomeLock])
+    conn.release()
+  }
 }))
 
 // Verifica, em tempo real, se o telefone informado ainda tem direito ao cupom de primeira
 // compra. Usado no checkout para mostrar o desconto antes de finalizar o pedido.
-pedidosRouter.get('/cupom-primeira-compra/elegivel', asyncHandler(async (req, res) => {
-  const elegivel = await elegivelCupomPrimeiraCompra(req.query.telefone)
+// Endpoint público (sem login) — o rate limit abaixo existe porque, sem ele, dava pra usar
+// isso pra descobrir em massa quais telefones já são clientes da pizzaria.
+pedidosRouter.get('/cupom-primeira-compra/elegivel', elegibilidadeCupomLimiter, asyncHandler(async (req, res) => {
+  const elegivel = await elegivelCupomPrimeiraCompra(pool, req.query.telefone)
   res.json({
     elegivel,
     codigo: CUPOM_PRIMEIRA_COMPRA,

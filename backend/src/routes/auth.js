@@ -2,10 +2,11 @@ import { Router } from 'express'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import { asyncHandler } from '../middleware/asyncHandler.js'
+import { loginLimiter } from '../middleware/rateLimit.js'
 
 export const authRouter = Router()
 
-authRouter.post('/login', asyncHandler(async (req, res) => {
+authRouter.post('/login', loginLimiter, asyncHandler(async (req, res) => {
   const { usuario, senha } = req.body || {}
 
   if (!usuario || !senha) {
