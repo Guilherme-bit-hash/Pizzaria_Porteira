@@ -36,6 +36,8 @@ export interface DadosNovoPedido {
   observacoes?: string
   itens: ItemCarrinho[]
   cupom?: string
+  email?: string
+  aceitaPromocoes?: boolean
 }
 
 export interface RespostaNovoPedido {

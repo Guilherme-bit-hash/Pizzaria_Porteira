@@ -30,3 +30,13 @@ export const elegibilidadeCupomLimiter = rateLimit({
   legacyHeaders: false,
   message: { erro: 'Muitas verificações em pouco tempo. Tente novamente em alguns minutos.' },
 })
+
+// Link de descadastro dos e-mails (público): limite para impedir que alguém fique testando
+// tokens em massa. Um cliente legítimo clica uma vez.
+export const descadastroLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { erro: 'Muitas tentativas. Tente novamente em alguns minutos.' },
+})

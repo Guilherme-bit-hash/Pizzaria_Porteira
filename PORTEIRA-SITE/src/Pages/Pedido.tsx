@@ -63,6 +63,7 @@ export default function Pedidos() {
   const [cupomElegivel, setCupomElegivel] = useState<boolean | null>(null)
   const [formaPagamento, setFormaPagamento] = useState<'whatsapp' | 'pix'>('whatsapp')
   const [emailCliente, setEmailCliente] = useState('')
+  const [aceitaPromocoes, setAceitaPromocoes] = useState(false)
   const [pedidoId, setPedidoId] = useState<number | null>(null)
   const [pixData, setPixData] = useState<PagamentoPix | null>(null)
   const [statusPagamento, setStatusPagamento] = useState<StatusPagamento>('pendente')
@@ -199,6 +200,8 @@ export default function Pedidos() {
         observacoes: dadosCliente.observacoes,
         itens,
         cupom: cupomDesbloqueadoPeloValor ? CUPOM_PRIMEIRA_COMPRA : undefined,
+        email: emailCliente.trim() || undefined,
+        aceitaPromocoes,
       })
 
       if (resultado) {
@@ -233,6 +236,8 @@ export default function Pedidos() {
         observacoes: dadosCliente.observacoes,
         itens,
         cupom: cupomDesbloqueadoPeloValor ? CUPOM_PRIMEIRA_COMPRA : undefined,
+        email: emailCliente.trim() || undefined,
+        aceitaPromocoes,
       })
 
       if (!resultado) {
@@ -440,7 +445,7 @@ export default function Pedidos() {
                   />
                 </div>
 
-                <div className="pedido-campo pedido-campo--ultimo">
+                <div className="pedido-campo">
                   <label className="pedido-label">Observações do Pedido</label>
                   <textarea
                     value={dadosCliente.observacoes}
@@ -448,6 +453,35 @@ export default function Pedidos() {
                     className="pedido-input pedido-textarea"
                     placeholder="Sem cebola, maionese à parte, trocar batata por salada..."
                   />
+                </div>
+
+                <div className="pedido-campo">
+                  <label className="pedido-label">E-mail (opcional — recibo do PIX e novidades)</label>
+                  <input
+                    type="email"
+                    value={emailCliente}
+                    onChange={(e) => setEmailCliente(e.target.value)}
+                    className="pedido-input"
+                    placeholder="seuemail@exemplo.com"
+                  />
+                </div>
+
+                {/* Consentimento (LGPD): começa desmarcado, o cliente precisa marcar de propósito */}
+                <div className="pedido-campo pedido-campo--ultimo">
+                  <label className="pedido-consentimento">
+                    <input
+                      type="checkbox"
+                      checked={aceitaPromocoes}
+                      onChange={(e) => setAceitaPromocoes(e.target.checked)}
+                    />
+                    <span>
+                      Quero receber promoções da Pizzaria Porteira por WhatsApp e e-mail. Posso pedir para
+                      parar a qualquer momento.
+                    </span>
+                  </label>
+                  <p className="pedido-consentimento__nota">
+                    Usamos seus dados para entregar o pedido e, só se você marcar acima, para enviar promoções.
+                  </p>
                 </div>
               </form>
 
@@ -500,18 +534,6 @@ export default function Pedidos() {
                   </button>
                 </div>
 
-                {formaPagamento === 'pix' && (
-                  <div className="pedido-campo pedido-campo--ultimo">
-                    <label className="pedido-label">Email (opcional, para o recibo do pagamento)</label>
-                    <input
-                      type="email"
-                      value={emailCliente}
-                      onChange={(e) => setEmailCliente(e.target.value)}
-                      className="pedido-input"
-                      placeholder="seuemail@exemplo.com"
-                    />
-                  </div>
-                )}
               </div>
 
               {/* BOTÕES DE AÇÃO */}

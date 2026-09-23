@@ -53,6 +53,18 @@ A API sobe em `http://localhost:3001` (ou na porta definida em `PORT`).
 | PATCH  | `/api/pedidos/:id/status`                | Admin (Bearer token)    | Atualiza o status do pedido (`recebido`, `preparando`, `saiu_para_entrega`, `entregue`, `cancelado`) |
 | GET    | `/api/promocoes`                         | -                       | Lista as promoções da semana |
 | PUT    | `/api/promocoes/:dia`                    | Admin (Bearer token)    | Cria/atualiza a promoção de um dia da semana (0 = domingo … 6 = sábado) |
+| GET    | `/api/produtos`                          | -                       | Cardápio público (só produtos ativos) |
+| GET    | `/api/produtos/admin`                    | Admin (Bearer token)    | Lista todos os produtos, inclusive desativados |
+| POST   | `/api/produtos`                          | Admin (Bearer token)    | Cria um produto |
+| PUT    | `/api/produtos/:id`                      | Admin (Bearer token)    | Edita um produto (nome, preço, categoria, imagem, ativo, ordem) |
+| DELETE | `/api/produtos/:id`                      | Admin (Bearer token)    | Exclui um produto |
+| GET    | `/api/clientes?busca=&promocoes=1`       | Admin (Bearer token)    | Lista clientes com total de pedidos/gasto; filtra por busca e por consentimento |
+| GET    | `/api/clientes/exportar`                 | Admin (Bearer token)    | Baixa a base de clientes em CSV |
+| GET    | `/api/clientes/:id`                      | Admin (Bearer token)    | Detalha um cliente com o histórico de pedidos |
+| PATCH  | `/api/clientes/:id/consentimento`        | Admin (Bearer token)    | Registra/remove o consentimento para receber promoções |
+| GET    | `/api/campanhas/status`                  | Admin (Bearer token)    | Informa se o SMTP está configurado e quantos clientes receberiam a campanha |
+| POST   | `/api/campanhas/email`                   | Admin (Bearer token)    | Envia promoção por e-mail (`emailTeste` envia só para um endereço de teste) |
+| GET    | `/api/campanhas/descadastrar?id=&token=` | - (token HMAC)          | Link de descadastro incluído em cada e-mail |
 | POST   | `/api/pagamentos/webhook`                | -                       | Recebe as notificações de pagamento do Mercado Pago (só útil com o servidor acessível publicamente — veja abaixo) |
 
 Para rotas protegidas, envie o header `Authorization: Bearer <token>` obtido no login.
@@ -64,6 +76,13 @@ Para rotas protegidas, envie o header `Authorization: Bearer <token>` obtido no 
   - **Polling** (`GET /api/pedidos/:id/pagamento/status`): o próprio checkout consulta a cada poucos segundos — funciona em qualquer ambiente, inclusive localhost.
   - **Webhook** (`POST /api/pagamentos/webhook`): o Mercado Pago chama esse endpoint quando o pagamento muda de status — mais rápido, mas só funciona se o servidor estiver acessível publicamente (configure `MP_NOTIFICATION_URL` no `.env` ao fazer deploy).
 - Em desenvolvimento local (sem URL pública), o polling já é suficiente para testar o fluxo completo.
+
+## Campanhas por e-mail
+
+- Preencha `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` e `PUBLIC_API_URL` no `.env` (com Gmail, use uma "senha de app"). Sem isso o servidor sobe normalmente e só o envio fica indisponível.
+- No painel, em **📧 Campanhas**, envie primeiro um teste para você e depois para todos.
+- Só recebem clientes que marcaram o consentimento no checkout e têm e-mail. Todo e-mail leva um link de descadastro.
+- WhatsApp em massa não está incluído: exige a API oficial do WhatsApp Business (paga, com modelos aprovados).
 
 ## O que ainda falta / próximos passos
 

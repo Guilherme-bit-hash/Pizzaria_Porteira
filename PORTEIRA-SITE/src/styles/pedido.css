@@ -607,3 +607,24 @@
     padding: 1.2rem;
   }
 }
+
+/* ===== CONSENTIMENTO DE PROMOÇÕES (LGPD) ===== */
+.pedido-consentimento {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.pedido-consentimento input {
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+
+.pedido-consentimento__nota {
+  margin: 8px 0 0;
+  font-size: 0.8rem;
+  opacity: 0.7;
+}

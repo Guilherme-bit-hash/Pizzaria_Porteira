@@ -12,6 +12,9 @@ import Pedido from './Pages/Pedido'
 import AdminLogin from './Pages/AdminLogin'
 import AdminPedidos from './Pages/AdminPedidos'
 import AdminPromocoes from './Pages/AdminPromocoes'
+import AdminProdutos from './Pages/AdminProdutos'
+import AdminClientes from './Pages/AdminClientes'
+import AdminCampanhas from './Pages/AdminCampanhas'
 import { WHATSAPP_NUMBER, formatarWhatsApp } from './config/whatsapp'
 
 // Importação de estilos
@@ -34,6 +37,9 @@ function App() {
             <Route path="/admin" element={<AdminLogin />} />
             <Route path="/admin/pedidos" element={<AdminPedidos />} />
             <Route path="/admin/promocoes" element={<AdminPromocoes />} />
+            <Route path="/admin/produtos" element={<AdminProdutos />} />
+            <Route path="/admin/clientes" element={<AdminClientes />} />
+            <Route path="/admin/campanhas" element={<AdminCampanhas />} />
             
             {/* Páginas adicionais */}
             <Route path="/promocoes" element={

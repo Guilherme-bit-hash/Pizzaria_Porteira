@@ -4,7 +4,6 @@ import { exigirAdmin } from '../middleware/auth.js'
 import { asyncHandler } from '../middleware/asyncHandler.js'
 import { getPaymentClient } from '../services/mercadoPago.js'
 import { criarPedidoLimiter, elegibilidadeCupomLimiter } from '../middleware/rateLimit.js'
-import { PRECOS_CARDAPIO } from '../data/cardapio.js'
 
 export const pedidosRouter = Router()
 
@@ -63,10 +62,16 @@ async function precosPromocoesValidos() {
   return new Set(linhas.map((linha) => Number(linha.preco)))
 }
 
-// Nunca confia no preço enviado pelo cliente: itens que batem com um nome do cardápio fixo
-// (src/data/cardapio.js) têm o preço comparado com o catálogo; os demais (promoções) só são
-// aceitos se o preço enviado corresponder a um preço de promoção realmente cadastrado.
-function validarItens(itens, precosPromocoes) {
+// Catálogo vigente (produtos ativos da tabela `produtos`, editável pelo painel admin).
+async function precosCardapio() {
+  const [linhas] = await pool.query('SELECT nome, preco FROM produtos WHERE ativo = TRUE')
+  return new Map(linhas.map((linha) => [linha.nome, Number(linha.preco)]))
+}
+
+// Nunca confia no preço enviado pelo cliente: itens que batem com um nome do cardápio têm o
+// preço comparado com o catálogo; os demais (promoções) só são aceitos se o preço enviado
+// corresponder a um preço de promoção realmente cadastrado.
+function validarItens(itens, precosPromocoes, precosCatalogo) {
   if (!Array.isArray(itens) || itens.length === 0) return null
 
   const itensValidados = []
@@ -80,7 +85,7 @@ function validarItens(itens, precosPromocoes) {
       return null
     }
 
-    const precoCatalogo = PRECOS_CARDAPIO.get(item.nome.trim())
+    const precoCatalogo = precosCatalogo.get(item.nome.trim())
     if (precoCatalogo !== undefined) {
       if (Math.abs(precoCatalogo - item.preco) > 0.001) return null
       itensValidados.push({ ...item, preco: precoCatalogo })
@@ -95,7 +100,7 @@ function validarItens(itens, precosPromocoes) {
 
 // Criar pedido (usado pelo checkout do site, sem autenticação)
 pedidosRouter.post('/', criarPedidoLimiter, asyncHandler(async (req, res) => {
-  const { nome, telefone, endereco, complemento, observacoes, itens, cupom } = req.body || {}
+  const { nome, telefone, endereco, complemento, observacoes, itens, cupom, email, aceitaPromocoes } = req.body || {}
 
   if (!nome || !telefone || !endereco) {
     return res.status(400).json({ erro: 'Nome, telefone e endereço são obrigatórios.' })
@@ -105,8 +110,13 @@ pedidosRouter.post('/', criarPedidoLimiter, asyncHandler(async (req, res) => {
     return res.status(400).json({ erro: 'Dados do cliente inválidos. Confira nome, telefone e endereço informados.' })
   }
 
-  const precosPromocoes = await precosPromocoesValidos()
-  const itensValidos = validarItens(itens, precosPromocoes)
+  const emailLimpo = typeof email === 'string' ? email.trim() : ''
+  if (emailLimpo && (emailLimpo.length > 150 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailLimpo))) {
+    return res.status(400).json({ erro: 'E-mail inválido.' })
+  }
+
+  const [precosPromocoes, precosCatalogo] = await Promise.all([precosPromocoesValidos(), precosCardapio()])
+  const itensValidos = validarItens(itens, precosPromocoes, precosCatalogo)
   if (!itensValidos) {
     return res.status(400).json({ erro: 'A lista de itens do pedido é inválida ou os preços não conferem com o cardápio.' })
   }
@@ -141,10 +151,40 @@ pedidosRouter.post('/', criarPedidoLimiter, asyncHandler(async (req, res) => {
 
     const total = Number((subtotal - desconto).toFixed(2))
 
-    const [resultado] = await conn.query(
-      `INSERT INTO pedidos (cliente_nome, cliente_telefone, endereco, complemento, observacoes, itens, subtotal, desconto, cupom, total)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    // Guarda/atualiza o cliente (chave: telefone normalizado). O consentimento para receber
+    // promoções só é ligado, nunca desligado, por um pedido: a caixa desmarcada num pedido
+    // posterior não deve apagar um "sim" dado antes. `id = LAST_INSERT_ID(id)` faz o insertId
+    // devolver o id do cliente também quando ele já existia.
+    const consentiu = aceitaPromocoes === true
+    const [clienteResultado] = await conn.query(
+      `INSERT INTO clientes (nome, telefone, telefone_normalizado, email, endereco, complemento, aceita_promocoes, consentimento_em)
+       VALUES (?, ?, ?, ?, ?, ?, ?, IF(?, NOW(), NULL))
+       ON DUPLICATE KEY UPDATE
+         id = LAST_INSERT_ID(id),
+         nome = VALUES(nome),
+         telefone = VALUES(telefone),
+         email = COALESCE(VALUES(email), email),
+         endereco = VALUES(endereco),
+         complemento = VALUES(complemento),
+         consentimento_em = IF(VALUES(aceita_promocoes) AND NOT aceita_promocoes, NOW(), consentimento_em),
+         aceita_promocoes = aceita_promocoes OR VALUES(aceita_promocoes)`,
       [
+        nome.trim(),
+        telefone,
+        normalizarTelefone(telefone),
+        emailLimpo || null,
+        endereco.trim(),
+        complemento || null,
+        consentiu,
+        consentiu,
+      ]
+    )
+
+    const [resultado] = await conn.query(
+      `INSERT INTO pedidos (cliente_id, cliente_nome, cliente_telefone, endereco, complemento, observacoes, itens, subtotal, desconto, cupom, total)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        clienteResultado.insertId,
         nome,
         telefone,
         endereco,

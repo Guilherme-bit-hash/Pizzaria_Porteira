@@ -7,6 +7,9 @@ import { pedidosRouter } from './routes/pedidos.js'
 import { authRouter } from './routes/auth.js'
 import { promocoesRouter } from './routes/promocoes.js'
 import { pagamentosRouter } from './routes/pagamentos.js'
+import { produtosRouter } from './routes/produtos.js'
+import { clientesRouter } from './routes/clientes.js'
+import { campanhasRouter } from './routes/campanhas.js'
 
 // Falha rápido e com mensagem clara no boot se faltar alguma variável obrigatória, em vez de
 // só quebrar de forma confusa no primeiro login (ex: jwt.sign com secret undefined).
@@ -49,6 +52,9 @@ app.use('/api/auth', authRouter)
 app.use('/api/pedidos', pedidosRouter)
 app.use('/api/promocoes', promocoesRouter)
 app.use('/api/pagamentos', pagamentosRouter)
+app.use('/api/produtos', produtosRouter)
+app.use('/api/clientes', clientesRouter)
+app.use('/api/campanhas', campanhasRouter)
 
 app.use((err, req, res, next) => {
   console.error(err)

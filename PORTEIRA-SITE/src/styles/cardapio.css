@@ -764,3 +764,11 @@
     font-size: 1.3rem;
   }
 }
+
+/* ===== ESTADOS DO CARDÁPIO (carregando / erro / categoria vazia) ===== */
+.cardapio-status {
+  text-align: center;
+  padding: 40px 16px;
+  font-size: 1.05rem;
+  opacity: 0.85;
+}

@@ -1,5 +1,5 @@
 // src/Pages/Cardapio.tsx - VERSÃO COMPLETA ATUALIZADA
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { useCarrinho } from '../contexts/CarrinhoContexts'
 import Navbar from '../components/Navbar'
@@ -9,9 +9,17 @@ import { showToast } from '../components/Toast'
 import Sidebar from '../components/Sidebar'
 import MenuButton from '../components/MenuButton'
 import { WHATSAPP_NUMBER } from '../config/whatsapp'
+import { listarCardapio, type CategoriaProduto, type Produto } from '../services/produtoService'
 import '../styles/cardapio.css'
 
 type TabType = 'pizzas' | 'hamburgueres' | 'bebidas' | 'sobremesas' | 'promocoes'
+
+const CATEGORIA_DA_ABA: Record<Exclude<TabType, 'promocoes'>, CategoriaProduto> = {
+  pizzas: 'pizza',
+  hamburgueres: 'hamburguer',
+  bebidas: 'bebida',
+  sobremesas: 'sobremesa'
+}
 
 // Menor que a quantidade de itens de qualquer aba hoje (a maior tem 6), pra garantir que a
 // paginação sempre apareça de fato — com um valor igual ou maior, uma aba com poucos itens
@@ -102,124 +110,43 @@ export default function Cardapio() {
     return `https://placehold.co/600x400/${cores[categoria]}/white?text=${texto}&font=montserrat`
   }
 
-  // Dados do cardápio com URLs de imagens
+  // Cardápio vindo da API (editável no painel admin), agrupado por aba
+  const [produtos, setProdutos] = useState<Produto[]>([])
+  const [carregandoCardapio, setCarregandoCardapio] = useState(true)
+  const [erroCardapio, setErroCardapio] = useState(false)
+
+  const carregarCardapio = useCallback(async () => {
+    setCarregandoCardapio(true)
+    setErroCardapio(false)
+    try {
+      setProdutos(await listarCardapio())
+    } catch (error) {
+      console.error('Não foi possível carregar o cardápio:', error)
+      setErroCardapio(true)
+    } finally {
+      setCarregandoCardapio(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    carregarCardapio()
+  }, [carregarCardapio])
+
+  const itensDaAba = (aba: Exclude<TabType, 'promocoes'>) =>
+    produtos
+      .filter((produto) => produto.categoria === CATEGORIA_DA_ABA[aba])
+      .map((produto) => ({
+        nome: produto.nome,
+        descricao: produto.descricao,
+        preco: produto.preco,
+        imagem: produto.imagemUrl || getPlaceholderImage(produto.nome, aba)
+      }))
+
   const cardapio = {
-    pizzas: [
-      {
-        nome: 'Mussarela',
-        descricao: 'Mussarela, molho de tomate, orégano',
-        preco: 32.9,
-        imagem: getPlaceholderImage('Mussarela', 'pizzas')
-      },
-      {
-        nome: 'Portuguesa',
-        descricao: 'Presunto, ovo, cebola, pimentão, azeitonas, mussarela',
-        preco: 39.9,
-        imagem: getPlaceholderImage('Portuguesa', 'pizzas')
-      },
-      {
-        nome: 'Calabresa',
-        descricao: 'Calabresa, cebola, mussarela, orégano',
-        preco: 34.9,
-        imagem: getPlaceholderImage('Calabresa', 'pizzas')
-      },
-      {
-        nome: 'Frango com Catupiry',
-        descricao: 'Frango desfiado, Catupiry, milho, mussarela',
-        preco: 42.9,
-        imagem: getPlaceholderImage('Frango Catupiry', 'pizzas')
-      },
-      {
-        nome: 'Margherita',
-        descricao: 'Mussarela, tomate, manjericão, azeite',
-        preco: 35.9,
-        imagem: getPlaceholderImage('Margherita', 'pizzas')
-      },
-      {
-        nome: '4 Queijos',
-        descricao: 'Mussarela, provolone, parmesão, gorgonzola',
-        preco: 44.9,
-        imagem: getPlaceholderImage('4 Queijos', 'pizzas')
-      }
-    ],
-    hamburgueres: [
-      {
-        nome: 'Clássico',
-        descricao: 'Carne 150g, queijo, alface, tomate, maionese',
-        preco: 26.9,
-        imagem: getPlaceholderImage('Hambúrguer Clássico', 'hamburgueres')
-      },
-      {
-        nome: 'Porteira',
-        descricao: 'Carne 180g, bacon, cheddar, cebola caramelizada',
-        preco: 29.9,
-        imagem: getPlaceholderImage('Hambúrguer Porteira', 'hamburgueres')
-      },
-      {
-        nome: 'Double Bacon',
-        descricao: '2 carnes, bacon extra, queijo cheddar, molho especial',
-        preco: 34.9,
-        imagem: getPlaceholderImage('Double Bacon', 'hamburgueres')
-      },
-      {
-        nome: 'Vegetariano',
-        descricao: 'Hambúrguer de grão de bico, queijo, alface, tomate',
-        preco: 28.9,
-        imagem: getPlaceholderImage('Vegetariano', 'hamburgueres')
-      }
-    ],
-    bebidas: [
-      {
-        nome: 'Refrigerante lata',
-        descricao: 'Coca-Cola, Guaraná, Fanta Laranja, Sprite',
-        preco: 6,
-        imagem: getPlaceholderImage('Refrigerante', 'bebidas')
-      },
-      {
-        nome: 'Suco natural',
-        descricao: 'Laranja, limão, maracujá, abacaxi com hortelã',
-        preco: 8,
-        imagem: getPlaceholderImage('Suco Natural', 'bebidas')
-      },
-      {
-        nome: 'Água mineral',
-        descricao: 'Água com/sem gás 500ml',
-        preco: 4,
-        imagem: getPlaceholderImage('Água', 'bebidas')
-      },
-      {
-        nome: 'Cerveja artesanal',
-        descricao: 'IPA, Pilsen, Weiss 500ml',
-        preco: 12,
-        imagem: getPlaceholderImage('Cerveja', 'bebidas')
-      }
-    ],
-    sobremesas: [
-      {
-        nome: 'Pudim',
-        descricao: 'Pudim de leite condensado tradicional',
-        preco: 12,
-        imagem: getPlaceholderImage('Pudim', 'sobremesas')
-      },
-      {
-        nome: 'Mousse de chocolate',
-        descricao: 'Chocolate meio amargo com raspas de chocolate',
-        preco: 10,
-        imagem: getPlaceholderImage('Mousse', 'sobremesas')
-      },
-      {
-        nome: 'Brownie com sorvete',
-        descricao: 'Brownie quente com bola de sorvete de creme',
-        preco: 16,
-        imagem: getPlaceholderImage('Brownie', 'sobremesas')
-      },
-      {
-        nome: 'Cheesecake',
-        descricao: 'Cheesecake de frutas vermelhas',
-        preco: 14,
-        imagem: getPlaceholderImage('Cheesecake', 'sobremesas')
-      }
-    ]
+    pizzas: itensDaAba('pizzas'),
+    hamburgueres: itensDaAba('hamburgueres'),
+    bebidas: itensDaAba('bebidas'),
+    sobremesas: itensDaAba('sobremesas')
     // Sem chave "promocoes" aqui: a aba de promoções não usa esta lista — ela renderiza o
     // banner de `promocaoDoDia` (vindo do backend) e a grade semanal mais abaixo.
   }
@@ -494,8 +421,24 @@ export default function Cardapio() {
           </div>
         )}
 
+        {/* ESTADOS DE CARREGAMENTO / ERRO / ABA VAZIA */}
+        {abaAtiva !== 'promocoes' && carregandoCardapio && (
+          <p className="cardapio-status">Carregando cardápio...</p>
+        )}
+        {abaAtiva !== 'promocoes' && !carregandoCardapio && erroCardapio && (
+          <div className="cardapio-status">
+            <p>Não foi possível carregar o cardápio agora.</p>
+            <button type="button" onClick={carregarCardapio} className="cardapio-paginacao__botao">
+              Tentar novamente
+            </button>
+          </div>
+        )}
+        {abaAtiva !== 'promocoes' && !carregandoCardapio && !erroCardapio && cardapio[abaAtiva].length === 0 && (
+          <p className="cardapio-status">Nenhum item disponível nesta categoria no momento.</p>
+        )}
+
         {/* SEÇÃO NORMAL PARA OUTRAS ABAS */}
-        {abaAtiva !== 'promocoes' && (
+        {abaAtiva !== 'promocoes' && !carregandoCardapio && !erroCardapio && cardapio[abaAtiva].length > 0 && (
           <>
             {/* CONTADOR DE ITENS */}
             <div className="cardapio-contador">

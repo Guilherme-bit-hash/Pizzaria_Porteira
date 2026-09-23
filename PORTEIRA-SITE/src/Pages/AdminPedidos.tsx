@@ -9,6 +9,7 @@ import {
   type StatusPedido,
 } from '../services/pedidoService'
 import { showToast } from '../components/Toast'
+import AdminNav from '../components/AdminNav'
 import '../styles/admin.css'
 
 const STATUS_LABEL: Record<StatusPedido, string> = {
@@ -115,23 +116,11 @@ export default function AdminPedidos() {
     }
   }
 
-  const handleSair = () => {
-    limparAdminToken()
-    navigate('/admin')
-  }
-
   return (
     <div className="admin-page">
       <header className="admin-header">
         <h1 className="admin-header__titulo">📋 Pedidos</h1>
-        <div className="admin-header__acoes">
-          <button onClick={() => navigate('/admin/promocoes')} className="admin-botao-secundario">
-            🎯 Promoções
-          </button>
-          <button onClick={handleSair} className="admin-botao-perigo">
-            Sair
-          </button>
-        </div>
+        <AdminNav atual="pedidos" />
       </header>
 
       <div className="admin-conteudo">

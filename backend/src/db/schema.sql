@@ -24,6 +24,40 @@ CREATE TABLE IF NOT EXISTS pedidos (
   atualizado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
+-- Cardápio editável pelo painel admin. Os produtos iniciais são inseridos pelo migrate.js
+-- (só quando a tabela está vazia), para uma renomeação feita no painel não ser desfeita.
+CREATE TABLE IF NOT EXISTS produtos (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  categoria ENUM('pizza', 'hamburguer', 'bebida', 'sobremesa') NOT NULL,
+  nome VARCHAR(150) NOT NULL,
+  descricao VARCHAR(255) NOT NULL DEFAULT '',
+  preco DECIMAL(10, 2) NOT NULL,
+  imagem_url VARCHAR(500) NULL,
+  ativo BOOLEAN NOT NULL DEFAULT TRUE,
+  ordem INT NOT NULL DEFAULT 0,
+  criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  atualizado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uq_produtos_nome (nome)
+);
+
+-- Base de clientes, criada/atualizada automaticamente a cada pedido. `aceita_promocoes` só
+-- vira TRUE quando o cliente marca o consentimento no checkout (LGPD) — é ele que deve
+-- filtrar qualquer disparo de promoções por WhatsApp/e-mail.
+CREATE TABLE IF NOT EXISTS clientes (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  nome VARCHAR(150) NOT NULL,
+  telefone VARCHAR(30) NOT NULL,
+  telefone_normalizado VARCHAR(20) NOT NULL,
+  email VARCHAR(150) NULL,
+  endereco VARCHAR(255) NOT NULL,
+  complemento VARCHAR(150) NULL,
+  aceita_promocoes BOOLEAN NOT NULL DEFAULT FALSE,
+  consentimento_em TIMESTAMP NULL,
+  criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  atualizado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uq_clientes_telefone (telefone_normalizado)
+);
+
 CREATE TABLE IF NOT EXISTS promocoes (
   dia_semana TINYINT PRIMARY KEY,
   nome VARCHAR(150) NOT NULL,

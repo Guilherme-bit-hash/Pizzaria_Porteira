@@ -4,6 +4,7 @@ import { getAdminToken, limparAdminToken } from '../services/pedidoService'
 import { atualizarPromocao, listarPromocoes, type DadosPromocao } from '../services/promocaoService'
 import { promocoesPadrao, type Promocao } from '../hooks/usePromocaoDoDia'
 import { showToast } from '../components/Toast'
+import AdminNav from '../components/AdminNav'
 import '../styles/admin.css'
 
 const NOMES_DIAS = [
@@ -104,23 +105,11 @@ export default function AdminPromocoes() {
     }
   }
 
-  const handleSair = () => {
-    limparAdminToken()
-    navigate('/admin')
-  }
-
   return (
     <div className="admin-page">
       <header className="admin-header admin-header--estreito">
         <h1 className="admin-header__titulo">🎯 Promoções</h1>
-        <div className="admin-header__acoes">
-          <button onClick={() => navigate('/admin/pedidos')} className="admin-botao-secundario">
-            📋 Pedidos
-          </button>
-          <button onClick={handleSair} className="admin-botao-perigo">
-            Sair
-          </button>
-        </div>
+        <AdminNav atual="promocoes" />
       </header>
 
       <div className="admin-conteudo admin-conteudo--estreito">
