@@ -1,3 +1,12 @@
+// =====================================================================================
+// routes/pedidos.js — o coração do sistema: pedidos. Montado em /api/pedidos.
+//
+// Rotas públicas (usadas pelo checkout do site): criar pedido, verificar elegibilidade do
+// cupom, gerar cobrança PIX e consultar status do pagamento.
+// Rotas do painel admin (protegidas por exigirAdmin): listar, detalhar e mudar status.
+// Ao criar um pedido, também cria/atualiza o cliente na tabela `clientes`.
+// A confirmação assíncrona do PIX chega por routes/pagamentos.js (webhook).
+// =====================================================================================
 import { Router } from 'express'
 import { pool } from '../db/pool.js'
 import { exigirAdmin } from '../middleware/auth.js'
@@ -7,12 +16,16 @@ import { criarPedidoLimiter, elegibilidadeCupomLimiter } from '../middleware/rat
 
 export const pedidosRouter = Router()
 
+// Status possíveis de um pedido (igual ao ENUM `status` da tabela `pedidos`).
 const STATUS_VALIDOS = ['recebido', 'preparando', 'saiu_para_entrega', 'entregue', 'cancelado']
 
+// Regras do cupom de primeira compra: código, 10% de desconto e subtotal mínimo de R$ 80.
 const CUPOM_PRIMEIRA_COMPRA = 'BEMVINDO10'
 const CUPOM_PERCENTUAL = 0.1
 const CUPOM_VALOR_MINIMO = 80
 
+// Deixa só os dígitos do telefone ("(11) 99999-9999" -> "11999999999"), para comparar
+// telefones escritos de formas diferentes.
 function normalizarTelefone(telefone) {
   return String(telefone || '').replace(/\D/g, '')
 }
@@ -46,6 +59,7 @@ async function elegivelCupomPrimeiraCompra(executor, telefone) {
   const telefoneNormalizado = normalizarTelefone(telefone)
   if (!telefoneNormalizado) return false
 
+  // Procura qualquer pedido anterior cujo telefone (sem máscara) seja igual; nenhum = elegível.
   const [linhas] = await executor.query(
     `SELECT id FROM pedidos WHERE REGEXP_REPLACE(cliente_telefone, '[^0-9]', '') = ? LIMIT 1`,
     [telefoneNormalizado]
@@ -71,12 +85,14 @@ async function precosCardapio() {
 // Nunca confia no preço enviado pelo cliente: itens que batem com um nome do cardápio têm o
 // preço comparado com o catálogo; os demais (promoções) só são aceitos se o preço enviado
 // corresponder a um preço de promoção realmente cadastrado.
+// Devolve a lista de itens aprovada ou null se qualquer item for inválido.
 function validarItens(itens, precosPromocoes, precosCatalogo) {
   if (!Array.isArray(itens) || itens.length === 0) return null
 
   const itensValidados = []
 
   for (const item of itens) {
+    // Formato do item: nome não vazio, preço numérico >= 0 e quantidade inteira de 1 a 50.
     if (
       typeof item.nome !== 'string' || !item.nome.trim() ||
       typeof item.preco !== 'number' || Number.isNaN(item.preco) || item.preco < 0 ||
@@ -87,6 +103,7 @@ function validarItens(itens, precosPromocoes, precosCatalogo) {
 
     const precoCatalogo = precosCatalogo.get(item.nome.trim())
     if (precoCatalogo !== undefined) {
+      // Item do cardápio: o preço enviado deve bater com o do banco (tolerância de arredondamento).
       if (Math.abs(precoCatalogo - item.preco) > 0.001) return null
       itensValidados.push({ ...item, preco: precoCatalogo })
     } else if (item.preco === 0 || precosPromocoes.has(item.preco)) {
@@ -98,10 +115,13 @@ function validarItens(itens, precosPromocoes, precosCatalogo) {
   return itensValidados
 }
 
-// Criar pedido (usado pelo checkout do site, sem autenticação)
+// Criar pedido (usado pelo checkout do site, sem autenticação).
+// Fluxo: valida dados -> valida itens/preços -> calcula subtotal -> (com trava por telefone)
+// aplica cupom, grava/atualiza o cliente e grava o pedido.
 pedidosRouter.post('/', criarPedidoLimiter, asyncHandler(async (req, res) => {
   const { nome, telefone, endereco, complemento, observacoes, itens, cupom, email, aceitaPromocoes } = req.body || {}
 
+  // 1) Validação dos dados do cliente (campos obrigatórios, tamanhos e e-mail opcional).
   if (!nome || !telefone || !endereco) {
     return res.status(400).json({ erro: 'Nome, telefone e endereço são obrigatórios.' })
   }
@@ -115,12 +135,14 @@ pedidosRouter.post('/', criarPedidoLimiter, asyncHandler(async (req, res) => {
     return res.status(400).json({ erro: 'E-mail inválido.' })
   }
 
+  // 2) Validação dos itens contra os preços reais do banco (consultas feitas em paralelo).
   const [precosPromocoes, precosCatalogo] = await Promise.all([precosPromocoesValidos(), precosCardapio()])
   const itensValidos = validarItens(itens, precosPromocoes, precosCatalogo)
   if (!itensValidos) {
     return res.status(400).json({ erro: 'A lista de itens do pedido é inválida ou os preços não conferem com o cardápio.' })
   }
 
+  // 3) Subtotal calculado no servidor: soma preço x quantidade de cada item.
   const subtotal = itensValidos.reduce((acc, item) => acc + item.preco * item.quantidade, 0)
 
   // Trava por telefone (GET_LOCK do MySQL) durante a checagem de elegibilidade + o INSERT:
@@ -128,6 +150,9 @@ pedidosRouter.post('/', criarPedidoLimiter, asyncHandler(async (req, res) => {
   // na checagem "ainda não tem pedido" antes de qualquer um gravar, e os dois ganhavam o
   // cupom de primeira compra. Com o lock, o segundo espera o primeiro terminar de gravar
   // antes de checar, e aí já não é mais elegível.
+  // GET_LOCK(nome, 5): trava nomeada do MySQL, presa à conexão; espera até 5s e devolve 1 se
+  // conseguiu. Por isso usamos UMA conexão dedicada (getConnection) para todo o bloco, e o
+  // lock é liberado no finally com RELEASE_LOCK, mesmo que algo dê erro.
   const nomeLock = `pedido:${normalizarTelefone(telefone)}`
   const conn = await pool.getConnection()
   try {
@@ -151,10 +176,14 @@ pedidosRouter.post('/', criarPedidoLimiter, asyncHandler(async (req, res) => {
 
     const total = Number((subtotal - desconto).toFixed(2))
 
-    // Guarda/atualiza o cliente (chave: telefone normalizado). O consentimento para receber
+    // 4) Cliente: guarda/atualiza o cliente (chave: telefone normalizado). O consentimento para receber
     // promoções só é ligado, nunca desligado, por um pedido: a caixa desmarcada num pedido
     // posterior não deve apagar um "sim" dado antes. `id = LAST_INSERT_ID(id)` faz o insertId
     // devolver o id do cliente também quando ele já existia.
+    // ON DUPLICATE KEY UPDATE: se já existe cliente com esse telefone_normalizado (índice
+    // UNIQUE), em vez de erro ele atualiza a linha existente com os dados novos. E-mail novo
+    // vazio não apaga o antigo (COALESCE); consentimento só liga (OR) e a data é registrada
+    // apenas na passagem de "não" para "sim".
     const consentiu = aceitaPromocoes === true
     const [clienteResultado] = await conn.query(
       `INSERT INTO clientes (nome, telefone, telefone_normalizado, email, endereco, complemento, aceita_promocoes, consentimento_em)
@@ -180,6 +209,8 @@ pedidosRouter.post('/', criarPedidoLimiter, asyncHandler(async (req, res) => {
       ]
     )
 
+    // 5) Grava o pedido ligado ao cliente; `itens` vai como JSON (coluna JSON) e os valores
+    // de subtotal/desconto/total são os calculados aqui, não os enviados pelo navegador.
     const [resultado] = await conn.query(
       `INSERT INTO pedidos (cliente_id, cliente_nome, cliente_telefone, endereco, complemento, observacoes, itens, subtotal, desconto, cupom, total)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -207,6 +238,7 @@ pedidosRouter.post('/', criarPedidoLimiter, asyncHandler(async (req, res) => {
       status: 'recebido',
     })
   } finally {
+    // Sempre libera a trava e devolve a conexão ao pool, com sucesso ou erro.
     await conn.query('SELECT RELEASE_LOCK(?)', [nomeLock])
     conn.release()
   }
@@ -242,9 +274,11 @@ function mapearStatusPagamento(statusMp) {
 }
 
 // Gera a cobrança PIX no Mercado Pago para um pedido já criado.
+// Devolve o código "copia e cola" (qrCode) e a imagem do QR Code (base64) para o site exibir.
 pedidosRouter.post('/:id/pagamento/pix', asyncHandler(async (req, res) => {
   const { email } = req.body || {}
 
+  // O valor cobrado vem do banco (total do pedido), nunca do navegador.
   const [linhas] = await pool.query(
     'SELECT id, cliente_nome, total, forma_pagamento, pagamento_status FROM pedidos WHERE id = ?',
     [req.params.id]
@@ -259,8 +293,12 @@ pedidosRouter.post('/:id/pagamento/pix', asyncHandler(async (req, res) => {
   }
 
   const client = getPaymentClient()
+  // O Mercado Pago pede nome e sobrenome separados do pagador.
   const [primeiroNome, ...resto] = pedido.cliente_nome.trim().split(/\s+/)
 
+  // external_reference amarra o pagamento ao nosso pedido (o webhook usa isso para achá-lo);
+  // notification_url é onde o Mercado Pago avisará mudanças (POST /api/pagamentos/webhook).
+  // Sem e-mail válido do cliente, usa um e-mail fictício, pois o Mercado Pago exige um.
   const resultado = await client.create({
     body: {
       transaction_amount: Number(pedido.total),
@@ -276,8 +314,10 @@ pedidosRouter.post('/:id/pagamento/pix', asyncHandler(async (req, res) => {
     },
   })
 
+  // Dados do PIX (código copia e cola e QR Code) vêm aninhados na resposta do Mercado Pago.
   const dadosPix = resultado.point_of_interaction?.transaction_data
 
+  // Registra no pedido que o pagamento é PIX, o status inicial e o id do pagamento no MP.
   await pool.query(
     'UPDATE pedidos SET forma_pagamento = ?, pagamento_status = ?, mp_payment_id = ? WHERE id = ?',
     ['pix', mapearStatusPagamento(resultado.status), String(resultado.id), pedido.id]
@@ -303,6 +343,7 @@ pedidosRouter.get('/:id/pagamento/status', asyncHandler(async (req, res) => {
   }
   const pedido = linhas[0]
 
+  // Pedido sem PIX iniciado: apenas devolve o que está salvo.
   if (pedido.forma_pagamento !== 'pix' || !pedido.mp_payment_id) {
     return res.json({ status: pedido.pagamento_status })
   }
@@ -312,6 +353,7 @@ pedidosRouter.get('/:id/pagamento/status', asyncHandler(async (req, res) => {
     return res.json({ status: pedido.pagamento_status })
   }
 
+  // Ainda pendente: pergunta ao Mercado Pago e atualiza o banco se mudou.
   const client = getPaymentClient()
   const resultado = await client.get({ id: pedido.mp_payment_id })
   const statusAtual = mapearStatusPagamento(resultado.status)

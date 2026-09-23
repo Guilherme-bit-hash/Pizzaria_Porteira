@@ -1,5 +1,8 @@
+/* Estilos do Sidebar (components/Sidebar.tsx), usado em Pages/Cardapio.tsx. */
+/* Camadas (z-index): navbar 1000 < botão de menu 1001 < overlay 1002 < painel 1003. */
 /* src/styles/sidebar.css */
 /* ===== OVERLAY E PAINEL ===== */
+/* Fundo escurecido que cobre a tela inteira (position: fixed + inset: 0); clicar nele fecha o menu. */
 .sidebar-overlay {
   position: fixed;
   inset: 0;
@@ -14,6 +17,7 @@
   to { opacity: 1; }
 }
 
+/* Painel lateral fixo à esquerda; largura de 280px, limitada a 80% da tela (min()); rola se a lista for longa. */
 .sidebar {
   position: fixed;
   top: 0;
@@ -39,6 +43,7 @@
 }
 
 /* ===== CABEÇALHO DA SIDEBAR ===== */
+/* Cabeçalho do painel: título e botão fechar. */
 .sidebar__topo {
   display: flex;
   align-items: center;
@@ -48,12 +53,14 @@
   border-bottom: 1px solid rgba(255, 215, 0, 0.2);
 }
 
+/* Texto "Categorias". */
 .sidebar__titulo {
   color: #FFD700;
   font-size: 1.3rem;
   font-weight: bold;
 }
 
+/* Botão redondo de fechar o painel. */
 .sidebar__fechar {
   background: rgba(255, 255, 255, 0.1);
   border: none;
@@ -69,17 +76,20 @@
   transition: background 0.2s ease;
 }
 
+/* Hover: fundo mais claro. */
 .sidebar__fechar:hover {
   background: rgba(255, 255, 255, 0.2);
 }
 
 /* ===== ITENS DE NAVEGAÇÃO ===== */
+/* Coluna de botões de categoria. */
 .sidebar__lista {
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
+/* Botão de uma categoria (estilo inativo). */
 .sidebar__item {
   display: flex;
   align-items: center;
@@ -96,39 +106,46 @@
   text-align: left;
 }
 
+/* Hover: fundo mais claro. */
 .sidebar__item:hover {
   background: rgba(255, 255, 255, 0.1);
 }
 
+/* Emoji da categoria. */
 .sidebar__item-icone {
   font-size: 1.4rem;
 }
 
 /* ===== ITEM ATIVO POR CATEGORIA ===== */
+/* Categoria ativa "pizzas" (laranja); as classes --ativo e --nome-da-categoria são combinadas pelo React. */
 .sidebar__item--ativo.sidebar__item--pizzas {
   background: linear-gradient(135deg, #FF6B35, #FF6B35CC);
   border-color: rgba(255, 255, 255, 0.3);
   color: white;
 }
 
+/* Categoria ativa "hambúrgueres" (marrom). */
 .sidebar__item--ativo.sidebar__item--hamburgueres {
   background: linear-gradient(135deg, #8B4513, #8B4513CC);
   border-color: rgba(255, 255, 255, 0.3);
   color: white;
 }
 
+/* Categoria ativa "bebidas" (azul). */
 .sidebar__item--ativo.sidebar__item--bebidas {
   background: linear-gradient(135deg, #4A90E2, #4A90E2CC);
   border-color: rgba(255, 255, 255, 0.3);
   color: white;
 }
 
+/* Categoria ativa "sobremesas" (rosa). */
 .sidebar__item--ativo.sidebar__item--sobremesas {
   background: linear-gradient(135deg, #C2185B, #C2185BCC);
   border-color: rgba(255, 255, 255, 0.3);
   color: white;
 }
 
+/* Categoria ativa "promoções" (dourado, texto escuro para contraste). */
 .sidebar__item--ativo.sidebar__item--promocoes {
   background: linear-gradient(135deg, #FFD700, #FFD700CC);
   border-color: rgba(255, 255, 255, 0.3);
@@ -137,6 +154,7 @@
 
 /* ===== RESPONSIVIDADE ===== */
 /* Em desktop a TabsNavigation (.tabs-desktop) assume a navegação */
+/* Em telas largas a Sidebar nem é exibida. */
 @media (min-width: 769px) {
   .sidebar-overlay,
   .sidebar {

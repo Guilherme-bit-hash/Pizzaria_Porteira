@@ -1,6 +1,9 @@
+/* Estilos da página de pedido/checkout. Importado por Pages/Pedido.tsx. */
+/* Fluxo em etapas: carrinho -> entrega -> pagamento (forma, PIX). Também cobre o estado de carrinho vazio. */
 /* src/styles/pedido.css */
 
 /* ===== CARRINHO VAZIO ===== */
+/* Tela de carrinho vazio (tela cheia, conteúdo centralizado). */
 .pedido-vazio-page {
   min-height: 100vh;
   background: linear-gradient(135deg, #2D1B00 0%, #3A240F 30%, #4A2F15 60%, #5A3E2B 100%);
@@ -19,18 +22,21 @@
   text-align: center;
 }
 
+/* Tablet/celular: menos espaço no topo (Navbar mais baixa). */
 @media (max-width: 768px) {
   .pedido-vazio-page {
     padding-top: 130px;
   }
 }
 
+/* Celular pequeno: ainda menos espaço no topo. */
 @media (max-width: 480px) {
   .pedido-vazio-page {
     padding-top: 110px;
   }
 }
 
+/* Cartão central da mensagem de carrinho vazio. */
 .pedido-vazio-card {
   background: rgba(255, 255, 255, 0.05);
   border-radius: 20px;
@@ -39,18 +45,21 @@
   border: 2px solid rgba(255, 215, 0, 0.3);
 }
 
+/* Título do carrinho vazio. */
 .pedido-vazio-titulo {
   color: #FFD700;
   font-size: 2.5rem;
   margin-bottom: 1rem;
 }
 
+/* Texto explicativo do carrinho vazio. */
 .pedido-vazio-texto {
   font-size: 1.2rem;
   margin-bottom: 2rem;
   color: #ccc;
 }
 
+/* Botão que leva de volta ao cardápio. */
 .pedido-vazio-botao {
   display: inline-block;
   background: linear-gradient(135deg, #FFD700, #FFA500);
@@ -64,6 +73,7 @@
 }
 
 /* ===== PÁGINA ===== */
+/* Página do pedido com itens; padding-top compensa a Navbar fixa. */
 .pedido-page {
   min-height: 100vh;
   background: linear-gradient(135deg, #2D1B00 0%, #3A240F 30%, #4A2F15 60%, #5A3E2B 100%);
@@ -74,29 +84,34 @@
   padding-top: 180px;
 }
 
+/* Cabeçalho com título e indicador de etapas. */
 .pedido-cabecalho {
   text-align: center;
   margin-bottom: 3rem;
 }
 
+/* Reduz o padding-top da página (Navbar mais baixa). */
 @media (max-width: 768px) {
   .pedido-page {
     padding-top: 130px;
   }
 }
 
+/* Reduz ainda mais o padding-top no celular pequeno. */
 @media (max-width: 480px) {
   .pedido-page {
     padding-top: 110px;
   }
 }
 
+/* Título da página de pedido. */
 .pedido-cabecalho__titulo {
   color: #FFD700;
   font-size: 2.8rem;
   margin-bottom: 0.5rem;
 }
 
+/* Linha dos selos de etapa (Carrinho > Entrega). */
 .pedido-cabecalho__etapas {
   display: flex;
   justify-content: center;
@@ -105,6 +120,7 @@
   margin-top: 1rem;
 }
 
+/* Selo de uma etapa (estilo padrão: inativa). */
 .pedido-etapa-badge {
   padding: 8px 20px;
   background: rgba(255, 215, 0, 0.2);
@@ -113,15 +129,18 @@
   font-weight: bold;
 }
 
+/* Selo da etapa atual, preenchido em dourado. */
 .pedido-etapa-badge--ativa {
   background: #FFD700;
   color: #2D1B00;
 }
 
+/* Seta entre os selos de etapa. */
 .pedido-cabecalho__seta {
   font-size: 1.5rem;
 }
 
+/* Coluna central que empilha os cartões (largura máx. 1000px). */
 .pedido-conteudo {
   display: flex;
   flex-direction: column;
@@ -131,6 +150,7 @@
 }
 
 /* ===== CARDS COMPARTILHADOS ===== */
+/* Cartão base usado em cada etapa. */
 .pedido-card {
   background: rgba(255, 255, 255, 0.05);
   border-radius: 20px;
@@ -138,6 +158,7 @@
   border: 2px solid rgba(255, 215, 0, 0.2);
 }
 
+/* Linha superior do cartão: título à esquerda e botão de limpar à direita. */
 .pedido-card__topo {
   display: flex;
   justify-content: space-between;
@@ -145,12 +166,14 @@
   margin-bottom: 1.5rem;
 }
 
+/* Título do cartão. */
 .pedido-card__titulo {
   color: #FFD700;
   font-size: 1.8rem;
   margin-bottom: 1.5rem;
 }
 
+/* Botão vermelho "Limpar Tudo" do carrinho. */
 .pedido-botao-limpar {
   background: rgba(255, 68, 68, 0.2);
   color: #FF8888;
@@ -162,10 +185,12 @@
 }
 
 /* ===== LISTA DE ITENS DO CARRINHO ===== */
+/* Contêiner da lista de itens do carrinho. */
 .pedido-itens-lista {
   margin-bottom: 2rem;
 }
 
+/* Uma linha de item do carrinho (informações à esquerda, controles à direita). */
 .pedido-item {
   display: flex;
   align-items: center;
@@ -177,10 +202,12 @@
   border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
+/* Bloco de texto do item; flex: 1 ocupa o espaço restante. */
 .pedido-item__info {
   flex: 1;
 }
 
+/* Nome e preço do item na mesma linha. */
 .pedido-item__cabecalho {
   display: flex;
   justify-content: space-between;
@@ -188,24 +215,28 @@
   margin-bottom: 0.5rem;
 }
 
+/* Nome do produto. */
 .pedido-item__nome {
   color: #FFD700;
   margin: 0;
   font-size: 1.3rem;
 }
 
+/* Preço do item. */
 .pedido-item__preco {
   color: #FF8C42;
   font-size: 1.4rem;
   font-weight: bold;
 }
 
+/* Descrição do produto. */
 .pedido-item__descricao {
   color: #aaa;
   margin: 0 0 0.5rem 0;
   font-size: 0.9rem;
 }
 
+/* Observação escrita pelo cliente, em itálico laranja. */
 .pedido-item__observacao {
   color: #FFA500;
   margin: 0;
@@ -213,6 +244,7 @@
   font-style: italic;
 }
 
+/* Grupo de controles de quantidade + remover. */
 .pedido-item__controles {
   display: flex;
   align-items: center;
@@ -220,6 +252,7 @@
   margin-left: 1rem;
 }
 
+/* Pílula escura com os botões - / quantidade / +. */
 .pedido-item__quantidade-grupo {
   display: flex;
   align-items: center;
@@ -229,6 +262,7 @@
   border-radius: 20px;
 }
 
+/* Botão redondo de aumentar/diminuir quantidade. */
 .pedido-item__botao-qtd {
   background: rgba(255, 255, 255, 0.1);
   color: white;
@@ -243,6 +277,7 @@
   justify-content: center;
 }
 
+/* Número da quantidade entre os botões. */
 .pedido-item__quantidade-valor {
   font-size: 1.2rem;
   font-weight: bold;
@@ -250,6 +285,7 @@
   text-align: center;
 }
 
+/* Botão vermelho para remover o item. */
 .pedido-item__botao-remover {
   background: rgba(255, 68, 68, 0.1);
   color: #FF8888;
@@ -261,6 +297,7 @@
 }
 
 /* ===== CUPOM DE PRIMEIRA COMPRA ===== */
+/* Faixa (borda tracejada) que anuncia o cupom de primeira compra. */
 .pedido-cupom-banner {
   display: flex;
   align-items: center;
@@ -274,21 +311,25 @@
   font-size: 0.95rem;
 }
 
+/* Ícone do aviso de cupom. */
 .pedido-cupom-banner__icone {
   font-size: 1.4rem;
 }
 
+/* Mensagem sobre o resultado do cupom (verde = aplicado). */
 .pedido-cupom-feedback {
   margin: 0.6rem 0 0;
   font-size: 0.9rem;
   color: #7CFC94;
 }
 
+/* Variante vermelha: cupom não pôde ser aplicado. */
 .pedido-cupom-feedback--indisponivel {
   color: #FF8888;
 }
 
 /* ===== RESUMOS ===== */
+/* Caixa de resumo do pedido (itens e valores). */
 .pedido-resumo {
   padding: 1.5rem;
   background: rgba(0, 0, 0, 0.2);
@@ -296,38 +337,46 @@
   margin-bottom: 1.5rem;
 }
 
+/* Título do resumo. */
 .pedido-resumo__titulo {
   color: #FFD700;
   margin-bottom: 1rem;
 }
 
+/* Bloco que lista os itens no resumo. */
 .pedido-resumo__itens {
   margin-bottom: 0.8rem;
 }
 
+/* Lista dos itens do pedido. */
 .pedido-resumo__lista {
   margin: 0.5rem 0 0 1rem;
   padding: 0;
 }
 
+/* Cada item da lista do resumo. */
 .pedido-resumo__lista-item {
   margin-bottom: 0.3rem;
 }
 
+/* Linha "rótulo ... valor" (subtotal, frete etc.), com o valor à direita. */
 .pedido-resumo__linha {
   display: flex;
   justify-content: space-between;
   margin-bottom: 0.8rem;
 }
 
+/* Variante com menos espaço abaixo. */
 .pedido-resumo__linha--compacta {
   margin-bottom: 0.5rem;
 }
 
+/* Linha de desconto, em verde. */
 .pedido-resumo__linha--desconto {
   color: #7CFC94;
 }
 
+/* Linha do total, em destaque com linha divisória acima. */
 .pedido-resumo__total {
   display: flex;
   justify-content: space-between;
@@ -338,6 +387,7 @@
   border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+/* Botão dourado que avança para a etapa de entrega. */
 .pedido-botao-continuar {
   background: linear-gradient(135deg, #FFD700, #FFA500);
   color: #2D1B00;
@@ -351,6 +401,7 @@
   transition: all 0.3s ease;
 }
 
+/* Link para voltar ao cardápio e adicionar mais itens. */
 .pedido-link-voltar-cardapio {
   display: block;
   text-align: center;
@@ -361,24 +412,29 @@
 }
 
 /* ===== ETAPA ENTREGA ===== */
+/* Formulário de entrega. */
 .pedido-form {
   margin-bottom: 2rem;
 }
 
+/* Espaçamento entre campos do formulário. */
 .pedido-campo {
   margin-bottom: 1.2rem;
 }
 
+/* Último campo, com margem maior antes dos botões. */
 .pedido-campo--ultimo {
   margin-bottom: 1.5rem;
 }
 
+/* Rótulo dourado de cada campo. */
 .pedido-label {
   display: block;
   margin-bottom: 0.5rem;
   color: #FFD700;
 }
 
+/* Campo de texto padrão do formulário. */
 .pedido-input {
   width: 100%;
   padding: 12px;
@@ -389,17 +445,20 @@
   font-size: 1rem;
 }
 
+/* Caixa multilinha (observações): altura mínima e redimensiona só na vertical. */
 .pedido-textarea {
   min-height: 100px;
   resize: vertical;
 }
 
+/* Linha com os botões Voltar e Finalizar; quebra linha em telas estreitas. */
 .pedido-acoes {
   display: flex;
   gap: 1rem;
   flex-wrap: wrap;
 }
 
+/* Botão secundário para voltar ao carrinho (flex: 1). */
 .pedido-botao-voltar-carrinho {
   background: rgba(255, 255, 255, 0.1);
   color: #FFD700;
@@ -413,6 +472,7 @@
   min-width: 200px;
 }
 
+/* Botão verde (cor do WhatsApp) que finaliza o pedido; ocupa mais espaço que o "Voltar" (flex: 2). */
 .pedido-botao-finalizar {
   background: linear-gradient(135deg, #25D366, #128C7E);
   color: white;
@@ -431,16 +491,19 @@
   gap: 10px;
 }
 
+/* Estado desabilitado enquanto o pedido é enviado. */
 .pedido-botao-finalizar:disabled {
   cursor: not-allowed;
   opacity: 0.7;
 }
 
 /* ===== FORMA DE PAGAMENTO ===== */
+/* Bloco de escolha da forma de pagamento. */
 .pedido-forma-pagamento {
   margin-bottom: 1.5rem;
 }
 
+/* Linha com as opções de pagamento. */
 .pedido-forma-pagamento__opcoes {
   display: flex;
   gap: 1rem;
@@ -448,6 +511,7 @@
   margin-bottom: 1rem;
 }
 
+/* Botão de uma forma de pagamento (inativa). */
 .pedido-forma-pagamento__opcao {
   flex: 1;
   min-width: 200px;
@@ -462,6 +526,7 @@
   transition: all 0.2s ease;
 }
 
+/* Forma de pagamento selecionada, destacada em dourado. */
 .pedido-forma-pagamento__opcao--ativa {
   background: rgba(255, 215, 0, 0.15);
   color: #FFD700;
@@ -469,15 +534,18 @@
 }
 
 /* ===== PAGAMENTO PIX ===== */
+/* Área do pagamento PIX, centralizada. */
 .pedido-pix {
   text-align: center;
 }
 
+/* Texto de instrução do PIX. */
 .pedido-pix__instrucao {
   color: #ccc;
   margin-bottom: 1.5rem;
 }
 
+/* QR Code do PIX; fundo branco e padding para o leitor conseguir ler. */
 .pedido-pix__qrcode {
   width: 220px;
   height: 220px;
@@ -488,6 +556,7 @@
   display: block;
 }
 
+/* Linha com o código "copia e cola" e o botão copiar. */
 .pedido-pix__copia-cola {
   display: flex;
   gap: 0.8rem;
@@ -495,6 +564,7 @@
   flex-wrap: wrap;
 }
 
+/* Campo do código PIX (fonte menor, ocupa o espaço restante). */
 .pedido-pix__copia-cola .pedido-input {
   flex: 1;
   min-width: 200px;
@@ -502,6 +572,7 @@
   font-size: 0.8rem;
 }
 
+/* Botão "Copiar" do código PIX. */
 .pedido-pix__botao-copiar {
   background: linear-gradient(135deg, #FFD700, #FFA500);
   color: #2D1B00;
@@ -512,12 +583,14 @@
   cursor: pointer;
 }
 
+/* Mensagem de aguardando o pagamento. */
 .pedido-pix__aguardando {
   color: #FFD700;
   font-weight: bold;
   margin-bottom: 1.5rem;
 }
 
+/* Bloco de resultado (pago/expirado) do PIX, em coluna. */
 .pedido-pix__resultado {
   display: flex;
   flex-direction: column;
@@ -525,6 +598,7 @@
   gap: 1rem;
 }
 
+/* Aviso sobre o envio do pedido pelo WhatsApp. */
 .pedido-aviso-whatsapp {
   text-align: center;
   color: #aaa;
@@ -536,6 +610,7 @@
 }
 
 /* ===== RODAPÉ ===== */
+/* Rodapé da página do pedido. */
 .pedido-rodape {
   text-align: center;
   margin-top: 3rem;
@@ -545,11 +620,13 @@
   border-top: 1px solid rgba(255, 215, 0, 0.2);
 }
 
+/* Linha de texto com margem superior. */
 .pedido-rodape__texto--espacado {
   margin-top: 0.5rem;
 }
 
 /* ===== RESPONSIVIDADE ===== */
+/* Celulares: reduz paddings e fontes e empilha os itens do carrinho. */
 @media (max-width: 640px) {
   .pedido-page {
     padding: 12px;
@@ -609,6 +686,7 @@
 }
 
 /* ===== CONSENTIMENTO DE PROMOÇÕES (LGPD) ===== */
+/* Checkbox de consentimento para receber promoções (LGPD); cursor: pointer torna o texto clicável. */
 .pedido-consentimento {
   display: flex;
   align-items: flex-start;
@@ -618,11 +696,13 @@
   cursor: pointer;
 }
 
+/* Alinha o checkbox ao topo do texto e impede que encolha. */
 .pedido-consentimento input {
   margin-top: 3px;
   flex-shrink: 0;
 }
 
+/* Nota explicativa pequena sob o consentimento. */
 .pedido-consentimento__nota {
   margin: 8px 0 0;
   font-size: 0.8rem;

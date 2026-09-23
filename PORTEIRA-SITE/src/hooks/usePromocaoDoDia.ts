@@ -1,6 +1,12 @@
+// src/hooks/usePromocaoDoDia.ts
+// Hook (função reutilizável de React, nome começa com "use") que informa QUAL É A PROMOÇÃO DE HOJE.
+// Usado por componentes de promoção (PromocaoDiaToast, PromocoesLandingToast, banners) e pelo checkout.
+// Busca as promoções no backend (GET /api/promocoes, via services/promocaoService.ts);
+// se o backend estiver fora do ar, usa as promoções padrão definidas neste arquivo.
 import { useState, useEffect } from 'react'
 import { listarPromocoes } from '../services/promocaoService'
 
+// Formato de uma promoção usada pelo site (campos opcionais = textos de divulgação).
 export interface Promocao {
   nome: string
   descricao: string
@@ -13,6 +19,7 @@ export interface Promocao {
 }
 
 // Usadas quando o backend está indisponível, ou como valor inicial antes da resposta da API.
+// A chave é o dia da semana: 0 = domingo, 1 = segunda ... 6 = sábado (igual a Date.getDay()).
 export const promocoesPadrao: Record<number, Promocao> = {
   0: {
     nome: '🍕 Domingo em Família',
@@ -86,18 +93,25 @@ export const promocoesPadrao: Record<number, Promocao> = {
   }
 }
 
+// O hook em si. Retorna: promoção de hoje, número e nome do dia e a lista de todas as promoções.
 export const usePromocaoDoDia = () => {
+  // Estado: promoções de todos os dias (começa com as padrão e é atualizado quando a API responde)
   const [todasAsPromocoes, setTodasAsPromocoes] = useState<Record<number, Promocao>>(promocoesPadrao)
+  // Estado: dia da semana atual (0 a 6)
   const [diaDaSemana, setDiaDaSemana] = useState<number>(() => new Date().getDay())
+  // Estado: nome do dia por extenso ("Segunda-feira")
   const [nomeDia, setNomeDia] = useState<string>('')
 
   // Busca as promoções cadastradas no painel admin, mantendo os valores padrão como fallback.
+  // Roda uma única vez, quando o componente que usa o hook aparece na tela (dependências vazias []).
   useEffect(() => {
+    // Evita atualizar o estado se o componente já saiu da tela antes da resposta chegar
     let cancelado = false
 
     listarPromocoes().then((promocoesApi) => {
       if (cancelado || !promocoesApi) return
 
+      // Sobrescreve, dia a dia, as promoções padrão pelas vindas do backend
       setTodasAsPromocoes((atuais) => {
         const atualizadas = { ...atuais }
         for (const promocao of promocoesApi) {
@@ -116,12 +130,14 @@ export const usePromocaoDoDia = () => {
       })
     })
 
+    // Função de limpeza: o React a chama quando o componente sai da tela
     return () => {
       cancelado = true
     }
   }, [])
 
   // Mantém o dia da semana em dia, atualizando à meia-noite.
+  // Roda na primeira renderização e sempre que "diaDaSemana" muda (reagendando o próximo timer).
   useEffect(() => {
     const nomesDias = [
       'Domingo',
@@ -134,17 +150,21 @@ export const usePromocaoDoDia = () => {
     ]
     setNomeDia(nomesDias[diaDaSemana])
 
+    // Calcula quantos milissegundos faltam até 00:00 de amanhã
     const agora = new Date()
     const amanha = new Date(agora)
     amanha.setDate(amanha.getDate() + 1)
     amanha.setHours(0, 0, 0, 0)
     const msAteAmanha = amanha.getTime() - agora.getTime()
 
+    // Na virada do dia, atualiza o estado (o que dispara este effect de novo para o dia seguinte)
     const timeout = setTimeout(() => setDiaDaSemana(new Date().getDay()), msAteAmanha)
+    // Limpeza: cancela o timer se o componente sair da tela ou o dia mudar
     return () => clearTimeout(timeout)
   }, [diaDaSemana])
 
   return {
+    // null caso não exista promoção para o dia
     promocaoAtual: todasAsPromocoes[diaDaSemana] ?? null,
     diaDaSemana,
     nomeDia,
@@ -152,7 +172,7 @@ export const usePromocaoDoDia = () => {
   }
 }
 
-// Função para verificar se é o dia correto
+// Função para verificar se é o dia correto (compara o dia da semana informado com o de hoje)
 export const ehDiaCorreto = (diaSemana: number): boolean => {
   const agora = new Date()
   return agora.getDay() === diaSemana

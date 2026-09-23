@@ -1,3 +1,11 @@
+// =====================================================================================
+// routes/campanhas.js — campanhas de e-mail promocional. Montado em /api/campanhas.
+//
+// O painel admin consulta quantos clientes receberiam (GET /status) e dispara o envio
+// (POST /email). O envio real é feito por services/email.js. Só recebem e-mail clientes
+// que deram consentimento (coluna `aceita_promocoes`, LGPD). A rota pública
+// GET /descadastrar é o link que vai no rodapé de cada e-mail para o cliente sair da lista.
+// =====================================================================================
 import { Router } from 'express'
 import { pool } from '../db/pool.js'
 import { exigirAdmin } from '../middleware/auth.js'
@@ -19,6 +27,7 @@ const URL_PUBLICA_API = () => process.env.PUBLIC_API_URL || `http://localhost:${
 
 // Pausa entre envios para não estourar o limite por minuto dos provedores de SMTP.
 const INTERVALO_ENTRE_ENVIOS_MS = 300
+// Devolve uma promessa que só se resolve após `ms` milissegundos (usada com await).
 const pausa = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
 // Só entram na campanha clientes que deram consentimento E têm e-mail cadastrado.
@@ -34,8 +43,11 @@ async function buscarDestinatarios() {
 // (obrigatório: o cliente precisa conseguir sair da lista com um clique).
 function montarEmail({ mensagem, cliente }) {
   const link = `${URL_PUBLICA_API()}/api/campanhas/descadastrar?id=${cliente.id}&token=${gerarTokenDescadastro(cliente.id)}`
+  // Saudação personalizada com o primeiro nome, quando existir.
   const saudacao = cliente.nome ? `Olá, ${cliente.nome.split(' ')[0]}!` : 'Olá!'
 
+  // Versão em texto puro e versão HTML do mesmo e-mail; o conteúdo digitado pelo admin
+  // passa por escaparHtml para não permitir injeção de HTML.
   const texto = `${saudacao}\n\n${mensagem}\n\n—\nPizzaria Porteira\nPara não receber mais promoções: ${link}`
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto; color: #222;">
@@ -61,6 +73,7 @@ campanhasRouter.get('/status', exigirAdmin, asyncHandler(async (req, res) => {
 campanhasRouter.post('/email', exigirAdmin, asyncHandler(async (req, res) => {
   const { assunto, mensagem, emailTeste } = req.body || {}
 
+  // Validações antes de qualquer envio (tamanho de assunto/mensagem e SMTP configurado).
   if (typeof assunto !== 'string' || !assunto.trim() || assunto.length > 200) {
     return res.status(400).json({ erro: 'Informe um assunto (até 200 caracteres).' })
   }
@@ -71,6 +84,7 @@ campanhasRouter.post('/email', exigirAdmin, asyncHandler(async (req, res) => {
     return res.status(503).json({ erro: 'E-mail não configurado no servidor. Preencha as variáveis SMTP_* no .env.' })
   }
 
+  // Modo teste: um único destinatário fictício; modo real: todos com consentimento.
   const destinatarios = emailTeste
     ? [{ id: 0, nome: 'Teste', email: String(emailTeste).trim() }]
     : await buscarDestinatarios()
@@ -82,6 +96,7 @@ campanhasRouter.post('/email', exigirAdmin, asyncHandler(async (req, res) => {
     return res.status(400).json({ erro: 'Nenhum cliente com consentimento e e-mail cadastrado.' })
   }
 
+  // Envio sequencial (um por vez, com pausa) contando sucessos e falhas para o relatório final.
   let enviados = 0
   let falhas = 0
   for (const cliente of destinatarios) {
@@ -104,10 +119,12 @@ campanhasRouter.post('/email', exigirAdmin, asyncHandler(async (req, res) => {
 // ser descadastrado na hora. A proteção é o token HMAC, que só o servidor sabe gerar.
 campanhasRouter.get('/descadastrar', descadastroLimiter, asyncHandler(async (req, res) => {
   const id = Number(req.query.id)
+  // Rejeita ids inválidos ou token que não bate com o gerado para esse cliente.
   if (!Number.isInteger(id) || !tokenDescadastroValido(id, req.query.token)) {
     return res.status(400).type('html').send('<p>Link inválido ou expirado.</p>')
   }
 
+  // Revoga o consentimento; a página de confirmação é HTML porque quem clica é uma pessoa no navegador.
   await pool.query('UPDATE clientes SET aceita_promocoes = FALSE, consentimento_em = NULL WHERE id = ?', [id])
   res.type('html').send(
     '<!doctype html><meta charset="utf-8"><body style="font-family:Arial,sans-serif;text-align:center;padding:48px">' +

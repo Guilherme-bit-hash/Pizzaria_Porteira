@@ -1,5 +1,7 @@
+/* Estilos do painel administrativo. Importado por Pages/AdminLogin, AdminPedidos, AdminProdutos,\nAdminClientes, AdminPromocoes e AdminCampanhas; o componente AdminNav usa `admin-header__acoes` e os botões daqui. */
 /* src/styles/admin.css - compartilhado entre AdminLogin, AdminPedidos e AdminPromocoes */
 /* ===== PÁGINA E LOGIN ===== */
+/* Fundo e tipografia de toda tela do admin; padding de 20px nas bordas. */
 .admin-page {
   min-height: 100vh;
   background: linear-gradient(135deg, #2D1B00 0%, #3A240F 30%, #4A2F15 60%, #5A3E2B 100%);
@@ -8,12 +10,14 @@
   padding: 20px;
 }
 
+/* Modificador da tela de login: centraliza o formulário no meio da tela. */
 .admin-page--login {
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
+/* Cartão translúcido do formulário de login (largura máx. 400px). */
 .admin-form {
   background: rgba(255, 255, 255, 0.05);
   border-radius: 20px;
@@ -24,6 +28,7 @@
 }
 
 /* ===== CAMPOS DE FORMULÁRIO ===== */
+/* Título do formulário de login. */
 .admin-form__titulo {
   color: #FFD700;
   font-size: 1.8rem;
@@ -31,20 +36,24 @@
   text-align: center;
 }
 
+/* Espaçamento entre campos do formulário. */
 .admin-campo {
   margin-bottom: 1.2rem;
 }
 
+/* Último campo: margem maior antes do botão. */
 .admin-campo--ultimo {
   margin-bottom: 1.5rem;
 }
 
+/* Rótulo dourado acima de cada input. */
 .admin-label {
   display: block;
   margin-bottom: 0.5rem;
   color: #FFD700;
 }
 
+/* Campo de texto padrão do admin (também usado em selects/textarea). */
 .admin-input {
   width: 100%;
   padding: 12px;
@@ -56,6 +65,7 @@
 }
 
 /* ===== BOTÕES ===== */
+/* Botão principal (dourado, largura total), ex.: "Entrar". */
 .admin-botao-primario {
   width: 100%;
   background: linear-gradient(135deg, #FFD700, #FFA500);
@@ -68,12 +78,14 @@
   cursor: pointer;
 }
 
+/* Aparência do botão enquanto a ação está em andamento (impede clique). */
 .admin-botao-primario:disabled {
   cursor: not-allowed;
   opacity: 0.7;
 }
 
 /* Cabeçalho comum das telas internas (AdminPedidos, AdminPromocoes) */
+/* Cabeçalho das telas internas (título à esquerda, botões à direita); quebra linha em telas estreitas (flex-wrap). */
 .admin-header {
   display: flex;
   justify-content: space-between;
@@ -85,16 +97,19 @@
   gap: 1rem;
 }
 
+/* Título da seção (ex.: "Pedidos"). */
 .admin-header__titulo {
   color: #FFD700;
   font-size: 2rem;
 }
 
+/* Grupo de botões de navegação (renderizado pelo AdminNav). */
 .admin-header__acoes {
   display: flex;
   gap: 0.8rem;
 }
 
+/* Botões de navegação entre seções do admin. */
 .admin-botao-secundario {
   background: rgba(255, 215, 0, 0.15);
   color: #FFD700;
@@ -104,6 +119,7 @@
   cursor: pointer;
 }
 
+/* Botão vermelho, para ações destrutivas como "Sair". */
 .admin-botao-perigo {
   background: rgba(255, 68, 68, 0.2);
   color: #FF8888;
@@ -113,24 +129,28 @@
   cursor: pointer;
 }
 
+/* Área central de conteúdo abaixo do cabeçalho (largura máx. 1000px). */
 .admin-conteudo {
   max-width: 1000px;
   margin: 0 auto;
 }
 
 /* ===== MENSAGENS ===== */
+/* Texto de erro em vermelho claro. */
 .admin-mensagem-erro {
   color: #FF8888;
   margin-bottom: 1.5rem;
   text-align: center;
 }
 
+/* Texto neutro centralizado (ex.: lista vazia). */
 .admin-mensagem-neutra {
   text-align: center;
   color: #ccc;
 }
 
 /* Cards de pedido */
+/* Cartão de um pedido na lista do admin. */
 .admin-pedido-card {
   background: rgba(255, 255, 255, 0.05);
   border-radius: 16px;
@@ -139,6 +159,7 @@
   border: 1px solid rgba(255, 215, 0, 0.2);
 }
 
+/* Linha superior do cartão: dados do cliente à esquerda e badges à direita. */
 .admin-pedido-card__topo {
   display: flex;
   justify-content: space-between;
@@ -148,23 +169,27 @@
   margin-bottom: 1rem;
 }
 
+/* Número/nome do pedido. */
 .admin-pedido-card__titulo {
   color: #FFD700;
   margin: 0;
 }
 
+/* Dados de contato do cliente. */
 .admin-pedido-card__info {
   color: #aaa;
   margin: 0.3rem 0 0;
   font-size: 0.9rem;
 }
 
+/* Data e hora do pedido, em cinza. */
 .admin-pedido-card__data {
   color: #888;
   margin: 0.3rem 0 0;
   font-size: 0.85rem;
 }
 
+/* Pilha vertical de badges (status e pagamento) alinhada à direita. */
 .admin-pedido-card__badges {
   display: flex;
   flex-direction: column;
@@ -173,6 +198,7 @@
 }
 
 /* ===== BADGES DE STATUS ===== */
+/* Etiqueta arredondada de status (visual padrão: amarelo). */
 .admin-status-badge {
   padding: 6px 14px;
   border-radius: 20px;
@@ -183,33 +209,39 @@
   white-space: nowrap;
 }
 
+/* Variante verde. */
 .admin-status-badge--sucesso {
   background: rgba(124, 252, 148, 0.15);
   color: #7CFC94;
 }
 
+/* Variante laranja. */
 .admin-status-badge--alerta {
   background: rgba(255, 165, 0, 0.15);
   color: #FFA500;
 }
 
+/* Variante vermelha. */
 .admin-status-badge--erro {
   background: rgba(255, 68, 68, 0.15);
   color: #FF8888;
 }
 
+/* Lista de itens do pedido. */
 .admin-pedido-card__itens {
   margin: 0 0 1rem;
   padding-left: 1.2rem;
   color: #ddd;
 }
 
+/* Observações do cliente, em laranja. */
 .admin-pedido-card__observacoes {
   color: #FFA500;
   font-size: 0.9rem;
   margin-bottom: 1rem;
 }
 
+/* Rodapé do cartão: total à esquerda e botões de ação à direita. */
 .admin-pedido-card__rodape {
   display: flex;
   justify-content: space-between;
@@ -218,16 +250,19 @@
   gap: 1rem;
 }
 
+/* Valor total do pedido. */
 .admin-pedido-card__total {
   color: #FFD700;
   font-size: 1.2rem;
 }
 
+/* Grupo de botões (avançar/cancelar). */
 .admin-pedido-card__acoes {
   display: flex;
   gap: 0.8rem;
 }
 
+/* Botão dourado que avança o pedido para o próximo status. */
 .admin-botao-avancar {
   background: linear-gradient(135deg, #FFD700, #FFA500);
   color: #2D1B00;
@@ -238,6 +273,7 @@
   cursor: pointer;
 }
 
+/* Botão vermelho translúcido que cancela o pedido. */
 .admin-botao-cancelar {
   background: rgba(255, 68, 68, 0.15);
   color: #FF8888;
@@ -247,18 +283,21 @@
   cursor: pointer;
 }
 
+/* Estado desabilitado do botão de avançar (requisição em andamento). */
 .admin-botao-avancar:disabled {
   cursor: not-allowed;
   opacity: 0.7;
 }
 
 /* Variante mais estreita usada pela tela de Promoções */
+/* Larguras menores (900px) para a tela de Promoções. */
 .admin-header--estreito,
 .admin-conteudo--estreito {
   max-width: 900px;
 }
 
 /* Cards do formulário de promoções */
+/* Cartão de cada promoção no formulário de promoções. */
 .admin-promo-card {
   background: rgba(255, 255, 255, 0.05);
   border-radius: 16px;
@@ -267,6 +306,7 @@
   border: 1px solid rgba(255, 215, 0, 0.2);
 }
 
+/* Título do cartão de promoção. */
 .admin-promo-card__titulo {
   color: #FFD700;
   margin-top: 0;
@@ -274,6 +314,7 @@
 }
 
 /* Grade responsiva: colunas de no mínimo 220px */
+/* Grade de campos: auto-fit cria quantas colunas couberem, cada uma com no mínimo 220px (responsivo sem @media). */
 .admin-form-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -281,30 +322,36 @@
   margin-bottom: 1rem;
 }
 
+/* Campo avulso com margem inferior padrão. */
 .admin-campo-simples {
   margin-bottom: 1rem;
 }
 
+/* Último campo do bloco, com margem maior. */
 .admin-campo-simples--final {
   margin-bottom: 1.2rem;
 }
 
+/* Caixa de texto multilinha: altura mínima e só redimensiona na vertical. */
 .admin-textarea {
   min-height: 80px;
   resize: vertical;
 }
 
+/* Seletor de cor (input type=color) com altura fixa. */
 .admin-color-input {
   padding: 4px;
   height: 42px;
 }
 
+/* Alinha o checkbox à base da linha dos demais campos da grade. */
 .admin-checkbox-campo {
   display: flex;
   align-items: flex-end;
   gap: 0.5rem;
 }
 
+/* Texto do checkbox, ao lado da caixa de seleção. */
 .admin-checkbox-label {
   color: #FFD700;
   font-size: 0.85rem;
@@ -314,6 +361,7 @@
   gap: 0.5rem;
 }
 
+/* Rodapé do cartão: botão salvar e mensagem de status lado a lado. */
 .admin-promo-card__rodape {
   display: flex;
   align-items: center;
@@ -321,11 +369,13 @@
   flex-wrap: wrap;
 }
 
+/* Mensagem de retorno (verde) após salvar. */
 .admin-mensagem-status {
   font-size: 0.9rem;
   color: #8BFF8B;
 }
 
+/* Variante da mensagem de status em vermelho. */
 .admin-mensagem-status--erro {
   color: #FF8888;
 }

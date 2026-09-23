@@ -1,14 +1,26 @@
+// ============================================================================
+// PromocaoDia - cartão colorido com a promoção fixa de cada dia da semana.
+// Usado em: atualmente não é importado por nenhuma página (componente disponível
+// para uso futuro; a promoção do dia exibida hoje vem do PromocaoDiaToast).
+// Props: nenhuma - o dia é calculado a partir da data do computador do cliente.
+// Estilos: styles/promocaoDia.css.
+// ============================================================================
 import { useState } from 'react'
 import '../styles/promocaoDia.css'
 
+// Formato de uma promoção diária.
 interface Promocao {
   titulo: string
   descricao: string
+  // Cor de destaque do cartão (repassada ao CSS pela variável --promo-cor).
   cor: string
   emoji: string
+  // Rota do cardápio para onde a promoção aponta.
   link: string
 }
 
+// Tabela de promoções: a posição no array é o número do dia (0 = domingo ... 6 = sábado),
+// o mesmo valor devolvido por Date.getDay().
 const promocoesPorDia: Promocao[] = [
   {
     titulo: '🍕 Domingo em Família',
@@ -61,24 +73,29 @@ const promocoesPorDia: Promocao[] = [
   }
 ]
 
+// Nomes dos dias, na mesma ordem de getDay() (0 = domingo).
 const diasDaSemana = [
   'Domingo', 'Segunda-feira', 'Terça-feira',
   'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'
 ]
 
 export default function PromocaoDia() {
+  // useState: memória do componente; `isClosed` vira true quando o cliente clica no "✕".
   const [isClosed, setIsClosed] = useState(false)
+  // Descobre a promoção e o nome do dia de hoje.
   const hoje = new Date()
   const diaDaSemana = hoje.getDay()
   const promocao = promocoesPorDia[diaDaSemana]
   const nomeDia = diasDaSemana[diaDaSemana]
 
+  // Nada para mostrar se não há promoção ou se o cliente fechou o cartão.
   if (!promocao || isClosed) {
     return null
   }
 
   return (
     <div className="promocao-dia">
+      {/* Cartão principal; injeta a cor do dia como variável CSS --promo-cor */}
       <div
         className="promocao-dia__card"
         style={{ '--promo-cor': promocao.cor } as React.CSSProperties}
@@ -90,13 +107,16 @@ export default function PromocaoDia() {
         <div className="promocao-dia__conteudo">
           {/* Lado esquerdo */}
           <div className="promocao-dia__lado-esquerdo">
+            {/* Emoji + etiqueta com o nome do dia */}
             <div className="promocao-dia__topo">
               <span className="promocao-dia__emoji">{promocao.emoji}</span>
               <span className="promocao-dia__tag-dia">{nomeDia.toUpperCase()}</span>
             </div>
 
+            {/* Título da promoção */}
             <h3 className="promocao-dia__titulo">{promocao.titulo}</h3>
 
+            {/* Descrição da oferta */}
             <p className="promocao-dia__descricao">{promocao.descricao}</p>
           </div>
 

@@ -1,13 +1,21 @@
 // src/components/WhatsAppFlutuante.tsx
+// ============================================================================
+// WhatsAppFlutuante - botão redondo verde que abre uma conversa no WhatsApp.
+// Usado em: BotoesFlutuantes.tsx (escondido na página do cardápio).
+// Props: nenhuma - o número vem de config/whatsapp.
+// Estilos: styles/whatsappFlutuante.css.
+// ============================================================================
 import '../styles/whatsappFlutuante.css'
 import { WHATSAPP_NUMBER } from '../config/whatsapp'
 
 export default function WhatsAppFlutuante() {
+  // Mensagem inicial já digitada; encodeURIComponent a deixa segura para ir dentro da URL.
   const mensagemPadrao = encodeURIComponent(
     "Olá! Gostaria de fazer um pedido ou tirar uma dúvida sobre o cardápio da Pizzaria Porteira."
   )
 
   return (
+    // Link externo (wa.me) abrindo em nova aba; rel="noopener noreferrer" é uma boa prática de segurança
     <a
       href={`https://wa.me/${WHATSAPP_NUMBER}?text=${mensagemPadrao}`}
       target="_blank"
@@ -16,6 +24,7 @@ export default function WhatsAppFlutuante() {
       title="Falar no WhatsApp"
       className="whatsapp-flutuante"
     >
+      {/* Logo do WhatsApp desenhado em SVG (vetor, nítido em qualquer tamanho) */}
       <svg
         viewBox="0 0 32 32"
         width="30"

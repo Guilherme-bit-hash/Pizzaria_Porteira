@@ -1,5 +1,7 @@
+/* Estilos da landing page. Importado por Pages/Home.tsx. */
 /* src/styles/home.css */
 /* ===== PÁGINA INICIAL ===== */
+/* Tela cheia com a imagem de fundo (/fundo.png) cobrindo toda a área; conteúdo centralizado. */
 .home {
   min-height: 100vh;
   background-image: url('/fundo.png');
@@ -14,12 +16,14 @@
 }
 
 /* ===== OVERLAY E CONTEÚDO ===== */
+/* Camada preta translúcida sobre a imagem (position: absolute + inset: 0 cobre a tela toda) para dar contraste ao texto. */
 .home__overlay {
   position: absolute;
   inset: 0;
   background-color: rgba(0, 0, 0, 0.45);
 }
 
+/* Bloco central com logo, botão e dica. */
 .home__conteudo {
   position: relative;
   /* Camada acima do overlay escuro */
@@ -31,6 +35,7 @@
 }
 
 /* ===== LOGO ===== */
+/* Logo redonda; clamp() escolhe um tamanho entre 160px e 400px conforme a janela; flutua via animação. */
 .home__logo {
   width: clamp(160px, min(40vw, 32vh), 400px);
   height: clamp(160px, min(40vw, 32vh), 400px);
@@ -49,6 +54,7 @@
 }
 
 /* ===== BOTÃO E DICA ===== */
+/* Botão de entrada para o cardápio. */
 .home__botao {
   background-color: #5a3e2b;
   color: #ffffff;
@@ -64,11 +70,13 @@
   margin-top: 1rem;
 }
 
+/* Hover: cor mais clara e brilho maior. */
 .home__botao:hover {
   background-color: #6d4c3a;
   box-shadow: 0 20px 40px rgba(255, 215, 0, 0.8);
 }
 
+/* Texto de dica abaixo do botão, com pulso de opacidade. */
 .home__dica {
   margin-top: 2rem;
   font-size: 1rem;

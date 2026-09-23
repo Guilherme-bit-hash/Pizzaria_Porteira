@@ -1,5 +1,8 @@
+/* Estilos do Toast (components/Toast.tsx), avisos temporários no canto da tela. */
+/* Usado indiretamente em todo o site, pois o ToastContainer é montado em App.tsx. */
 /* src/styles/toast.css */
 /* ===== CONTAINER E TOAST ===== */
+/* Pilha de toasts fixa no canto superior direito da tela. */
 .toast-container {
   position: fixed;
   top: 20px;
@@ -14,6 +17,7 @@
   pointer-events: none;
 }
 
+/* Estilo base de um aviso; entra deslizando da direita. */
 .toast {
   padding: 16px 20px;
   border-radius: 12px;
@@ -35,6 +39,7 @@
 }
 
 /* ===== VARIANTES DE COR ===== */
+/* Texto branco para os tipos de fundo colorido. */
 .toast--success,
 .toast--info,
 .toast--warning,
@@ -42,6 +47,7 @@
   color: white;
 }
 
+/* Cor de fundo de cada tipo de aviso: sucesso (verde), informação (azul), alerta (laranja), erro (vermelho) e promoção (dourado). */
 .toast--success { background: #4CAF50; }
 .toast--info { background: #2196F3; }
 .toast--warning { background: #FF9800; }
@@ -52,15 +58,18 @@
 }
 
 /* ===== CONTEÚDO E AÇÕES ===== */
+/* Emoji à esquerda; flex-shrink: 0 impede que seja espremido. */
 .toast__emoji {
   font-size: 1.5rem;
   flex-shrink: 0;
 }
 
+/* Texto e botões do aviso; flex: 1 ocupa o espaço restante. */
 .toast__conteudo {
   flex: 1;
 }
 
+/* Linha de botões de compartilhar (WhatsApp, Email e Copiar). */
 .toast__acoes {
   display: flex;
   gap: 8px;
@@ -68,6 +77,7 @@
   flex-wrap: wrap;
 }
 
+/* Botão translúcido dentro do toast (herda a cor do texto do tipo). */
 .toast__botao-acao {
   background: rgba(255, 255, 255, 0.2);
   border: 1px solid rgba(255, 255, 255, 0.3);
@@ -80,6 +90,7 @@
   transition: background 0.2s ease;
 }
 
+/* Hover: fundo mais claro. */
 .toast__botao-acao:hover {
   background: rgba(255, 255, 255, 0.3);
 }
@@ -93,6 +104,7 @@
   flex-wrap: wrap;
 }
 
+/* Campo de e-mail do formulário inline. */
 .toast__input-email {
   flex: 1;
   min-width: 140px;
@@ -105,6 +117,7 @@
 }
 
 /* ===== BOTÃO FECHAR ===== */
+/* Botão de fechar, discreto (opacidade reduzida). */
 .toast__botao-fechar {
   background: none;
   border: none;
@@ -117,11 +130,13 @@
   flex-shrink: 0;
 }
 
+/* Hover: fica totalmente visível. */
 .toast__botao-fechar:hover {
   opacity: 1;
 }
 
 /* ===== ANIMAÇÕES ===== */
+/* Entrada: desliza da direita para a posição normal. */
 @keyframes toast-slide-in {
   from {
     transform: translateX(400px);
@@ -133,6 +148,7 @@
   }
 }
 
+/* Saída: volta para a direita e some (dura 300 ms, igual ao tempo de remoção em Toast.tsx). */
 @keyframes toast-slide-out {
   from {
     transform: translateX(0);
@@ -145,6 +161,7 @@
 }
 
 /* ===== RESPONSIVIDADE ===== */
+/* Celulares: o contêiner ocupa a largura toda da tela (com 10px de margem). */
 @media (max-width: 480px) {
   .toast-container {
     left: 10px;

@@ -1,5 +1,7 @@
+/* Estilos do componente BannerPromocoes (components/bannerpromocoes.tsx). */
 /* src/styles/bannerPromocoes.css */
 /* ===== CONTAINER DO BANNER ===== */
+/* Caixa do banner; position: relative + overflow: hidden mantêm a faixa decorativa (absolute) dentro dos cantos arredondados. */
 .banner-promocoes {
   background: linear-gradient(135deg, #2D1B00, #4A2F15);
   border-radius: 15px;
@@ -22,6 +24,7 @@
 }
 
 /* ===== TÍTULO E GRADE DE CARDS ===== */
+/* Título "Promoções Exclusivas". */
 .banner-promocoes__titulo {
   color: #FFD700;
   text-align: center;
@@ -29,6 +32,7 @@
   margin-bottom: 1.5rem;
 }
 
+/* Grade responsiva: colunas de no mínimo 300px, quebrando conforme a largura. */
 .banner-promocoes__grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -36,6 +40,7 @@
 }
 
 /* ===== CARD DE PROMOÇÃO ===== */
+/* Cartão de uma promoção, com efeito de elevação no hover. */
 .banner-promocoes__card {
   background: rgba(255, 255, 255, 0.05);
   border-radius: 12px;
@@ -45,17 +50,20 @@
   cursor: pointer;
 }
 
+/* Hover: cartão sobe 5px e clareia. */
 .banner-promocoes__card:hover {
   background: rgba(255, 255, 255, 0.1);
   transform: translateY(-5px);
 }
 
+/* Título da promoção dentro do cartão. */
 .banner-promocoes__card-titulo {
   color: #FFD700;
   margin: 0 0 10px 0;
   font-size: 1.4rem;
 }
 
+/* Descrição da promoção. */
 .banner-promocoes__card-descricao {
   color: #ccc;
   margin: 0 0 15px 0;
@@ -75,6 +83,7 @@
 }
 
 /* ===== RODAPÉ E BOTÃO ===== */
+/* Rodapé do banner, com linha divisória, que contém o botão. */
 .banner-promocoes__rodape {
   text-align: center;
   margin-top: 2rem;
@@ -82,6 +91,7 @@
   border-top: 1px solid rgba(255, 215, 0, 0.2);
 }
 
+/* Botão "Ver Cardápio Completo". */
 .banner-promocoes__botao {
   display: inline-block;
   background: linear-gradient(135deg, #FFD700, #FFA500);
@@ -95,6 +105,7 @@
   box-shadow: none;
 }
 
+/* Hover: aumenta levemente e ganha brilho dourado. */
 .banner-promocoes__botao:hover {
   transform: scale(1.05);
   box-shadow: 0 10px 25px rgba(255, 215, 0, 0.4);

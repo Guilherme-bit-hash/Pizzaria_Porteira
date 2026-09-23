@@ -1,3 +1,10 @@
+// =====================================================================================
+// routes/produtos.js — cardápio editável (CRUD de produtos). Montado em /api/produtos.
+//
+// O site lista o cardápio público (GET /); o painel admin usa as demais rotas (todas
+// protegidas por exigirAdmin) para ver tudo, criar, editar e excluir produtos.
+// Os preços daqui também são a fonte de verdade que routes/pedidos.js confere ao criar pedido.
+// =====================================================================================
 import { Router } from 'express'
 import { pool } from '../db/pool.js'
 import { exigirAdmin } from '../middleware/auth.js'
@@ -5,8 +12,10 @@ import { asyncHandler } from '../middleware/asyncHandler.js'
 
 export const produtosRouter = Router()
 
+// Categorias permitidas (devem coincidir com o ENUM `categoria` da tabela `produtos`).
 const CATEGORIAS = ['pizza', 'hamburguer', 'bebida', 'sobremesa']
 
+// Aceita apenas links http/https, impedindo valores perigosos como "javascript:" na imagem.
 function urlValida(valor) {
   try {
     const url = new URL(valor)
@@ -31,6 +40,7 @@ function validarProduto(body) {
   }
   if (ordem !== undefined && !Number.isInteger(ordem)) return null
 
+  // Valores opcionais ausentes ganham padrão (descrição vazia, ativo, ordem 0).
   return {
     categoria,
     nome: nome.trim(),
@@ -42,6 +52,8 @@ function validarProduto(body) {
   }
 }
 
+// Converte uma linha do banco (snake_case, DECIMAL como texto) para o JSON da API (camelCase,
+// preço numérico).
 function mapLinha(linha) {
   return {
     id: linha.id,
@@ -55,6 +67,8 @@ function mapLinha(linha) {
   }
 }
 
+// Se o erro for de nome repetido (índice UNIQUE uq_produtos_nome), responde 409 e devolve
+// true; caso contrário devolve false para o chamador relançar o erro.
 function tratarNomeDuplicado(error, res) {
   if (error.code === 'ER_DUP_ENTRY') {
     res.status(409).json({ erro: 'Já existe um produto com esse nome.' })
@@ -75,6 +89,7 @@ produtosRouter.get('/admin', exigirAdmin, asyncHandler(async (req, res) => {
   res.json(linhas.map(mapLinha))
 }))
 
+// Cria um produto (painel admin).
 produtosRouter.post('/', exigirAdmin, asyncHandler(async (req, res) => {
   const dados = validarProduto(req.body)
   if (!dados) {
@@ -93,6 +108,7 @@ produtosRouter.post('/', exigirAdmin, asyncHandler(async (req, res) => {
   }
 }))
 
+// Atualiza todos os campos de um produto existente (painel admin).
 produtosRouter.put('/:id', exigirAdmin, asyncHandler(async (req, res) => {
   const dados = validarProduto(req.body)
   if (!dados) {

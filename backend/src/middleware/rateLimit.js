@@ -1,3 +1,19 @@
+// =====================================================================================
+// middleware/rateLimit.js — limitadores de requisições (rate limit).
+//
+// Rate limit = teto de quantas requisições um mesmo IP pode fazer numa janela de tempo;
+// passou disso, o servidor responde 429 (Too Many Requests). Protege contra abuso
+// automatizado (força bruta, flood). Cada limitador é encaixado como middleware na rota
+// correspondente: loginLimiter em routes/auth.js, criarPedidoLimiter e
+// elegibilidadeCupomLimiter em routes/pedidos.js e descadastroLimiter em routes/campanhas.js.
+//
+// Configuração comum a todos:
+//   windowMs: tamanho da janela de tempo em ms (15 min);
+//   limit: máximo de requisições por IP dentro da janela;
+//   standardHeaders: envia os cabeçalhos padrão RateLimit-* informando o saldo restante;
+//   legacyHeaders: desligado (não envia os antigos X-RateLimit-*);
+//   message: corpo JSON devolvido quando o limite estoura.
+// =====================================================================================
 import rateLimit from 'express-rate-limit'
 
 // Login do admin: poucas tentativas por IP, para dificultar brute-force da senha.

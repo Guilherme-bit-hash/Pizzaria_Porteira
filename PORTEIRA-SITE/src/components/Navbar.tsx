@@ -1,16 +1,29 @@
+// ============================================================================
+// Navbar - barra superior do site (logo, botão voltar e menu hambúrguer no celular).
+// Usado em: App.tsx, Pages/Cardapio.tsx e Pages/Pedido.tsx.
+// Props: logo (imagem), showBackButton (mostra "Voltar") e backTo (destino do "Voltar").
+// Estilos: styles/navbar.css.
+// ============================================================================
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import '../styles/navbar.css'
 
+// Props (todas opcionais, por causa do `?`; os padrões ficam na função abaixo).
 interface NavbarProps {
+  // Caminho da imagem do logo.
   logo?: string
+  // Se true, exibe o link "← Voltar".
   showBackButton?: boolean
+  // Rota para onde o "Voltar" leva.
   backTo?: string
 }
 
 export default function Navbar({ logo = '/logo.jpeg', showBackButton = false, backTo = '/' }: NavbarProps) {
+  // useState: memória do componente. Guarda se o menu mobile está aberto;
+  // ao chamar setIsMenuOpen o React redesenha o componente com o novo valor.
   const [isMenuOpen, setIsMenuOpen] = useState(false)
 
+  // Handler: alterna o menu entre aberto e fechado (usado pelo botão hambúrguer).
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen)
   }
@@ -42,6 +55,7 @@ export default function Navbar({ logo = '/logo.jpeg', showBackButton = false, ba
       </header>
 
       {/* SIDEBAR MOBILE */}
+      {/* Painel de links; cada link fecha o menu ao ser clicado */}
       {isMenuOpen && (
         <div className="navbar-sidebar-mobile">
           {showBackButton && (
@@ -69,6 +83,7 @@ export default function Navbar({ logo = '/logo.jpeg', showBackButton = false, ba
       )}
 
       {/* OVERLAY - FECHA MENU AO CLICAR */}
+      {/* Fundo escurecido atrás do menu; clicar fora dele fecha o menu */}
       {isMenuOpen && (
         <div onClick={() => setIsMenuOpen(false)} className="navbar__overlay" />
       )}

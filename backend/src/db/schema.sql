@@ -1,31 +1,53 @@
+-- =====================================================================================
+-- schema.sql — estrutura do banco de dados (banco e tabelas).
+--
+-- Executado por db/migrate.js. Todos os comandos usam IF NOT EXISTS / INSERT IGNORE, então
+-- rodar de novo é seguro. Tabelas: pedidos, produtos (cardápio), clientes e promocoes
+-- (promoção de cada dia da semana). A coluna pedidos.cliente_id (vínculo com clientes) é
+-- criada pelo migrate.js, não aqui.
+-- Convenções: criado_em/atualizado_em são preenchidos automaticamente pelo MySQL; colunas
+-- NULL são opcionais e NOT NULL são obrigatórias; DECIMAL(10, 2) guarda dinheiro sem erro de
+-- arredondamento.
+-- =====================================================================================
+
+-- Cria o banco (se não existir) com utf8mb4, que suporta acentos e emojis, e o seleciona.
 CREATE DATABASE IF NOT EXISTS pizzaria_porteira
   CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 USE pizzaria_porteira;
 
+-- Pedidos feitos pelo checkout do site (usada por routes/pedidos.js).
 CREATE TABLE IF NOT EXISTS pedidos (
-  id INT AUTO_INCREMENT PRIMARY KEY,
+  id INT AUTO_INCREMENT PRIMARY KEY, -- identificador gerado automaticamente
+  -- Dados do cliente e da entrega, copiados no momento do pedido (histórico fiel).
   cliente_nome VARCHAR(150) NOT NULL,
   cliente_telefone VARCHAR(30) NOT NULL,
   endereco VARCHAR(255) NOT NULL,
   complemento VARCHAR(150) NULL,
   observacoes TEXT NULL,
+  -- Itens do pedido (nome, preço e quantidade) guardados como JSON, para que o pedido
+  -- não mude se o cardápio for editado depois.
   itens JSON NOT NULL,
+  -- Valores: subtotal dos itens, desconto do cupom e total final a pagar.
   subtotal DECIMAL(10, 2) NOT NULL DEFAULT 0,
   desconto DECIMAL(10, 2) NOT NULL DEFAULT 0,
   cupom VARCHAR(50) NULL,
   total DECIMAL(10, 2) NOT NULL,
+  -- Andamento do pedido, atualizado pelo admin.
   status ENUM('recebido', 'preparando', 'saiu_para_entrega', 'entregue', 'cancelado')
     NOT NULL DEFAULT 'recebido',
+  -- Pagamento: forma escolhida, situação do PIX e id do pagamento no Mercado Pago.
   forma_pagamento ENUM('whatsapp', 'pix') NOT NULL DEFAULT 'whatsapp',
   pagamento_status ENUM('pendente', 'aprovado', 'recusado', 'expirado') NULL,
   mp_payment_id VARCHAR(50) NULL,
+  -- Datas: criação e última alteração (esta se atualiza sozinha a cada UPDATE).
   criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   atualizado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
 -- Cardápio editável pelo painel admin. Os produtos iniciais são inseridos pelo migrate.js
 -- (só quando a tabela está vazia), para uma renomeação feita no painel não ser desfeita.
+-- (usada por routes/produtos.js e conferida em routes/pedidos.js)
 CREATE TABLE IF NOT EXISTS produtos (
   id INT AUTO_INCREMENT PRIMARY KEY,
   categoria ENUM('pizza', 'hamburguer', 'bebida', 'sobremesa') NOT NULL,
@@ -33,42 +55,54 @@ CREATE TABLE IF NOT EXISTS produtos (
   descricao VARCHAR(255) NOT NULL DEFAULT '',
   preco DECIMAL(10, 2) NOT NULL,
   imagem_url VARCHAR(500) NULL,
+  -- ativo = FALSE esconde o produto do site sem apagá-lo; ordem define a posição na listagem.
   ativo BOOLEAN NOT NULL DEFAULT TRUE,
   ordem INT NOT NULL DEFAULT 0,
   criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   atualizado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  -- Não permite dois produtos com o mesmo nome (o nome identifica o item nos pedidos).
   UNIQUE KEY uq_produtos_nome (nome)
 );
 
 -- Base de clientes, criada/atualizada automaticamente a cada pedido. `aceita_promocoes` só
 -- vira TRUE quando o cliente marca o consentimento no checkout (LGPD) — é ele que deve
 -- filtrar qualquer disparo de promoções por WhatsApp/e-mail.
+-- (usada por routes/clientes.js, routes/campanhas.js e routes/pedidos.js)
 CREATE TABLE IF NOT EXISTS clientes (
   id INT AUTO_INCREMENT PRIMARY KEY,
   nome VARCHAR(150) NOT NULL,
   telefone VARCHAR(30) NOT NULL,
+  -- Telefone só com dígitos: é a chave que identifica o cliente (ver índice UNIQUE abaixo).
   telefone_normalizado VARCHAR(20) NOT NULL,
   email VARCHAR(150) NULL,
   endereco VARCHAR(255) NOT NULL,
   complemento VARCHAR(150) NULL,
+  -- Consentimento LGPD para receber promoções e a data em que foi dado.
   aceita_promocoes BOOLEAN NOT NULL DEFAULT FALSE,
   consentimento_em TIMESTAMP NULL,
   criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   atualizado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  -- Garante um único cliente por telefone; é o que permite o ON DUPLICATE KEY UPDATE
+  -- do INSERT de clientes em routes/pedidos.js.
   UNIQUE KEY uq_clientes_telefone (telefone_normalizado)
 );
 
+-- Promoção de cada dia da semana (usada por routes/promocoes.js). A chave primária é o
+-- próprio dia, então há no máximo uma promoção por dia.
 CREATE TABLE IF NOT EXISTS promocoes (
-  dia_semana TINYINT PRIMARY KEY,
+  dia_semana TINYINT PRIMARY KEY, -- 0 = domingo ... 6 = sábado
   nome VARCHAR(150) NOT NULL,
   descricao VARCHAR(255) NOT NULL,
   preco DECIMAL(10, 2) NOT NULL DEFAULT 0,
+  -- destaque e cor controlam a aparência da promoção no site.
   destaque BOOLEAN NOT NULL DEFAULT TRUE,
   cor VARCHAR(20) NOT NULL DEFAULT '#FFD700',
+  -- Textos prontos para divulgar a promoção por WhatsApp e por e-mail.
   whatsapp_message TEXT NULL,
   email_subject VARCHAR(255) NULL,
   email_body TEXT NULL,
   atualizado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  -- Impede gravar um dia fora do intervalo 0 a 6.
   CONSTRAINT chk_promocoes_dia_semana CHECK (dia_semana BETWEEN 0 AND 6)
 );
 

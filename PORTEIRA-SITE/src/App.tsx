@@ -1,4 +1,7 @@
-// src/App.tsx - VERSÃO CORRIGIDA
+// src/App.tsx
+// COMPONENTE RAIZ do site. Define a "moldura" da aplicação e a TABELA DE ROTAS:
+// qual página (src/Pages) aparece para cada URL do navegador.
+// É importado por src/main.tsx. Não fala com o backend diretamente; cada página faz isso via src/services.
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { CarrinhoProvider } from './contexts/CarrinhoContexts'
 import BotoesFlutuantes from './components/BotoesFlutuantes'
@@ -17,31 +20,40 @@ import AdminClientes from './Pages/AdminClientes'
 import AdminCampanhas from './Pages/AdminCampanhas'
 import { WHATSAPP_NUMBER, formatarWhatsApp } from './config/whatsapp'
 
-// Importação de estilos
+// Importação de estilos globais do app
 import './styles/App.css'
 
+// Componente App: tudo que o usuário vê nasce daqui.
+// Um "componente" React é uma função que devolve JSX (HTML escrito dentro do TypeScript).
 function App() {
   return (
+    // CarrinhoProvider: "context" do React. Deixa o carrinho de compras disponível
+    // para qualquer componente filho (Cardapio, Pedido, Navbar...) sem passar props manualmente.
     <CarrinhoProvider>
+      {/* BrowserRouter: habilita a navegação por URL (react-router) sem recarregar a página */}
       <BrowserRouter>
-        {/* Toast Container */}
+        {/* Toast Container: área onde aparecem as notificações (showToast) de qualquer lugar */}
         <ToastContainer />
 
         {/* Todos componentes dentro da estrutura principal */}
         <div className="app-container">
-          {/* Conteúdo Principal com Rotas */}
+          {/* Routes/Route: a tabela de rotas. Só a rota que combina com a URL atual é renderizada */}
           <Routes>
+            {/* Rotas públicas (clientes) */}
             <Route path="/" element={<Home />} />
             <Route path="/cardapio" element={<Cardapio />} />
             <Route path="/pedido" element={<Pedido />} />
+
+            {/* Rotas do painel administrativo (exigem token, ver AdminLogin) */}
             <Route path="/admin" element={<AdminLogin />} />
             <Route path="/admin/pedidos" element={<AdminPedidos />} />
             <Route path="/admin/promocoes" element={<AdminPromocoes />} />
             <Route path="/admin/produtos" element={<AdminProdutos />} />
             <Route path="/admin/clientes" element={<AdminClientes />} />
             <Route path="/admin/campanhas" element={<AdminCampanhas />} />
-            
-            {/* Páginas adicionais */}
+
+            {/* Páginas adicionais: simples e estáticas, por isso ficam definidas aqui mesmo */}
+            {/* /promocoes: página de promoções (ainda sem conteúdo dinâmico) */}
             <Route path="/promocoes" element={
               <>
                 <Navbar showBackButton={true} backTo="/" />
@@ -53,6 +65,7 @@ function App() {
               </>
             } />
 
+            {/* /sobre: texto institucional da pizzaria */}
             <Route path="/sobre" element={
               <>
                 <Navbar showBackButton={true} backTo="/" />
@@ -69,6 +82,7 @@ function App() {
               </>
             } />
 
+            {/* /contato: dados de contato; o WhatsApp vem de src/config/whatsapp.ts */}
             <Route path="/contato" element={
               <>
                 <Navbar showBackButton={true} backTo="/" />
@@ -83,8 +97,8 @@ function App() {
               </>
             } />
           </Routes>
-          
-          {/* Componentes Flutuantes */}
+
+          {/* Componentes Flutuantes: ficam fora do <Routes>, então aparecem em TODAS as páginas */}
           <BotoesFlutuantes />
           <PromocaoDiaToast />
           <PrimeiraCompraToast />

@@ -1,13 +1,25 @@
+// =====================================================================================
+// db/migrate.js — script de migração: prepara o banco de dados.
+//
+// NÃO é importado pela API; é executado manualmente (via script npm do backend) antes de
+// usar o sistema. Ele: (1) roda o schema.sql, que cria o banco e as tabelas se não existirem;
+// (2) garante colunas que bancos antigos podem não ter; (3) carrega o cardápio inicial se a
+// tabela `produtos` estiver vazia. Pode ser rodado várias vezes sem estragar nada (idempotente).
+// =====================================================================================
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import mysql from 'mysql2/promise'
 import 'dotenv/config'
 
+// Em módulos ES não existe __dirname pronto; calculamos a pasta deste arquivo para achar o schema.sql ao lado.
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
+// Lê todo o script SQL de criação do banco/tabelas.
 const schema = readFileSync(path.join(__dirname, 'schema.sql'), 'utf8')
 
-// Colunas de pagamento PIX, adicionadas depois da criação inicial da tabela `pedidos`.
+// Colunas de pagamento PIX e de vínculo com o cliente (cliente_id), que bancos criados
+// numa versão anterior do schema.sql podem não ter. Em banco novo, as de pagamento já vêm do
+// schema.sql (então dão "duplicada" e são ignoradas) e cliente_id é criada aqui.
 // MySQL (diferente do MariaDB) não suporta `ADD COLUMN IF NOT EXISTS`, então a
 // idempotência é feita aqui: tenta adicionar e ignora o erro "coluna duplicada"
 // (ER_DUP_FIELDNAME) quando o banco já tem a coluna de uma migração anterior.
@@ -20,6 +32,7 @@ const COLUNAS_PIX = [
 
 // Cardápio original do site, usado só para popular a tabela `produtos` na primeira migração.
 // Depois disso, tudo é editado pelo painel admin.
+// Formato de cada linha: [categoria, nome, descrição, preço].
 const PRODUTOS_INICIAIS = [
   ['pizza', 'Mussarela', 'Mussarela, molho de tomate, orégano', 32.9],
   ['pizza', 'Portuguesa', 'Presunto, ovo, cebola, pimentão, azeitonas, mussarela', 39.9],
@@ -41,18 +54,23 @@ const PRODUTOS_INICIAIS = [
   ['sobremesa', 'Cheesecake', 'Cheesecake de frutas vermelhas', 14],
 ]
 
+// Executa a migração completa. Usa uma conexão direta (e não o pool) porque o banco
+// pode ainda não existir, então não dá para se conectar já apontando para ele.
 async function migrate() {
   const connection = await mysql.createConnection({
     host: process.env.DB_HOST || 'localhost',
     port: Number(process.env.DB_PORT) || 3306,
     user: process.env.DB_USER || 'root',
     password: process.env.DB_PASSWORD || '',
+    // Necessário para executar o schema.sql inteiro (vários comandos SQL) de uma só vez.
     multipleStatements: true,
   })
 
   try {
+    // 1) Cria banco, tabelas e as promoções padrão.
     await connection.query(schema)
 
+    // 2) Garante as colunas extras em `pedidos`, ignorando as que já existem.
     for (const sql of COLUNAS_PIX) {
       try {
         await connection.query(sql)
@@ -61,6 +79,8 @@ async function migrate() {
       }
     }
 
+    // 3) Cardápio inicial: só carrega se a tabela estiver vazia, para não sobrescrever
+    // (nem duplicar) o que o admin já editou. `VALUES ?` insere várias linhas de uma vez.
     await connection.query('USE pizzaria_porteira')
     const [[{ total }]] = await connection.query('SELECT COUNT(*) AS total FROM produtos')
     if (total === 0) {
@@ -73,10 +93,12 @@ async function migrate() {
 
     console.log('Banco de dados e tabelas criados/verificados com sucesso.')
   } finally {
+    // Sempre fecha a conexão, senão o script não terminaria.
     await connection.end()
   }
 }
 
+// Dispara a migração; em caso de falha, mostra a mensagem e encerra com código de erro (1).
 migrate().catch((error) => {
   console.error('Falha ao rodar a migração:', error.message)
   process.exit(1)

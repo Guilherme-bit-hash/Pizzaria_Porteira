@@ -1,4 +1,10 @@
-// src/Pages/Pedidos.tsx - VERSÃO COMPLETA
+// src/Pages/Pedido.tsx
+// Página de CHECKOUT (carrinho + entrega + pagamento), servida na rota "/pedido" (definida em App.tsx).
+// Tem 3 etapas controladas pelo estado "etapa": 1) revisar o carrinho, 2) dados de entrega e forma de
+// pagamento, 3) pagamento via PIX. O cliente pode finalizar pelo WhatsApp ou pagar com PIX.
+// Backend: POST /api/pedidos, GET /api/pedidos/cupom-primeira-compra/elegivel (services/pedidoService.ts),
+// /api/pedidos/:id/pagamento/* (services/pagamentoService.ts) e GET /api/produtos (services/produtoService.ts).
+// O carrinho vem do contexto (contexts/CarrinhoContexts.tsx).
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useCarrinho, type ItemCarrinho } from '../contexts/CarrinhoContexts'
@@ -22,7 +28,9 @@ import { listarCardapio } from '../services/produtoService'
 import { WHATSAPP_NUMBER, formatarWhatsApp } from '../config/whatsapp'
 import '../styles/pedido.css'
 
+// Componente da página de pedido (nome interno "Pedidos"; importado como "Pedido" em App.tsx).
 export default function Pedidos() {
+  // Dados e ações do carrinho vindos do contexto global (useCarrinho)
   const {
     itens,
     total,
@@ -53,7 +61,10 @@ export default function Pedidos() {
     }
   }
 
+  // ---- Estados da página (useState: ao mudarem, a tela é redesenhada) ----
+  // Etapa atual do checkout
   const [etapa, setEtapa] = useState<'carrinho' | 'entrega' | 'pagamento'>('carrinho')
+  // Campos do formulário de entrega
   const [dadosCliente, setDadosCliente] = useState({
     nome: '',
     telefone: '',
@@ -61,11 +72,16 @@ export default function Pedidos() {
     complemento: '',
     observacoes: ''
   })
+  // Requisição em andamento (desativa os botões de finalizar)
   const [enviando, setEnviando] = useState(false)
+  // Cupom de primeira compra: null = ainda não verificado, true = vale, false = telefone já comprou antes
   const [cupomElegivel, setCupomElegivel] = useState<boolean | null>(null)
+  // Escolha do cliente: combinar no WhatsApp ou pagar com PIX
   const [formaPagamento, setFormaPagamento] = useState<'whatsapp' | 'pix'>('whatsapp')
+  // E-mail opcional e consentimento (LGPD) para receber promoções
   const [emailCliente, setEmailCliente] = useState('')
   const [aceitaPromocoes, setAceitaPromocoes] = useState(false)
+  // Dados do fluxo PIX: id do pedido criado, QR code recebido, status do pagamento e mensagem de erro
   const [pedidoId, setPedidoId] = useState<number | null>(null)
   const [pixData, setPixData] = useState<PagamentoPix | null>(null)
   const [statusPagamento, setStatusPagamento] = useState<StatusPagamento>('pendente')
@@ -74,6 +90,7 @@ export default function Pedidos() {
   // Ao abrir o carrinho, confere com o cardápio atual: se o admin mudou um preço ou tirou um
   // produto do ar, o carrinho é corrigido e o cliente é avisado (senão o pedido seria recusado
   // pelo servidor por divergência de preço).
+  // Roda uma única vez, quando a página abre (lista de dependências vazia).
   useEffect(() => {
     listarCardapio()
       .then((produtos) => {
@@ -100,18 +117,21 @@ export default function Pedidos() {
       })
   }, [])
 
+  // Telefone só com dígitos, e se o valor do carrinho já atingiu o mínimo do cupom
   const telefoneDigits = dadosCliente.telefone.replace(/\D/g, '')
   const cupomDesbloqueadoPeloValor = total >= CUPOM_VALOR_MINIMO
 
   // Reconsulta o backend sempre que o telefone muda, com um pequeno atraso para não
   // disparar uma requisição a cada tecla digitada. A verdade definitiva sobre o cupom
   // só é decidida no servidor ao finalizar o pedido — isso aqui é só feedback visual.
+  // Roda quando o telefone ou o desbloqueio do cupom mudam.
   useEffect(() => {
     if (!cupomDesbloqueadoPeloValor || telefoneDigits.length < 10) {
       setCupomElegivel(null)
       return
     }
 
+    // "cancelado" evita usar uma resposta antiga se o telefone mudou de novo enquanto esperava
     let cancelado = false
     const timer = setTimeout(() => {
       verificarCupomPrimeiraCompra(dadosCliente.telefone).then((elegivel) => {
@@ -119,18 +139,21 @@ export default function Pedidos() {
       })
     }, 600)
 
+    // Limpeza: cancela o timer e ignora respostas pendentes
     return () => {
       cancelado = true
       clearTimeout(timer)
     }
   }, [telefoneDigits, cupomDesbloqueadoPeloValor, dadosCliente.telefone])
 
+  // Valores calculados só para exibição (o servidor recalcula tudo ao criar o pedido)
   const cupomConfirmado = cupomDesbloqueadoPeloValor && cupomElegivel === true
   const descontoPrevisto = cupomConfirmado ? Number((total * CUPOM_PERCENTUAL).toFixed(2)) : 0
   const totalComDesconto = Number((total - descontoPrevisto).toFixed(2))
 
   // Enquanto aprovado, o pagamento PIX esvazia o carrinho — sem essa exceção, a tela de
   // sucesso seria substituída pela de "carrinho vazio" assim que isso acontecesse.
+  // Roda quando o status do pagamento muda: ao ser aprovado, marca "já fez pedido" e limpa o carrinho.
   useEffect(() => {
     if (statusPagamento === 'aprovado') {
       marcarPedidoRealizado()
@@ -140,6 +163,7 @@ export default function Pedidos() {
   }, [statusPagamento])
 
   // Consulta o status do PIX periodicamente enquanto o pedido estiver pendente de pagamento.
+  // (polling: a cada 4s pergunta ao backend se o cliente já pagou). Só ativo na etapa "pagamento".
   useEffect(() => {
     if (etapa !== 'pagamento' || !pedidoId || statusPagamento !== 'pendente') return
 
@@ -152,10 +176,11 @@ export default function Pedidos() {
       }
     }, 4000)
 
+    // Limpeza: para o polling quando a etapa/status muda ou a página fecha
     return () => clearInterval(intervalo)
   }, [etapa, pedidoId, statusPagamento])
 
-  // Se carrinho vazio
+  // Se carrinho vazio (mostra um aviso com link para o cardápio em vez do checkout)
   if (quantidadeTotal === 0 && etapa !== 'pagamento') {
     return (
       <>
@@ -178,6 +203,7 @@ export default function Pedidos() {
   // Gerar mensagem do WhatsApp a partir do resumo confirmado pelo backend
   // (subtotal/desconto/total ali já refletem se o cupom foi de fato aplicado)
   const gerarMensagemWhatsApp = (resumo: { subtotal: number; desconto: number; total: number; cupom: string | null }) => {
+    // Monta o texto linha a linha (os *asteriscos* deixam em negrito no WhatsApp)
     let mensagem = `*NOVO PEDIDO - PIZZARIA PORTEIRA*\n\n`
     mensagem += `*Cliente:* ${dadosCliente.nome}\n`
     mensagem += `*Telefone:* ${dadosCliente.telefone}\n`
@@ -215,6 +241,7 @@ export default function Pedidos() {
   const handleFinalizarPedido = async () => {
     setEnviando(true)
 
+    // Resumo padrão (sem desconto), usado se o backend não responder
     let resumoFinal: { subtotal: number; desconto: number; total: number; cupom: string | null } = {
       subtotal: total,
       desconto: 0,
@@ -235,6 +262,7 @@ export default function Pedidos() {
         aceitaPromocoes,
       })
 
+      // Backend respondeu: usa os valores oficiais calculados pelo servidor
       if (resultado) {
         resumoFinal = {
           subtotal: resultado.subtotal,
@@ -244,6 +272,7 @@ export default function Pedidos() {
         }
       }
     } finally {
+      // Sempre abre o WhatsApp, mesmo se o backend falhou, para o pedido não se perder
       setEnviando(false)
       marcarPedidoRealizado()
       const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(gerarMensagemWhatsApp(resumoFinal))}`
@@ -271,11 +300,13 @@ export default function Pedidos() {
         aceitaPromocoes,
       })
 
+      // Sem id de pedido não há como cobrar: mostra erro e para
       if (!resultado) {
         setErroPix('Não foi possível registrar o pedido agora. Tente novamente ou finalize pelo WhatsApp.')
         return
       }
 
+      // Guarda o id, pede o QR code PIX e avança para a etapa de pagamento
       setPedidoId(resultado.id)
       const pix = await criarPagamentoPix(resultado.id, emailCliente || undefined)
       setPixData(pix)
@@ -302,6 +333,7 @@ export default function Pedidos() {
           <h1 className="pedido-cabecalho__titulo">
             {etapa === 'carrinho' ? '🛒 Seu Carrinho' : '📍 Dados de Entrega'}
           </h1>
+          {/* Indicador de etapas (destaca a etapa atual) */}
           <div className="pedido-cabecalho__etapas">
             <div className={`pedido-etapa-badge${etapa === 'carrinho' ? ' pedido-etapa-badge--ativa' : ''}`}>
               1. Carrinho
@@ -320,6 +352,7 @@ export default function Pedidos() {
           {etapa === 'carrinho' && (
             <>
               <div className="pedido-card">
+                {/* Título com contagem de itens e botão para esvaziar o carrinho */}
                 <div className="pedido-card__topo">
                   <h2 className="pedido-card__titulo">
                     Itens no Carrinho ({quantidadeTotal})
@@ -403,6 +436,7 @@ export default function Pedidos() {
                   </div>
                 </div>
 
+                {/* Avança para a etapa 2 */}
                 <button onClick={() => setEtapa('entrega')} className="pedido-botao-continuar">
                   Continuar para Entrega →
                 </button>
@@ -419,7 +453,9 @@ export default function Pedidos() {
             <div className="pedido-card">
               <h2 className="pedido-card__titulo">📍 Dados para Entrega</h2>
 
+              {/* Formulário de entrega: cada campo atualiza o estado dadosCliente */}
               <form className="pedido-form">
+                {/* Nome */}
                 <div className="pedido-campo">
                   <label className="pedido-label">Nome Completo *</label>
                   <input
@@ -432,6 +468,7 @@ export default function Pedidos() {
                   />
                 </div>
 
+                {/* Telefone (também usado para verificar o cupom de primeira compra) */}
                 <div className="pedido-campo">
                   <label className="pedido-label">Telefone (WhatsApp) *</label>
                   <input
@@ -442,6 +479,7 @@ export default function Pedidos() {
                     className="pedido-input"
                     placeholder="(11) 99999-9999"
                   />
+                  {/* Feedback do cupom: verificando / aplicado / indisponível */}
                   {cupomDesbloqueadoPeloValor && telefoneDigits.length >= 10 && (
                     <p
                       className={`pedido-cupom-feedback${cupomElegivel === false ? ' pedido-cupom-feedback--indisponivel' : ''}`}
@@ -453,6 +491,7 @@ export default function Pedidos() {
                   )}
                 </div>
 
+                {/* Endereço */}
                 <div className="pedido-campo">
                   <label className="pedido-label">Endereço Completo *</label>
                   <input
@@ -465,6 +504,7 @@ export default function Pedidos() {
                   />
                 </div>
 
+                {/* Complemento (opcional) */}
                 <div className="pedido-campo">
                   <label className="pedido-label">Complemento</label>
                   <input
@@ -476,6 +516,7 @@ export default function Pedidos() {
                   />
                 </div>
 
+                {/* Observações gerais do pedido (opcional) */}
                 <div className="pedido-campo">
                   <label className="pedido-label">Observações do Pedido</label>
                   <textarea
@@ -486,6 +527,7 @@ export default function Pedidos() {
                   />
                 </div>
 
+                {/* E-mail (opcional): recibo do PIX e campanhas */}
                 <div className="pedido-campo">
                   <label className="pedido-label">E-mail (opcional — recibo do PIX e novidades)</label>
                   <input
@@ -545,7 +587,7 @@ export default function Pedidos() {
                 </div>
               </div>
 
-              {/* FORMA DE PAGAMENTO */}
+              {/* FORMA DE PAGAMENTO (escolha entre WhatsApp e PIX) */}
               <div className="pedido-forma-pagamento">
                 <h3 className="pedido-resumo__titulo">Como você quer pagar?</h3>
                 <div className="pedido-forma-pagamento__opcoes">
@@ -567,7 +609,7 @@ export default function Pedidos() {
 
               </div>
 
-              {/* BOTÕES DE AÇÃO */}
+              {/* BOTÕES DE AÇÃO: voltar e finalizar (o botão muda conforme a forma de pagamento) */}
               <div className="pedido-acoes">
                 <button onClick={() => setEtapa('carrinho')} className="pedido-botao-voltar-carrinho">
                   ← Voltar ao Carrinho
@@ -594,10 +636,12 @@ export default function Pedidos() {
                 )}
               </div>
 
+              {/* Erro ao gerar o PIX */}
               {erroPix && (
                 <p className="pedido-cupom-feedback pedido-cupom-feedback--indisponivel">{erroPix}</p>
               )}
 
+              {/* Aviso explicando o que acontece ao finalizar */}
               <p className="pedido-aviso-whatsapp">
                 {formaPagamento === 'whatsapp'
                   ? '⚠️ Ao clicar em "Finalizar Pedido", você será redirecionado para o WhatsApp para confirmar seu pedido e combinar a forma de pagamento.'
@@ -609,6 +653,7 @@ export default function Pedidos() {
           {/* ETAPA 3: PAGAMENTO PIX */}
           {etapa === 'pagamento' && pixData && (
             <div className="pedido-card pedido-pix">
+              {/* Aguardando pagamento: QR code e código "copia e cola" */}
               {statusPagamento === 'pendente' && (
                 <>
                   <h2 className="pedido-card__titulo">⚡ Pague com PIX</h2>
@@ -656,6 +701,7 @@ export default function Pedidos() {
                 </>
               )}
 
+              {/* Pagamento aprovado: confirmação e atalho para avisar a pizzaria */}
               {statusPagamento === 'aprovado' && (
                 <div className="pedido-pix__resultado">
                   <h2 className="pedido-card__titulo">✅ Pagamento confirmado!</h2>
@@ -674,6 +720,7 @@ export default function Pedidos() {
                 </div>
               )}
 
+              {/* PIX recusado ou expirado: permite voltar e tentar de novo */}
               {(statusPagamento === 'recusado' || statusPagamento === 'expirado') && (
                 <div className="pedido-pix__resultado">
                   <h2 className="pedido-card__titulo">⚠️ Pagamento não concluído</h2>

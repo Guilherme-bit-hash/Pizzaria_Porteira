@@ -1,7 +1,15 @@
 // src/components/BannerPromocoes.tsx
+// ============================================================================
+// BannerPromocoes - faixa com os cartões de promoções em destaque.
+// Usado em: o componente em si não é renderizado por nenhuma página hoje; já a
+// lista `promocoesDestaque` é importada por PromocoesLandingToast.tsx.
+// Props: nenhuma.
+// Estilos: styles/bannerPromocoes.css.
+// ============================================================================
 import { Link } from 'react-router-dom'; // Importação necessária
 import '../styles/bannerPromocoes.css'
 
+// Dados das promoções em destaque (`codigo` é o cupom e é opcional).
 export const promocoesDestaque = [
   { id: 1, titulo: '🎁 Primeira Compra', descricao: '10% OFF no seu primeiro pedido', codigo: 'BEMVINDO10' },
   { id: 2, titulo: '📦 Delivery Grátis', descricao: 'Frete grátis acima de R$ 50', codigo: 'FRETEGRATIS' },
@@ -13,12 +21,15 @@ export default function BannerPromocoes() {
 
   return (
     <div className="banner-promocoes">
+      {/* Faixa decorativa no topo do banner */}
       <div className="banner-promocoes__faixa-topo" />
 
+      {/* Título do banner */}
       <h2 className="banner-promocoes__titulo">
         🎪 Promoções Exclusivas
       </h2>
 
+      {/* Grade de cartões: um por promoção */}
       <div className="banner-promocoes__grid">
         {promocoes.map((promo) => (
           <div key={promo.id} className="banner-promocoes__card">
@@ -28,6 +39,7 @@ export default function BannerPromocoes() {
             <p className="banner-promocoes__card-descricao">
               {promo.descricao}
             </p>
+            {/* Cupom exibido só quando a promoção tem código */}
             {promo.codigo && (
               <div className="banner-promocoes__codigo">
                 Código: {promo.codigo}
@@ -37,6 +49,7 @@ export default function BannerPromocoes() {
         ))}
       </div>
 
+      {/* Rodapé com o botão que leva ao cardápio */}
       <div className="banner-promocoes__rodape">
         <Link to="/cardapio" className="banner-promocoes__botao">
           🍕 Ver Cardápio Completo

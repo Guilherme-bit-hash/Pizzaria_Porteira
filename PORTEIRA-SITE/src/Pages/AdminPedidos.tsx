@@ -1,3 +1,8 @@
+// src/Pages/AdminPedidos.tsx
+// Painel de PEDIDOS do administrador, servido na rota "/admin/pedidos" (definida em App.tsx).
+// Lista os pedidos, permite avançar o status (recebido -> preparando -> entrega -> entregue) ou cancelar.
+// Backend: GET /api/pedidos e PATCH /api/pedidos/:id/status (via services/pedidoService.ts), com token de admin.
+// A lista é atualizada sozinha a cada 15 segundos.
 import { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -12,6 +17,7 @@ import { showToast } from '../components/Toast'
 import AdminNav from '../components/AdminNav'
 import '../styles/admin.css'
 
+// Texto amigável (com emoji) exibido para cada status do pedido.
 const STATUS_LABEL: Record<StatusPedido, string> = {
   recebido: '🆕 Recebido',
   preparando: '👨‍🍳 Preparando',
@@ -20,6 +26,7 @@ const STATUS_LABEL: Record<StatusPedido, string> = {
   cancelado: '❌ Cancelado',
 }
 
+// Fluxo do pedido: para cada status, qual é o próximo (null = fim do fluxo, sem botão de avançar).
 const PROXIMOS_STATUS: Record<StatusPedido, StatusPedido | null> = {
   recebido: 'preparando',
   preparando: 'saiu_para_entrega',
@@ -28,6 +35,8 @@ const PROXIMOS_STATUS: Record<StatusPedido, StatusPedido | null> = {
   cancelado: null,
 }
 
+// Decide o texto e a cor (classe CSS) do selo de pagamento de um pedido.
+// Pedidos via WhatsApp não têm status de pagamento; pedidos PIX mostram pago/recusado/expirado/pendente.
 function pagamentoBadge(pedido: Pedido) {
   if (pedido.forma_pagamento !== 'pix') return { texto: '💬 WhatsApp', classe: '' }
 
@@ -45,16 +54,22 @@ function pagamentoBadge(pedido: Pedido) {
 
 export default function AdminPedidos() {
   const navigate = useNavigate()
+
+  // Estados da tela: lista de pedidos, indicador de carregamento inicial e mensagem de erro
   const [pedidos, setPedidos] = useState<Pedido[]>([])
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState('')
 
+  // Busca os pedidos no backend e atualiza a tela.
+  // useCallback mantém a mesma função entre renderizações (só recria se "navigate" mudar),
+  // o que evita que o useEffect abaixo seja reexecutado sem necessidade.
   const carregarPedidos = useCallback(async () => {
     try {
       const dados = await listarPedidos()
       setPedidos(dados)
       setErro('')
     } catch (error) {
+      // Token inválido/expirado: apaga o token e volta para o login
       if (error instanceof Error && /token/i.test(error.message)) {
         limparAdminToken()
         navigate('/admin')
@@ -66,6 +81,8 @@ export default function AdminPedidos() {
     }
   }, [navigate])
 
+  // Roda ao abrir a tela: sem token de admin manda para o login; com token carrega os pedidos
+  // e agenda uma nova busca a cada 15s (polling) para pedidos novos aparecerem sozinhos.
   useEffect(() => {
     if (!getAdminToken()) {
       navigate('/admin')
@@ -73,14 +90,17 @@ export default function AdminPedidos() {
     }
     carregarPedidos()
     const intervalo = setInterval(carregarPedidos, 15000)
+    // Limpeza: para o polling ao sair da tela
     return () => clearInterval(intervalo)
   }, [navigate, carregarPedidos])
 
+  // Clique em "Avançar": move o pedido para a próxima etapa do fluxo.
   const handleAvancarStatus = async (pedido: Pedido) => {
     const proximo = PROXIMOS_STATUS[pedido.status]
     if (!proximo) return
     try {
       await atualizarStatusPedido(pedido.id, proximo)
+      // Recarrega a lista para refletir a mudança
       carregarPedidos()
       showToast({
         message: `Pedido #${pedido.id} atualizado para "${STATUS_LABEL[proximo]}"`,
@@ -97,6 +117,7 @@ export default function AdminPedidos() {
     }
   }
 
+  // Clique em "Cancelar": marca o pedido como cancelado.
   const handleCancelar = async (pedido: Pedido) => {
     try {
       await atualizarStatusPedido(pedido.id, 'cancelado')
@@ -118,12 +139,14 @@ export default function AdminPedidos() {
 
   return (
     <div className="admin-page">
+      {/* Cabeçalho com título e menu de navegação entre as telas do admin */}
       <header className="admin-header">
         <h1 className="admin-header__titulo">📋 Pedidos</h1>
         <AdminNav atual="pedidos" />
       </header>
 
       <div className="admin-conteudo">
+        {/* Mensagens de estado: erro, carregando e lista vazia */}
         {erro && <p className="admin-mensagem-erro">{erro}</p>}
 
         {carregando && <p className="admin-mensagem-neutra">Carregando pedidos...</p>}
@@ -132,8 +155,10 @@ export default function AdminPedidos() {
           <p className="admin-mensagem-neutra">Nenhum pedido registrado ainda.</p>
         )}
 
+        {/* Um cartão por pedido (key ajuda o React a identificar cada item da lista) */}
         {pedidos.map((pedido) => (
           <div key={pedido.id} className="admin-pedido-card">
+            {/* Topo do cartão: número, dados do cliente e selos de status/pagamento */}
             <div className="admin-pedido-card__topo">
               <div>
                 <h3 className="admin-pedido-card__titulo">
@@ -155,6 +180,7 @@ export default function AdminPedidos() {
               </div>
             </div>
 
+            {/* Itens do pedido, com a observação de cada item quando houver */}
             <ul className="admin-pedido-card__itens">
               {pedido.itens.map((item, index) => (
                 <li key={index}>
@@ -164,23 +190,27 @@ export default function AdminPedidos() {
               ))}
             </ul>
 
+            {/* Observação geral do pedido (opcional) */}
             {pedido.observacoes && (
               <p className="admin-pedido-card__observacoes">
                 Observações do pedido: {pedido.observacoes}
               </p>
             )}
 
+            {/* Rodapé: total e botões de ação */}
             <div className="admin-pedido-card__rodape">
               <strong className="admin-pedido-card__total">
                 Total: R$ {Number(pedido.total).toFixed(2).replace('.', ',')}
               </strong>
 
               <div className="admin-pedido-card__acoes">
+                {/* Só mostra "Avançar" se ainda existe uma próxima etapa */}
                 {PROXIMOS_STATUS[pedido.status] && (
                   <button onClick={() => handleAvancarStatus(pedido)} className="admin-botao-avancar">
                     Avançar → {STATUS_LABEL[PROXIMOS_STATUS[pedido.status]!]}
                   </button>
                 )}
+                {/* Pedido já entregue ou cancelado não pode mais ser cancelado */}
                 {pedido.status !== 'entregue' && pedido.status !== 'cancelado' && (
                   <button onClick={() => handleCancelar(pedido)} className="admin-botao-cancelar">
                     Cancelar

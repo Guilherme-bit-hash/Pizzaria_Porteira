@@ -1,5 +1,8 @@
+/* Estilos do componente PromocaoDia (components/PromocaoDia.tsx). */
+/* A variável CSS --promo-cor é definida inline pelo React (style no card) e colore todo o cartão. */
 /* src/styles/promocaoDia.css */
 /* ===== BANNER FIXO ===== */
+/* Contêiner fixo no topo e centralizado (left: 50% + translateX(-50%)); entra deslizando de cima. */
 .promocao-dia {
   position: fixed;
   top: 20px;
@@ -16,6 +19,7 @@
 /* ===== CARD (COR DINÂMICA) ===== */
 /* --promo-cor é o único valor genuinamente dinâmico (muda por dia da semana);
    todo o resto do visual fica só aqui no CSS. */
+/* Cartão principal: degradê e sombras derivados de --promo-cor via color-mix; overflow: hidden prende o brilho animado. */
 .promocao-dia__card {
   background: linear-gradient(
     135deg,
@@ -37,6 +41,7 @@
   cursor: pointer;
 }
 
+/* Hover: cartão sobe 2px e a sombra colorida fica mais intensa. */
 .promocao-dia__card:hover {
   transform: translateY(-2px);
   box-shadow:
@@ -45,6 +50,7 @@
 }
 
 /* ===== BRILHO E CONTEÚDO ===== */
+/* Faixa de luz diagonal maior que o cartão, animada por promocao-dia-brilho. */
 .promocao-dia__brilho {
   position: absolute;
   top: -50%;
@@ -57,6 +63,7 @@
   animation: promocao-dia-brilho 4s ease-in-out infinite;
 }
 
+/* Linha com o texto à esquerda e o ícone à direita. */
 .promocao-dia__conteudo {
   display: flex;
   align-items: center;
@@ -67,10 +74,12 @@
   z-index: 2;
 }
 
+/* Coluna de texto; flex: 1 ocupa o espaço restante. */
 .promocao-dia__lado-esquerdo {
   flex: 1;
 }
 
+/* Linha com o emoji e a etiqueta do dia. */
 .promocao-dia__topo {
   display: flex;
   align-items: center;
@@ -79,10 +88,12 @@
 }
 
 /* ===== TEXTOS E ÍCONES ===== */
+/* Emoji da promoção. */
 .promocao-dia__emoji {
   font-size: 2rem;
 }
 
+/* Etiqueta com o nome do dia da semana. */
 .promocao-dia__tag-dia {
   font-size: 0.8rem;
   background: rgba(255, 255, 255, 0.25);
@@ -92,6 +103,7 @@
   letter-spacing: 0.5px;
 }
 
+/* Título da promoção; clamp() adapta o tamanho à largura da tela. */
 .promocao-dia__titulo {
   margin: 8px 0 6px 0;
   font-size: clamp(1.1rem, 3vw, 1.5rem);
@@ -99,6 +111,7 @@
   line-height: 1.2;
 }
 
+/* Descrição da oferta. */
 .promocao-dia__descricao {
   margin: 0;
   font-size: clamp(0.85rem, 2vw, 1rem);
@@ -106,6 +119,7 @@
   line-height: 1.3;
 }
 
+/* Ícone de fogo à direita, com animação de pulso. */
 .promocao-dia__icone-lateral {
   font-size: 2.8rem;
   /* Ícone lateral pulsando */
@@ -114,6 +128,7 @@
 }
 
 /* ===== BADGE DE HORÁRIO E BOTÃO FECHAR ===== */
+/* Selo "Apenas hoje" pendurado na borda superior do cartão (position: absolute). */
 .promocao-dia__badge-horario {
   position: absolute;
   top: -1px;
@@ -129,6 +144,7 @@
   backdrop-filter: blur(10px);
 }
 
+/* Botãozinho redondo de fechar no canto superior direito do cartão. */
 .promocao-dia__fechar {
   position: absolute;
   top: 12px;
@@ -148,11 +164,13 @@
   backdrop-filter: blur(5px);
 }
 
+/* Hover: fundo mais claro. */
 .promocao-dia__fechar:hover {
   background: rgba(255, 255, 255, 0.35);
 }
 
 /* ===== ANIMAÇÕES ===== */
+/* Entrada do cartão: desliza de cima para baixo (mantém translateX(-50%) para continuar centralizado). */
 @keyframes promocao-dia-slide-down {
   from {
     transform: translateX(-50%) translateY(-130%);
@@ -164,17 +182,20 @@
   }
 }
 
+/* Pulso de escala do ícone lateral. */
 @keyframes promocao-dia-bounce {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.15); }
 }
 
+/* Move a faixa de luz de um lado ao outro do cartão. */
 @keyframes promocao-dia-brilho {
   0% { transform: rotate(30deg) translateX(-100%); }
   100% { transform: rotate(30deg) translateX(100%); }
 }
 
 /* ===== RESPONSIVIDADE ===== */
+/* Celulares: empilha o conteúdo e coloca o ícone acima do texto (order: -1). */
 @media (max-width: 640px) {
   .promocao-dia__conteudo {
     flex-direction: column;

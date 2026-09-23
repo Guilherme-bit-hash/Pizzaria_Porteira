@@ -1,4 +1,8 @@
-// src/Pages/Cardapio.tsx - VERSÃO COMPLETA ATUALIZADA
+// src/Pages/Cardapio.tsx
+// Página do CARDÁPIO, servida na rota "/cardapio" (definida em App.tsx; a Home leva para cá).
+// Mostra os produtos em abas (pizzas, hambúrgueres, bebidas, sobremesas) com paginação e a aba
+// "Promoção do Dia". O botão "Adicionar" coloca o item no carrinho (contexts/CarrinhoContexts.tsx).
+// Backend: GET /api/produtos (services/produtoService.ts) e GET /api/promocoes (via hooks/usePromocaoDoDia.ts).
 import { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { useCarrinho } from '../contexts/CarrinhoContexts'
@@ -12,8 +16,11 @@ import { WHATSAPP_NUMBER } from '../config/whatsapp'
 import { listarCardapio, type CategoriaProduto, type Produto } from '../services/produtoService'
 import '../styles/cardapio.css'
 
+// Identificadores das abas exibidas na tela
 type TabType = 'pizzas' | 'hamburgueres' | 'bebidas' | 'sobremesas' | 'promocoes'
 
+// Liga cada aba (plural, usada na interface) à categoria do produto no banco (singular).
+// A aba "promocoes" fica de fora porque não lista produtos do banco.
 const CATEGORIA_DA_ABA: Record<Exclude<TabType, 'promocoes'>, CategoriaProduto> = {
   pizzas: 'pizza',
   hamburgueres: 'hamburguer',
@@ -27,6 +34,8 @@ const CATEGORIA_DA_ABA: Record<Exclude<TabType, 'promocoes'>, CategoriaProduto> 
 const ITENS_POR_PAGINA = 3
 const PROMOCOES_POR_PAGINA = 4
 
+// Grade fixa exibida em "Promoções da Semana" (texto de vitrine; a promoção do dia
+// em destaque vem do backend via usePromocaoDoDia). A posição na lista é o dia (0 = domingo).
 const DIAS_SEMANA_PROMOCOES = [
   { dia: 'Domingo', promocao: '2 Pizzas + Refri 2L por R$ 89,90', emoji: '👨‍👩‍👧‍👦', cor: '#FF6B35' },
   { dia: 'Segunda', promocao: '20% OFF em todas as pizzas', emoji: '🎯', cor: '#4A90E2' },
@@ -37,6 +46,8 @@ const DIAS_SEMANA_PROMOCOES = [
   { dia: 'Sábado', promocao: 'Promoção surpresa!', emoji: '🌟', cor: '#FFD700' }
 ]
 
+// Componente reutilizável dos botões "Anterior / Próxima" com "Página X de Y".
+// Recebe dados por "props" (parâmetros do componente): página atual, total e a função a chamar ao trocar.
 function ControlesPaginacao({
   paginaAtual,
   totalPaginas,
@@ -46,10 +57,12 @@ function ControlesPaginacao({
   totalPaginas: number
   onMudarPagina: (pagina: number) => void
 }) {
+  // Com uma página só, não há o que paginar: não desenha nada
   if (totalPaginas <= 1) return null
 
   return (
     <div className="cardapio-paginacao">
+      {/* Botão Anterior (desativado na primeira página) */}
       <button
         type="button"
         onClick={() => onMudarPagina(paginaAtual - 1)}
@@ -59,9 +72,11 @@ function ControlesPaginacao({
       >
         ← Anterior
       </button>
+      {/* Indicador da página atual */}
       <span className="cardapio-paginacao__info">
         Página {paginaAtual} de {totalPaginas}
       </span>
+      {/* Botão Próxima (desativado na última página) */}
       <button
         type="button"
         onClick={() => onMudarPagina(paginaAtual + 1)}
@@ -75,21 +90,29 @@ function ControlesPaginacao({
   )
 }
 
+// Componente da página inteira.
 export default function Cardapio() {
+  // Estados da interface (useState: valores que, ao mudar, redesenham a tela):
+  // aba selecionada, menu lateral (mobile) aberto/fechado e página atual de cada paginação
   const [abaAtiva, setAbaAtiva] = useState<TabType>('pizzas')
   const [sidebarAberta, setSidebarAberta] = useState(false)
   const [paginaAtual, setPaginaAtual] = useState(1)
   const [paginaPromocoes, setPaginaPromocoes] = useState(1)
+  // Função do contexto do carrinho para adicionar itens
   const { adicionarItem } = useCarrinho()
+  // Promoção de hoje e nome do dia (hook que consulta o backend)
   const { promocaoAtual: promocaoDoDia, nomeDia: nomeDiaAtual } = usePromocaoDoDia()
 
   // Volta para a primeira página sempre que trocar de aba
+  // (roda a cada mudança de "abaAtiva")
   useEffect(() => {
     setPaginaAtual(1)
   }, [abaAtiva])
 
   // Função para gerar imagens placeholder dinâmicas
+  // (usada quando o produto não tem imagem cadastrada; cria uma imagem colorida com emoji e nome)
   const getPlaceholderImage = (nome: string, categoria: TabType) => {
+    // Cor de fundo de cada categoria
     const cores = {
       pizzas: 'FF6B35',
       hamburgueres: '8B4513',
@@ -98,6 +121,7 @@ export default function Cardapio() {
       promocoes: 'FFD700'
     }
 
+    // Emoji de cada categoria
     const emojis = {
       pizzas: '🍕',
       hamburgueres: '🍔',
@@ -115,6 +139,8 @@ export default function Cardapio() {
   const [carregandoCardapio, setCarregandoCardapio] = useState(true)
   const [erroCardapio, setErroCardapio] = useState(false)
 
+  // Busca o cardápio público no backend (GET /api/produtos) e controla os estados de carregando/erro.
+  // Também é usada pelo botão "Tentar novamente".
   const carregarCardapio = useCallback(async () => {
     setCarregandoCardapio(true)
     setErroCardapio(false)
@@ -128,10 +154,13 @@ export default function Cardapio() {
     }
   }, [])
 
+  // Carrega o cardápio uma vez, quando a página abre.
   useEffect(() => {
     carregarCardapio()
   }, [carregarCardapio])
 
+  // Filtra os produtos da categoria da aba e converte para o formato usado nos cards
+  // (usa a imagem do produto ou, se não houver, a imagem placeholder).
   const itensDaAba = (aba: Exclude<TabType, 'promocoes'>) =>
     produtos
       .filter((produto) => produto.categoria === CATEGORIA_DA_ABA[aba])
@@ -142,6 +171,7 @@ export default function Cardapio() {
         imagem: produto.imagemUrl || getPlaceholderImage(produto.nome, aba)
       }))
 
+  // Itens já agrupados por aba, prontos para exibir
   const cardapio = {
     pizzas: itensDaAba('pizzas'),
     hamburgueres: itensDaAba('hamburgueres'),
@@ -151,6 +181,7 @@ export default function Cardapio() {
     // banner de `promocaoDoDia` (vindo do backend) e a grade semanal mais abaixo.
   }
 
+  // Lista de abas (id, texto e ícone), usada tanto pelas abas de desktop quanto pela Sidebar do mobile
   const abas: { id: TabType; label: string; icon: string }[] = [
     { id: 'pizzas', label: 'Pizzas', icon: '🍕' },
     { id: 'hamburgueres', label: 'Hambúrgueres', icon: '🍔' },
@@ -159,7 +190,7 @@ export default function Cardapio() {
     { id: 'promocoes', label: 'Promoção do Dia', icon: '🎯' }
   ]
 
-  // Mapear categorias para o contexto
+  // Mapear categorias (aba -> categoria aceita pelo carrinho)
   const categoriaMap = {
     pizzas: 'pizza',
     hamburgueres: 'hamburguer',
@@ -168,7 +199,7 @@ export default function Cardapio() {
     promocoes: 'promocao'
   } as const
 
-  // Função para adicionar ao carrinho
+  // Função para adicionar ao carrinho (clique em "Adicionar ao Carrinho" de um produto)
   const handleAdicionarAoCarrinho = (item: typeof cardapio.pizzas[0]) => {
     adicionarItem({
       nome: item.nome,
@@ -187,6 +218,8 @@ export default function Cardapio() {
   }
 
   // Remove scroll horizontal e bordas
+  // Roda uma vez ao entrar na página; a função retornada desfaz os estilos ao sair dela,
+  // para não afetar as outras páginas.
   useEffect(() => {
     document.documentElement.style.overflowX = 'hidden'
     document.body.style.overflowX = 'hidden'
@@ -205,11 +238,12 @@ export default function Cardapio() {
     }
   }, [])
 
+  // Sem promoção para hoje, a página não é desenhada
   if (!promocaoDoDia) return null
 
   return (
     <main className="cardapio-page">
-      {/* SIDEBAR RESPONSIVA (mobile) */}
+      {/* SIDEBAR RESPONSIVA (mobile): botão de menu abre a Sidebar com as mesmas abas */}
       <MenuButton onClick={() => setSidebarAberta(true)} />
       <Sidebar
         tabs={abas}
@@ -334,6 +368,7 @@ export default function Cardapio() {
             <div className="cardapio-semana">
               <h3 className="cardapio-semana__titulo">📅 Promoções da Semana</h3>
 
+              {/* Cards dos dias, paginados; só o card de hoje permite adicionar ao carrinho */}
               <div className="cardapio-semana__grid">
                 {DIAS_SEMANA_PROMOCOES
                   .map((item, index) => ({ ...item, indiceDia: index }))
@@ -412,6 +447,7 @@ export default function Cardapio() {
                 })}
               </div>
 
+              {/* Paginação dos cards da semana */}
               <ControlesPaginacao
                 paginaAtual={paginaPromocoes}
                 totalPaginas={Math.ceil(DIAS_SEMANA_PROMOCOES.length / PROMOCOES_POR_PAGINA)}
@@ -506,6 +542,7 @@ export default function Cardapio() {
               ))}
             </div>
 
+            {/* Paginação dos produtos */}
             <ControlesPaginacao
               paginaAtual={paginaAtual}
               totalPaginas={Math.ceil(cardapio[abaAtiva].length / ITENS_POR_PAGINA)}

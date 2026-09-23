@@ -1,3 +1,8 @@
+// src/Pages/AdminPromocoes.tsx
+// Painel de PROMOÇÕES DA SEMANA do administrador, servido na rota "/admin/promocoes" (definida em App.tsx).
+// Mostra um cartão editável para cada dia da semana (nome, preço, cor, textos de WhatsApp e e-mail).
+// Backend: GET /api/promocoes e PUT /api/promocoes/:dia (via services/promocaoService.ts).
+// Os valores padrão vêm de hooks/usePromocaoDoDia.ts (usados se o backend estiver fora do ar).
 import { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getAdminToken, limparAdminToken } from '../services/pedidoService'
@@ -7,6 +12,7 @@ import { showToast } from '../components/Toast'
 import AdminNav from '../components/AdminNav'
 import '../styles/admin.css'
 
+// Nomes dos dias da semana; a posição na lista é o número do dia (0 = domingo).
 const NOMES_DIAS = [
   'Domingo',
   'Segunda-feira',
@@ -19,16 +25,22 @@ const NOMES_DIAS = [
 
 export default function AdminPromocoes() {
   const navigate = useNavigate()
+
+  // Promoções de cada dia (chave = número do dia). Começa com as padrão e é sobrescrita pelo backend.
   const [promocoes, setPromocoes] = useState<Record<number, Promocao>>(promocoesPadrao)
+  // Estados de tela: carregando, erro geral de carregamento
   const [carregando, setCarregando] = useState(true)
   const [erroGeral, setErroGeral] = useState('')
+  // Dia que está sendo salvo agora (null = nenhum) e mensagem de resultado de cada dia
   const [salvandoDia, setSalvandoDia] = useState<number | null>(null)
   const [mensagemPorDia, setMensagemPorDia] = useState<Record<number, string>>({})
 
+  // Busca as promoções no backend e mescla com as atuais.
   const carregarPromocoes = useCallback(async () => {
     setCarregando(true)
     const dados = await listarPromocoes()
     if (!dados) {
+      // Backend indisponível: mantém os valores padrão e avisa
       setErroGeral('Não foi possível carregar as promoções do servidor. Mostrando valores padrão.')
     } else {
       setErroGeral('')
@@ -52,6 +64,7 @@ export default function AdminPromocoes() {
     setCarregando(false)
   }, [])
 
+  // Roda ao abrir a tela: exige login e carrega as promoções.
   useEffect(() => {
     if (!getAdminToken()) {
       navigate('/admin')
@@ -60,6 +73,7 @@ export default function AdminPromocoes() {
     carregarPromocoes()
   }, [navigate, carregarPromocoes])
 
+  // Atualiza um único campo de uma promoção no estado local (ainda não salva no backend).
   const handleCampoChange = (dia: number, campo: keyof Promocao, valor: string | number | boolean) => {
     setPromocoes((atuais) => ({
       ...atuais,
@@ -67,12 +81,14 @@ export default function AdminPromocoes() {
     }))
   }
 
+  // Salva no backend a promoção de um dia (botão "Salvar" do cartão).
   const handleSalvar = async (dia: number) => {
     const promocao = promocoes[dia]
     setSalvandoDia(dia)
     setMensagemPorDia((atuais) => ({ ...atuais, [dia]: '' }))
 
     try {
+      // Campos de texto opcionais vazios viram null para o backend
       const dados: DadosPromocao = {
         nome: promocao.nome,
         descricao: promocao.descricao,
@@ -92,6 +108,7 @@ export default function AdminPromocoes() {
         duration: 2500,
       })
     } catch (error) {
+      // Token inválido/expirado: volta ao login
       if (error instanceof Error && /token/i.test(error.message)) {
         limparAdminToken()
         navigate('/admin')
@@ -107,16 +124,19 @@ export default function AdminPromocoes() {
 
   return (
     <div className="admin-page">
+      {/* Cabeçalho com título e menu do admin */}
       <header className="admin-header admin-header--estreito">
         <h1 className="admin-header__titulo">🎯 Promoções</h1>
         <AdminNav atual="promocoes" />
       </header>
 
       <div className="admin-conteudo admin-conteudo--estreito">
+        {/* Mensagens de estado: erro geral e carregando */}
         {erroGeral && <p className="admin-mensagem-erro">{erroGeral}</p>}
 
         {carregando && <p className="admin-mensagem-neutra">Carregando promoções...</p>}
 
+        {/* Um cartão editável para cada dia da semana */}
         {!carregando && NOMES_DIAS.map((nomeDia, dia) => {
           const promocao = promocoes[dia]
           const mensagem = mensagemPorDia[dia]
@@ -125,6 +145,7 @@ export default function AdminPromocoes() {
             <div key={dia} className="admin-promo-card">
               <h3 className="admin-promo-card__titulo">{nomeDia}</h3>
 
+              {/* Linha de campos curtos: nome, preço, cor e destaque */}
               <div className="admin-form-grid">
                 <div>
                   <label className="admin-label">Nome da promoção</label>
@@ -166,6 +187,7 @@ export default function AdminPromocoes() {
                 </div>
               </div>
 
+              {/* Descrição exibida ao cliente */}
               <div className="admin-campo-simples">
                 <label className="admin-label">Descrição</label>
                 <input
@@ -175,6 +197,7 @@ export default function AdminPromocoes() {
                 />
               </div>
 
+              {/* Texto usado ao divulgar a promoção por WhatsApp */}
               <div className="admin-campo-simples">
                 <label className="admin-label">Mensagem do WhatsApp</label>
                 <textarea
@@ -184,6 +207,7 @@ export default function AdminPromocoes() {
                 />
               </div>
 
+              {/* Textos usados no e-mail promocional: assunto e corpo */}
               <div className="admin-form-grid">
                 <div>
                   <label className="admin-label">Assunto do e-mail</label>
@@ -204,6 +228,7 @@ export default function AdminPromocoes() {
                 />
               </div>
 
+              {/* Rodapé do cartão: botão salvar e mensagem de resultado */}
               <div className="admin-promo-card__rodape">
                 <button
                   onClick={() => handleSalvar(dia)}

@@ -1,3 +1,10 @@
+// =====================================================================================
+// routes/promocoes.js — promoção de cada dia da semana. Montado em /api/promocoes.
+//
+// A tabela `promocoes` tem no máximo 7 linhas (uma por dia, 0 = domingo ... 6 = sábado).
+// O site lê a lista (GET, público) para exibir a promoção do dia; o painel admin edita
+// cada dia (PUT, protegido por exigirAdmin).
+// =====================================================================================
 import { Router } from 'express'
 import { pool } from '../db/pool.js'
 import { exigirAdmin } from '../middleware/auth.js'
@@ -5,6 +12,8 @@ import { asyncHandler } from '../middleware/asyncHandler.js'
 
 export const promocoesRouter = Router()
 
+// Valida o corpo enviado pelo painel e devolve os dados limpos (com espaços aparados e
+// tipos garantidos), ou null se algum campo obrigatório estiver inválido.
 function validarPromocao(body) {
   const { nome, descricao, preco, destaque, cor, whatsappMessage, emailSubject, emailBody } = body || {}
 
@@ -25,6 +34,7 @@ function validarPromocao(body) {
   }
 }
 
+// Converte uma linha do banco (colunas em snake_case) para o formato JSON da API (camelCase).
 function mapLinha(linha) {
   return {
     diaSemana: linha.dia_semana,
@@ -57,6 +67,9 @@ promocoesRouter.put('/:dia', exigirAdmin, asyncHandler(async (req, res) => {
     return res.status(400).json({ erro: 'Dados da promoção inválidos. Verifique nome, descrição, preço e cor.' })
   }
 
+  // Upsert: insere a promoção do dia e, se a linha desse dia já existir (dia_semana é a
+  // chave primária), atualiza os campos em vez de dar erro. VALUES(coluna) é o valor que
+  // seria inserido.
   await pool.query(
     `INSERT INTO promocoes (dia_semana, nome, descricao, preco, destaque, cor, whatsapp_message, email_subject, email_body)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)

@@ -1,17 +1,27 @@
+// src/services/pedidoService.ts
+// Camada de acesso ao backend para PEDIDOS e LOGIN DE ADMIN (endpoints /api/pedidos/* e /api/auth/login).
+// Também guarda no localStorage do navegador o token de admin e a marca "já fez pedido".
+// Usado por Pages/Pedido.tsx (checkout), Pages/AdminLogin.tsx, Pages/AdminPedidos.tsx
+// e importado pelos outros services para reaproveitar getAdminToken().
 import type { ItemCarrinho } from '../contexts/CarrinhoContexts'
 
+// Endereço base do backend (vem do .env; se não existir, usa o backend local)
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
+// Chaves usadas no localStorage (armazenamento persistente do navegador)
 const TOKEN_KEY = 'pizzaria-porteira:admin-token'
 const PEDIDO_REALIZADO_KEY = 'pizzaria-porteira:pedido-realizado'
 
+// Cupom de primeira compra.
 // Precisam bater com as constantes equivalentes em backend/src/routes/pedidos.js —
 // o backend é quem decide de fato se o desconto é aplicado, isso aqui é só para exibição.
 export const CUPOM_PRIMEIRA_COMPRA = 'BEMVINDO10'
 export const CUPOM_PERCENTUAL = 0.1
 export const CUPOM_VALOR_MINIMO = 80
 
+// Etapas pelas quais um pedido passa, na ordem do fluxo da cozinha/entrega.
 export type StatusPedido = 'recebido' | 'preparando' | 'saiu_para_entrega' | 'entregue' | 'cancelado'
 
+// Pedido como retornado pelo backend (nomes em snake_case porque vêm direto das colunas do banco).
 export interface Pedido {
   id: number
   cliente_nome: string
@@ -28,6 +38,7 @@ export interface Pedido {
   atualizado_em: string
 }
 
+// Dados que o checkout envia para criar um pedido novo.
 export interface DadosNovoPedido {
   nome: string
   telefone: string
@@ -40,6 +51,7 @@ export interface DadosNovoPedido {
   aceitaPromocoes?: boolean
 }
 
+// Confirmação devolvida pelo backend: valores já calculados no servidor (subtotal, desconto, total).
 export interface RespostaNovoPedido {
   id: number
   subtotal: number
@@ -49,6 +61,9 @@ export interface RespostaNovoPedido {
   status: StatusPedido
 }
 
+// ---- Token de administrador (guardado no localStorage) ----
+
+// Lê o token salvo no login (null se não estiver logado).
 export function getAdminToken() {
   return localStorage.getItem(TOKEN_KEY)
 }
@@ -57,9 +72,12 @@ export function setAdminToken(token: string) {
   localStorage.setItem(TOKEN_KEY, token)
 }
 
+// Remove o token (logout).
 export function limparAdminToken() {
   localStorage.removeItem(TOKEN_KEY)
 }
+
+// ---- Marca de "primeiro pedido" ----
 
 // Usado para saber se o cliente já finalizou algum pedido neste navegador,
 // e assim decidir se ainda vale mostrar a promoção de primeira compra.
@@ -71,6 +89,7 @@ export function marcarPedidoRealizado() {
   localStorage.setItem(PEDIDO_REALIZADO_KEY, 'true')
 }
 
+// Lê a resposta como JSON e transforma erros HTTP em exceções com a mensagem do backend.
 async function tratarResposta(resposta: Response) {
   const dados = await resposta.json().catch(() => null)
   if (!resposta.ok) {
@@ -79,6 +98,7 @@ async function tratarResposta(resposta: Response) {
   return dados
 }
 
+// POST /api/pedidos (rota pública)
 // Registra o pedido no backend. Usado no checkout antes de redirecionar ao WhatsApp.
 // Retorna null (em vez de lançar erro) quando o backend está indisponível, para não travar o pedido via WhatsApp.
 export async function criarPedido(dados: DadosNovoPedido): Promise<RespostaNovoPedido | null> {
@@ -95,6 +115,7 @@ export async function criarPedido(dados: DadosNovoPedido): Promise<RespostaNovoP
   }
 }
 
+// GET /api/pedidos/cupom-primeira-compra/elegivel?telefone=...
 // Verifica no backend se o telefone informado ainda tem direito ao cupom de primeira
 // compra (nunca fez pedido antes). Usado só para dar feedback visual no checkout —
 // a validação que realmente vale é feita de novo no servidor ao criar o pedido.
@@ -111,6 +132,8 @@ export async function verificarCupomPrimeiraCompra(telefone: string): Promise<bo
   }
 }
 
+// POST /api/auth/login
+// Faz login do administrador; em caso de sucesso guarda o token no localStorage e o devolve.
 export async function loginAdmin(usuario: string, senha: string) {
   const resposta = await fetch(`${API_URL}/auth/login`, {
     method: 'POST',
@@ -122,6 +145,8 @@ export async function loginAdmin(usuario: string, senha: string) {
   return dados.token as string
 }
 
+// GET /api/pedidos (rota de admin: exige o token no cabeçalho Authorization)
+// Lista todos os pedidos para o painel.
 export async function listarPedidos(): Promise<Pedido[]> {
   const resposta = await fetch(`${API_URL}/pedidos`, {
     headers: { Authorization: `Bearer ${getAdminToken()}` },
@@ -129,6 +154,8 @@ export async function listarPedidos(): Promise<Pedido[]> {
   return tratarResposta(resposta)
 }
 
+// PATCH /api/pedidos/:id/status (rota de admin)
+// Move o pedido para outra etapa (ex.: recebido -> preparando).
 export async function atualizarStatusPedido(id: number, status: StatusPedido) {
   const resposta = await fetch(`${API_URL}/pedidos/${id}/status`, {
     method: 'PATCH',

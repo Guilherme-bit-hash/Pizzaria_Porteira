@@ -1,4 +1,8 @@
+/* Estilos da página do cardápio. Importado por Pages/Cardapio.tsx. */
+/* Seções, na ordem: cabeçalho, promoção do dia, promoções da semana, contador + grade de produtos, paginação, cartão de produto, dica do chefe, rodapé e estados. */
+/* Variáveis CSS definidas inline pelo React: --promo-cor (cor da promoção do dia) e --dia-cor (cor de cada dia em "Promoções da Semana"). */
 /* src/styles/cardapio.css */
+/* Fundo da página inteira; background-attachment: fixed mantém o degradê parado enquanto o conteúdo rola; overflow-x: hidden evita rolagem horizontal. */
 .cardapio-page {
   min-height: 100vh;
   background: linear-gradient(135deg, #2D1B00 0%, #3A240F 30%, #4A2F15 60%, #5A3E2B 100%);
@@ -11,6 +15,7 @@
   overflow-x: hidden;
 }
 
+/* Área principal; padding-top de 180px compensa a Navbar fixa (reduzido nos @media ao final do arquivo). */
 .cardapio-conteudo {
   padding-top: 180px;
   padding-bottom: 40px;
@@ -18,12 +23,14 @@
   margin: 0;
 }
 
+/* Bloco centralizado com título e subtítulo. */
 .cardapio-titulo-wrap {
   text-align: center;
   margin-bottom: 2rem;
   padding: 0 20px;
 }
 
+/* Título da página; clamp() escala a fonte entre o mínimo e o máximo conforme a largura da janela. */
 .cardapio-titulo {
   color: #FFD700;
   font-size: clamp(1.8rem, 5vw, 3rem);
@@ -31,6 +38,7 @@
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
 }
 
+/* Texto explicativo abaixo do título. */
 .cardapio-subtitulo {
   color: #ccc;
   font-size: clamp(0.95rem, 2vw, 1.2rem);
@@ -40,10 +48,12 @@
 }
 
 /* Navegação de categorias: TabsNavigation em telas largas (Sidebar assume o mobile) */
+/* Envolve a TabsNavigation. */
 .tabs-desktop {
   display: block;
 }
 
+/* No celular a TabsNavigation some (a Sidebar aberta pelo MenuButton assume). */
 @media (max-width: 768px) {
   .tabs-desktop {
     display: none;
@@ -51,12 +61,14 @@
 }
 
 /* ===== SEÇÃO PROMOÇÃO DO DIA ===== */
+/* Seção da promoção do dia, centralizada (largura máx. 900px). */
 .cardapio-promo-secao {
   max-width: 900px;
   margin: 0 auto 3rem auto;
   padding: 0 20px;
 }
 
+/* Banner da promoção do dia; o degradê usa a variável --promo-cor (color-mix cria um tom mais claro dela); overflow: hidden prende o brilho animado. */
 .cardapio-promo-banner {
   background: linear-gradient(
     135deg,
@@ -74,6 +86,7 @@
   margin-bottom: 3rem;
 }
 
+/* Faixa de luz diagonal maior que o banner, animada por cardapio-brilho (passa da esquerda para a direita). */
 .cardapio-promo-banner__brilho {
   position: absolute;
   top: -50%;
@@ -85,11 +98,13 @@
   animation: cardapio-brilho 3s infinite;
 }
 
+/* Desloca a faixa de luz de -100% a +100% na horizontal. */
 @keyframes cardapio-brilho {
   0% { transform: rotate(30deg) translateX(-100%); }
   100% { transform: rotate(30deg) translateX(100%); }
 }
 
+/* Linha com emoji e etiqueta do dia; z-index: 2 deixa o conteúdo acima do brilho. */
 .cardapio-promo-banner__cabecalho {
   display: flex;
   align-items: center;
@@ -100,10 +115,12 @@
   z-index: 2;
 }
 
+/* Emoji grande da promoção. */
 .cardapio-promo-banner__emoji {
   font-size: clamp(1.8rem, 7vw, 3.5rem);
 }
 
+/* Etiqueta com o nome do dia (fundo translúcido desfocado). */
 .cardapio-promo-banner__dia-badge {
   background: rgba(255, 255, 255, 0.25);
   padding: clamp(0.5rem, 2vw, 0.8rem) clamp(1rem, 4vw, 2rem);
@@ -115,6 +132,7 @@
   border: 2px solid rgba(255, 255, 255, 0.3);
 }
 
+/* Título da promoção do dia. */
 .cardapio-promo-banner__titulo {
   color: #FFD700;
   font-size: clamp(1.5rem, 6vw, 2.5rem);
@@ -124,6 +142,7 @@
   z-index: 2;
 }
 
+/* Descrição da promoção. */
 .cardapio-promo-banner__descricao {
   color: white;
   font-size: clamp(1rem, 4vw, 1.5rem);
@@ -135,12 +154,14 @@
   z-index: 2;
 }
 
+/* Contêiner do preço da promoção. */
 .cardapio-promo-banner__preco {
   margin-bottom: clamp(1rem, 4vw, 2rem);
   position: relative;
   z-index: 2;
 }
 
+/* Preço numérico em destaque (caixa escura). */
 .cardapio-promo-banner__preco--valor {
   font-size: clamp(1.8rem, 8vw, 3.5rem);
   color: #FFD700;
@@ -153,6 +174,7 @@
   border: 3px solid rgba(255, 215, 0, 0.4);
 }
 
+/* Texto de preço especial (ex.: promoções sem valor fixo). */
 .cardapio-promo-banner__preco--especial {
   font-size: clamp(1.3rem, 5vw, 2rem);
   color: #FFD700;
@@ -163,6 +185,7 @@
   border: 2px solid rgba(255, 215, 0, 0.4);
 }
 
+/* Fileira de selos (ex.: entrega, validade); quebra linha em telas estreitas. */
 .cardapio-promo-banner__badges {
   display: flex;
   justify-content: center;
@@ -173,6 +196,7 @@
   z-index: 2;
 }
 
+/* Cada selo da fileira. */
 .cardapio-promo-banner__badge {
   background: rgba(255, 255, 255, 0.15);
   padding: clamp(0.5rem, 2vw, 0.8rem) clamp(0.9rem, 3vw, 1.8rem);
@@ -187,12 +211,14 @@
   gap: 8px;
 }
 
+/* Área do botão de ação. */
 .cardapio-promo-banner__acao {
   margin-top: clamp(1.2rem, 5vw, 2.5rem);
   position: relative;
   z-index: 2;
 }
 
+/* Botão dourado principal do banner (pedir promoção). */
 .cardapio-promo-banner__botao {
   background: linear-gradient(135deg, #FFD700, #FFA500);
   color: #2D1B00;
@@ -210,16 +236,19 @@
   box-shadow: 0 10px 30px rgba(255, 215, 0, 0.6);
 }
 
+/* Hover: cresce e brilha mais. */
 .cardapio-promo-banner__botao:hover {
   transform: scale(1.05);
   box-shadow: 0 15px 40px rgba(255, 215, 0, 0.9);
 }
 
+/* Ícone dentro do botão. */
 .cardapio-promo-banner__botao-icone {
   font-size: 1.5rem;
 }
 
 /* ===== PROMOÇÕES DA SEMANA ===== */
+/* Cartão que agrupa a lista de promoções de todos os dias da semana. */
 .cardapio-semana {
   background: rgba(255, 255, 255, 0.05);
   border-radius: 20px;
@@ -227,6 +256,7 @@
   border: 2px solid rgba(255, 215, 0, 0.2);
 }
 
+/* Título "Promoções da Semana". */
 .cardapio-semana__titulo {
   color: #FFD700;
   font-size: 2rem;
@@ -234,6 +264,7 @@
   margin-bottom: 2.5rem;
 }
 
+/* Grade responsiva: colunas de no mínimo 320px. */
 .cardapio-semana__grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -248,6 +279,7 @@
   padding: 0;
 }
 
+/* Cartão de um dia da semana. */
 .cardapio-semana__card {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 215, 0, 0.2);
@@ -259,11 +291,13 @@
   overflow: hidden;
 }
 
+/* Cartão do dia atual: usa a cor do dia (--dia-cor) e borda dourada para se destacar. */
 .cardapio-semana__card--hoje {
   background: linear-gradient(135deg, var(--dia-cor), color-mix(in srgb, var(--dia-cor) 40%, transparent));
   border: 3px solid #FFD700;
 }
 
+/* Selo "HOJE" no canto do cartão (position: absolute), pulsando. */
 .cardapio-semana__card-badge-hoje {
   position: absolute;
   top: 10px;
@@ -278,11 +312,13 @@
   animation: cardapio-pulse 2s infinite;
 }
 
+/* Pulso de escala do selo "HOJE". */
 @keyframes cardapio-pulse {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.1); }
 }
 
+/* Linha superior do cartão: emoji + nome do dia e status. */
 .cardapio-semana__card-topo {
   display: flex;
   align-items: center;
@@ -290,34 +326,41 @@
   margin-bottom: 1.2rem;
 }
 
+/* Emoji do dia (levemente apagado nos dias que não são hoje). */
 .cardapio-semana__card-emoji {
   font-size: 2.5rem;
   filter: opacity(0.8);
 }
 
+/* No cartão de hoje o emoji fica com cor plena. */
 .cardapio-semana__card--hoje .cardapio-semana__card-emoji {
   filter: none;
 }
 
+/* Nome do dia da semana. */
 .cardapio-semana__card-dia {
   font-weight: bold;
   color: #FFA500;
   font-size: 1.3rem;
 }
 
+/* Nome do dia em dourado no cartão de hoje. */
 .cardapio-semana__card--hoje .cardapio-semana__card-dia {
   color: #FFD700;
 }
 
+/* Texto de status do dia (ex.: hoje/em breve). */
 .cardapio-semana__card-status {
   font-size: 0.9rem;
   color: rgba(255, 255, 255, 0.7);
 }
 
+/* Status em branco no cartão de hoje. */
 .cardapio-semana__card--hoje .cardapio-semana__card-status {
   color: white;
 }
 
+/* Descrição da promoção do dia. */
 .cardapio-semana__card-descricao {
   color: #ccc;
   margin: 0;
@@ -325,10 +368,12 @@
   line-height: 1.5;
 }
 
+/* Descrição em branco no cartão de hoje (melhor contraste sobre a cor do dia). */
 .cardapio-semana__card--hoje .cardapio-semana__card-descricao {
   color: white;
 }
 
+/* Rodapé do cartão: disponibilidade à esquerda e botão à direita. */
 .cardapio-semana__card-rodape {
   margin-top: 1rem;
   padding-top: 1rem;
@@ -338,6 +383,7 @@
   align-items: center;
 }
 
+/* Texto de disponibilidade da promoção. */
 .cardapio-semana__card-disponivel {
   font-size: 0.9rem;
   color: #FFD700;
@@ -346,6 +392,7 @@
   gap: 5px;
 }
 
+/* Botão/link "adicionar" da promoção. */
 .cardapio-semana__card-adicionar {
   display: inline-block;
   background: rgba(255, 215, 0, 0.2);
@@ -359,11 +406,13 @@
   transition: all 0.3s ease;
 }
 
+/* Hover: fundo mais forte. */
 .cardapio-semana__card-adicionar:hover {
   background: rgba(255, 215, 0, 0.35);
 }
 
 /* ===== CONTADOR + GRID DE PRODUTOS ===== */
+/* Texto com a quantidade de itens da categoria selecionada. */
 .cardapio-contador {
   text-align: center;
   margin-bottom: 2rem;
@@ -371,6 +420,7 @@
   font-size: 1.2rem;
 }
 
+/* Grade de cartões de produto: auto-fill cria colunas de no mínimo 350px. */
 .cardapio-grid {
   max-width: 1400px;
   margin: 0 auto;
@@ -381,6 +431,7 @@
   width: 100%;
 }
 
+/* Notebooks pequenos/tablets: colunas mais estreitas (300px). */
 @media (max-width: 1024px) {
   .cardapio-grid {
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -388,6 +439,7 @@
   }
 }
 
+/* Tablets/celulares: colunas de 280px e menos espaçamento. */
 @media (max-width: 768px) {
   .cardapio-grid {
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -395,6 +447,7 @@
   }
 }
 
+/* Celulares pequenos: uma única coluna. */
 @media (max-width: 480px) {
   .cardapio-grid {
     grid-template-columns: 1fr;
@@ -403,6 +456,7 @@
 }
 
 /* ===== PAGINAÇÃO (usada nas abas do cardápio e na grade de promoções da semana) ===== */
+/* Barra de paginação (Anterior / página X de Y / Próxima). */
 .cardapio-paginacao {
   max-width: 1400px;
   /* Margem negativa no topo "puxa" a paginação pra mais perto da grade acima, já que
@@ -416,6 +470,7 @@
   gap: 1.5rem;
 }
 
+/* Botões Anterior e Próxima. */
 .cardapio-paginacao__botao {
   background: rgba(255, 215, 0, 0.1);
   color: #FFD700;
@@ -429,6 +484,7 @@
   white-space: nowrap;
 }
 
+/* Hover só quando o botão está habilitado. */
 .cardapio-paginacao__botao:hover:not(:disabled) {
   background: rgba(255, 215, 0, 0.2);
   transform: scale(1.05);
@@ -440,12 +496,14 @@
   cursor: not-allowed;
 }
 
+/* Texto "Página X de Y". */
 .cardapio-paginacao__info {
   color: #ccc;
   font-size: 0.95rem;
   white-space: nowrap;
 }
 
+/* Celulares: paginação mais compacta. */
 @media (max-width: 480px) {
   .cardapio-paginacao {
     gap: 0.8rem;
@@ -461,6 +519,7 @@
   }
 }
 
+/* Cartão de produto (imagem + informações); flex em coluna para o botão ficar sempre no fim. */
 .cardapio-card {
   background: rgba(255, 255, 255, 0.05);
   border-radius: 20px;
@@ -473,6 +532,7 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+/* Hover: cartão sobe e ganha sombra. */
 .cardapio-card:hover {
   background: rgba(255, 255, 255, 0.08);
   transform: translateY(-10px);
@@ -480,6 +540,7 @@
   border-color: rgba(255, 215, 0, 0.3);
 }
 
+/* Moldura da imagem do produto (altura fixa, corta o excesso; position: relative para o badge e o overlay). */
 .cardapio-card__imagem-wrap {
   width: 100%;
   height: 220px;
@@ -487,18 +548,21 @@
   position: relative;
 }
 
+/* Imagem um pouco mais baixa no tablet/celular. */
 @media (max-width: 768px) {
   .cardapio-card__imagem-wrap {
     height: 200px;
   }
 }
 
+/* Imagem ainda mais baixa em celulares pequenos. */
 @media (max-width: 480px) {
   .cardapio-card__imagem-wrap {
     height: 180px;
   }
 }
 
+/* Imagem preenchendo a moldura (object-fit: cover, sem distorcer). */
 .cardapio-card__imagem {
   width: 100%;
   height: 100%;
@@ -506,10 +570,12 @@
   transition: transform 0.6s ease;
 }
 
+/* Zoom na imagem quando o mouse passa sobre o cartão. */
 .cardapio-card:hover .cardapio-card__imagem {
   transform: scale(1.15);
 }
 
+/* Degradê escuro na parte de baixo da imagem (posição absoluta). */
 .cardapio-card__imagem-overlay {
   position: absolute;
   bottom: 0;
@@ -519,6 +585,7 @@
   background: linear-gradient(to top, rgba(45, 27, 0, 0.8), transparent);
 }
 
+/* Etiqueta da categoria no canto superior esquerdo da imagem (position: absolute). */
 .cardapio-card__categoria-badge {
   position: absolute;
   top: 15px;
@@ -534,6 +601,7 @@
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 
+/* Área de texto do cartão; flex: 1 faz ela ocupar o espaço restante. */
 .cardapio-card__info {
   padding: 1.8rem;
   flex: 1;
@@ -541,6 +609,7 @@
   flex-direction: column;
 }
 
+/* Nome/avaliação à esquerda e preço à direita; quebra linha se faltar espaço. */
 .cardapio-card__cabecalho {
   display: flex;
   flex-wrap: wrap;
@@ -550,6 +619,7 @@
   margin-bottom: 1.2rem;
 }
 
+/* Nome do produto. */
 .cardapio-card__nome {
   color: #FFD700;
   font-size: 1.6rem;
@@ -557,6 +627,7 @@
   font-weight: bold;
 }
 
+/* Linha de selos (avaliação e tempo de preparo). */
 .cardapio-card__badges {
   display: flex;
   align-items: center;
@@ -564,24 +635,28 @@
   margin-bottom: 5px;
 }
 
+/* Estilo base dos selos do cartão. */
 .cardapio-card__badge {
   font-size: 0.9rem;
   padding: 4px 10px;
   border-radius: 15px;
 }
 
+/* Selo laranja de avaliação. */
 .cardapio-card__badge--avaliacao {
   color: #FF8C42;
   background: rgba(255, 140, 66, 0.1);
   border: 1px solid rgba(255, 140, 66, 0.3);
 }
 
+/* Selo verde de tempo de preparo. */
 .cardapio-card__badge--tempo {
   color: #4CAF50;
   background: rgba(76, 175, 80, 0.1);
   border: 1px solid rgba(76, 175, 80, 0.3);
 }
 
+/* Preço do produto em caixa escura; clamp() ajusta o tamanho à largura da tela. */
 .cardapio-card__preco {
   color: #FF8C42;
   font-size: clamp(1.3rem, 6vw, 2rem);
@@ -595,6 +670,7 @@
   border: 2px solid rgba(255, 140, 66, 0.2);
 }
 
+/* Descrição do produto; flex: 1 empurra o botão para baixo. */
 .cardapio-card__descricao {
   color: rgba(255, 255, 255, 0.8);
   margin: 0 0 1.8rem 0;
@@ -603,6 +679,7 @@
   flex: 1;
 }
 
+/* Botão "Adicionar ao carrinho"; margin-top: auto o mantém no fim do cartão. */
 .cardapio-card__botao {
   background: linear-gradient(135deg, #FFD700, #FFA500);
   color: #2D1B00;
@@ -622,17 +699,20 @@
   margin-top: auto;
 }
 
+/* Hover: cresce e clareia o degradê. */
 .cardapio-card__botao:hover {
   transform: scale(1.03);
   box-shadow: 0 10px 30px rgba(255, 215, 0, 0.7);
   background: linear-gradient(135deg, #FFE44D, #FFB347);
 }
 
+/* Ícone dentro do botão. */
 .cardapio-card__botao-icone {
   font-size: 1.3rem;
 }
 
 /* ===== DICA DO CHEFE ===== */
+/* Caixa "Dica do Chefe" abaixo da lista. */
 .cardapio-dica {
   background: rgba(255, 215, 0, 0.1);
   border: 2px solid rgba(255, 215, 0, 0.3);
@@ -643,18 +723,21 @@
   text-align: center;
 }
 
+/* Título da dica. */
 .cardapio-dica__titulo {
   color: #FFD700;
   font-size: 2rem;
   margin-bottom: 1rem;
 }
 
+/* Texto da dica. */
 .cardapio-dica__texto {
   color: #ccc;
   font-size: 1.2rem;
   margin-bottom: 1.5rem;
 }
 
+/* Fileira de selos da dica. */
 .cardapio-dica__badges {
   display: flex;
   justify-content: center;
@@ -662,6 +745,7 @@
   flex-wrap: wrap;
 }
 
+/* Cada selo da dica. */
 .cardapio-dica__badge {
   background: rgba(255, 255, 255, 0.1);
   padding: 10px 20px;
@@ -670,6 +754,7 @@
 }
 
 /* ===== RODAPÉ ===== */
+/* Rodapé da página (fundo escuro, borda dourada no topo). */
 .cardapio-rodape {
   text-align: center;
   padding: 3rem 20px;
@@ -680,6 +765,7 @@
   width: 100%;
 }
 
+/* Logo redonda do rodapé. */
 .cardapio-rodape__logo {
   width: 100px;
   height: 100px;
@@ -688,6 +774,7 @@
   margin-bottom: 1rem;
 }
 
+/* Logo menor no tablet/celular. */
 @media (max-width: 768px) {
   .cardapio-rodape__logo {
     width: 80px;
@@ -695,16 +782,19 @@
   }
 }
 
+/* Linhas de texto do rodapé. */
 .cardapio-rodape__texto {
   color: rgba(255, 255, 255, 0.9);
   margin: 0.5rem 0;
   font-size: 1.1rem;
 }
 
+/* Última linha, com mais espaço abaixo. */
 .cardapio-rodape__texto--final {
   margin: 0.5rem 0 1.5rem 0;
 }
 
+/* Fileira de links de redes sociais. */
 .cardapio-rodape__redes {
   display: flex;
   justify-content: center;
@@ -713,11 +803,13 @@
   flex-wrap: wrap;
 }
 
+/* Link/ícone de rede social. */
 .cardapio-rodape__rede-link {
   color: #FFD700;
   font-size: 1.5rem;
 }
 
+/* Botão do rodapé para voltar à página inicial. */
 .cardapio-rodape__botao-home {
   display: inline-block;
   background: linear-gradient(135deg, #FFD700, #FFA500);
@@ -731,12 +823,14 @@
   transition: all 0.3s ease;
 }
 
+/* Hover: botão sobe e brilha. */
 .cardapio-rodape__botao-home:hover {
   transform: translateY(-3px);
   box-shadow: 0 15px 35px rgba(255, 215, 0, 0.6);
 }
 
 /* ===== RESPONSIVIDADE GERAL ===== */
+/* Tablet/celular: menos espaço no topo (a Navbar fica mais baixa) e emoji menor. */
 @media (max-width: 768px) {
   .cardapio-conteudo {
     padding-top: 130px;
@@ -747,6 +841,7 @@
   }
 }
 
+/* Celular pequeno: topo ainda mais curto e fontes menores. */
 @media (max-width: 480px) {
   .cardapio-conteudo {
     padding-top: 110px;
@@ -766,6 +861,7 @@
 }
 
 /* ===== ESTADOS DO CARDÁPIO (carregando / erro / categoria vazia) ===== */
+/* Mensagem centralizada de carregando/erro/categoria vazia. */
 .cardapio-status {
   text-align: center;
   padding: 40px 16px;

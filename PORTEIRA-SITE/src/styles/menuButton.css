@@ -1,5 +1,7 @@
+/* Estilos do MenuButton (components/MenuButton.tsx), usado em Pages/Cardapio.tsx. */
 /* src/styles/menuButton.css */
 /* ===== BOTÃO FLUTUANTE DE MENU ===== */
+/* Botão quadrado fixo no canto inferior esquerdo que abre a Sidebar de categorias (position: fixed). */
 .menu-button {
   position: fixed;
   bottom: 20px;
@@ -21,12 +23,14 @@
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
+/* Hover: cresce levemente e brilha. */
 .menu-button:hover {
   transform: scale(1.08);
   box-shadow: 0 10px 30px rgba(255, 215, 0, 0.8);
 }
 
 /* ===== PONTOS DO ÍCONE ===== */
+/* Cada um dos três pontos do ícone (empilhados pelo flex-direction: column do botão). */
 .menu-button__ponto {
   width: 5px;
   height: 5px;
@@ -43,6 +47,7 @@
   }
 }
 
+/* Tablets/celulares: botão menor e mais perto da borda. */
 @media (max-width: 768px) {
   .menu-button {
     bottom: 15px;
@@ -52,6 +57,7 @@
   }
 }
 
+/* Celulares pequenos: botão ainda menor. */
 @media (max-width: 480px) {
   .menu-button {
     bottom: 12px;

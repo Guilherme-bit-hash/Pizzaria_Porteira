@@ -1,4 +1,6 @@
+/* Estilos do BotoesFlutuantes (components/BotoesFlutuantes.tsx), contêiner dos botões flutuantes. */
 /* src/styles/botoesFlutuantes.css */
+/* Coluna fixa no canto inferior direito; position: fixed a mantém visível ao rolar; z-index 999 a deixa acima do conteúdo. */
 .botoes-flutuantes {
   position: fixed;
   bottom: 20px;
@@ -10,6 +12,7 @@
   gap: 14px;
 }
 
+/* Celulares: aproxima da borda e reduz o espaço entre os botões. */
 @media (max-width: 480px) {
   .botoes-flutuantes {
     bottom: 15px;

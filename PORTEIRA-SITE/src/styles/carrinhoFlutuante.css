@@ -1,5 +1,7 @@
+/* Estilos do CarrinhoFlutuante (components/CarrinhoFlutuante.tsx), botão de carrinho dentro do BotoesFlutuantes. */
 /* src/styles/carrinhoFlutuante.css */
 /* ===== BOTÃO DO CARRINHO ===== */
+/* Botão em formato de pílula dourada com ícone, texto e preço. */
 .carrinho-flutuante {
   background: linear-gradient(135deg, #FFD700, #FFA500);
   color: #2D1B00;
@@ -19,12 +21,14 @@
   backdrop-filter: blur(10px);
 }
 
+/* Hover: botão sobe e cresce um pouco. */
 .carrinho-flutuante:hover {
   transform: translateY(-5px) scale(1.05);
   box-shadow: 0 15px 40px rgba(255, 215, 0, 0.6);
 }
 
 /* ===== ESTADO VAZIO ===== */
+/* Modificador aplicado quando o carrinho está vazio: aparência apagada e discreta. */
 .carrinho-flutuante--vazio {
   background: rgba(255, 215, 0, 0.3);
   color: rgba(45, 27, 0, 0.6);
@@ -32,6 +36,7 @@
   border: 2px solid rgba(255, 215, 0, 0.2);
 }
 
+/* Hover do botão vazio, com efeito mais sutil. */
 .carrinho-flutuante--vazio:hover {
   transform: translateY(-3px) scale(1.03);
   box-shadow: 0 10px 25px rgba(255, 215, 0, 0.3);
@@ -39,6 +44,7 @@
 }
 
 /* ===== ÍCONE, BADGE E PREÇO ===== */
+/* Envolve o ícone; position: relative serve de referência para posicionar o badge. */
 .carrinho-flutuante__icone-wrapper {
   position: relative;
   display: flex;
@@ -46,6 +52,7 @@
   justify-content: center;
 }
 
+/* Bolinha vermelha com a quantidade de itens, no canto do ícone (position: absolute), com animação de pulso. */
 .carrinho-flutuante__badge {
   position: absolute;
   top: -8px;
@@ -70,6 +77,7 @@
   50% { transform: scale(1.1); }
 }
 
+/* Etiqueta com o valor total do carrinho. */
 .carrinho-flutuante__preco {
   background: rgba(255, 255, 255, 0.3);
   padding: 4px 12px;
@@ -77,6 +85,7 @@
   font-weight: bold;
 }
 
+/* Etiqueta "Vazio" exibida no lugar do preço. */
 .carrinho-flutuante__vazio-tag {
   background: rgba(255, 255, 255, 0.1);
   padding: 4px 12px;
@@ -86,6 +95,7 @@
 }
 
 /* ===== RESPONSIVIDADE ===== */
+/* Tablets: botão um pouco menor. */
 @media (max-width: 768px) {
   .carrinho-flutuante {
     padding: 0.8rem 1.2rem;
@@ -93,6 +103,7 @@
   }
 }
 
+/* Celulares: botão compacto. */
 @media (max-width: 480px) {
   .carrinho-flutuante {
     padding: 0.7rem 1rem;

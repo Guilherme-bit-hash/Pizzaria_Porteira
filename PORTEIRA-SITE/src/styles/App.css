@@ -1,5 +1,7 @@
+/* Estilos globais do site. Importado em src/App.tsx (vale para todas as páginas).\nAqui ficam o reset, o container da aplicação e as classes de página reutilizadas por várias telas. */
 /* src/styles/App.css - ATUALIZADO */
 /* ===== RESET GLOBAL ===== */
+/* Zera margens/espaçamentos de todos os elementos; box-sizing: border-box faz padding e borda entrarem na largura declarada. */
 * {
   margin: 0;
   padding: 0;
@@ -7,12 +9,14 @@
 }
 
 /* Altura total da árvore para o layout ocupar a tela toda */
+/* Faz toda a árvore (raiz do React incluída) ocupar 100% da altura da janela. */
 html, body, #root {
   height: 100%;
   overflow-x: hidden; /* Impede scroll horizontal */
 }
 
 /* ===== CONTAINER DA APLICAÇÃO ===== */
+/* Fundo em degradê marrom escuro, cor e fonte padrão do site; envolve todas as rotas no App.tsx. */
 .app-container {
   min-height: 100vh;
   background: linear-gradient(135deg, #1A0F00 0%, #2D1B00 100%);
@@ -22,11 +26,13 @@ html, body, #root {
 }
 
 /* Ajuste para o PromocaoDia fixo */
+/* Empurra o conteúdo para baixo para não ficar escondido atrás da barra fixa (Navbar, position: fixed). */
 .main-content {
   padding-top: 80px; /* Espaço para o banner fixo */
 }
 
 /* ===== CONTAINER DE PÁGINA ===== */
+/* Caixa central das páginas simples (Sobre/Contato): largura máxima 1200px, colunas em flex, conteúdo centralizado na vertical. */
 .page-container {
   min-height: calc(100vh - 80px); /* Altura total menos o banner fixo */
   padding: 2rem;
@@ -38,12 +44,14 @@ html, body, #root {
 }
 
 /* Páginas simples que ficam direto sob a Navbar (sem .main-content) */
+/* Variante das páginas que ficam direto sob a Navbar: padding-top alto (180px) para compensar a barra fixa. */
 .page-container--com-navbar {
   padding-top: 180px;
   min-height: 100vh;
 }
 
 /* ===== TÍTULOS DE PÁGINA ===== */
+/* Título principal das páginas (Sobre, Contato). */
 .page-title {
   text-align: center;
   font-size: 2.5rem;
@@ -52,6 +60,7 @@ html, body, #root {
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
 }
 
+/* Subtítulo dourado logo abaixo do título da página. */
 .page-subtitle {
   text-align: center;
   color: #FFA500;
@@ -61,6 +70,7 @@ html, body, #root {
 }
 
 /* Página Sobre */
+/* Cartão de texto da página "Sobre". */
 .sobre-content {
   color: #ccc;
   font-size: 1.1rem;
@@ -74,6 +84,7 @@ html, body, #root {
 }
 
 /* Página Contato */
+/* Cartão com os dados da página "Contato". */
 .contato-info {
   background: rgba(255, 215, 0, 0.05);
   padding: 2rem;
@@ -83,6 +94,7 @@ html, body, #root {
   margin: 0 auto;
 }
 
+/* Cada linha de informação de contato, separada por uma linha fina. */
 .contato-info p {
   color: #ccc;
   font-size: 1.2rem;
@@ -92,6 +104,7 @@ html, body, #root {
 }
 
 /* Ajuste para telas menores */
+/* Tablets/celulares: reduz espaçamentos e tamanhos de fonte (a barra fica mais baixa, por isso o padding-top menor). */
 @media (max-width: 768px) {
   .main-content {
     padding-top: 60px;
@@ -112,6 +125,7 @@ html, body, #root {
 }
 
 /* Celulares pequenos */
+/* Celulares pequenos: reduz ainda mais título e espaçamento. */
 @media (max-width: 480px) {
   .page-title {
     font-size: 1.8rem;

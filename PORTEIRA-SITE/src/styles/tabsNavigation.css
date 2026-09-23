@@ -1,5 +1,7 @@
+/* Estilos do TabsNavigation (components/TabsNavigation.tsx), usado em Pages/Cardapio.tsx. */
 /* src/styles/tabsNavigation.css */
 /* ===== CONTAINER DAS ABAS ===== */
+/* Contêiner das abas e da dica de rolagem, centralizado (largura máx. 1400px). */
 .tabs-navigation {
   display: flex;
   flex-direction: column;
@@ -11,6 +13,7 @@
 }
 
 /* ===== ÁREA DE ROLAGEM ===== */
+/* Linha de abas: centralizada e quebrando linha no desktop; em telas estreitas vira rolagem horizontal (overflow-x: auto). */
 .tabs-scroll-container {
   display: flex;
   flex-wrap: wrap;
@@ -44,6 +47,7 @@
 }
 
 /* ===== BOTÃO DA ABA ===== */
+/* Botão de uma aba (estilo inativo); flex: 1 0 auto faz as abas dividirem a linha por igual. */
 .tab-button {
   background: rgba(255, 255, 255, 0.1);
   color: rgba(255, 255, 255, 0.8);
@@ -66,46 +70,55 @@
   flex-shrink: 0;
 }
 
+/* Emoji da aba. */
 .tab-button__icone {
   font-size: 1.5rem;
 }
 
 /* ===== ABA ATIVA POR CATEGORIA ===== */
+/* Base da aba selecionada (texto branco e borda mais clara); a cor vem das regras por categoria abaixo. */
 .tab-button--ativa {
   color: #FFFFFF;
   border: 2px solid rgba(255, 255, 255, 0.3);
 }
 
+/* Aba ativa "pizzas" (laranja); o sufixo hex (CC / 66) define a transparência do degradê e da sombra. */
 .tab-button--ativa.tab-button--pizzas {
   background: linear-gradient(135deg, #FF6B35, #FF6B35CC);
   box-shadow: 0 8px 25px #FF6B3566;
 }
 
+/* Aba ativa "hambúrgueres" (marrom). */
 .tab-button--ativa.tab-button--hamburgueres {
   background: linear-gradient(135deg, #8B4513, #8B4513CC);
   box-shadow: 0 8px 25px #8B451366;
 }
 
+/* Aba ativa "bebidas" (azul). */
 .tab-button--ativa.tab-button--bebidas {
   background: linear-gradient(135deg, #4A90E2, #4A90E2CC);
   box-shadow: 0 8px 25px #4A90E266;
 }
 
+/* Aba ativa "sobremesas" (rosa). */
 .tab-button--ativa.tab-button--sobremesas {
   background: linear-gradient(135deg, #C2185B, #C2185BCC);
   box-shadow: 0 8px 25px #C2185B66;
 }
 
+/* Aba ativa "promoções" (dourado). */
 .tab-button--ativa.tab-button--promocoes {
   background: linear-gradient(135deg, #FFD700, #FFD700CC);
   box-shadow: 0 8px 25px #FFD70066;
 }
 
 /* ===== RÓTULO E DICA DE ROLAGEM ===== */
+/* Texto da aba (escondido em celulares muito pequenos, sobrando só o ícone). */
 .tab-label {
   display: inline;
 }
 
+/* Dica "Deslize para ver mais": oculta por padrão e mostrada só no celular. */
 .scroll-hint {
   text-align: center;
   font-size: 0.85rem;
@@ -114,6 +127,7 @@
 }
 
 /* ===== RESPONSIVIDADE ===== */
+/* Tablets: abas um pouco menores. */
 @media (max-width: 1024px) {
   .tab-button {
     min-width: 160px;
@@ -122,6 +136,7 @@
   }
 }
 
+/* Celulares: abas alinhadas à esquerda com rolagem horizontal; mostra a dica de deslizar. */
 @media (max-width: 768px) {
   .tabs-scroll-container {
     justify-content: flex-start;
@@ -142,6 +157,7 @@
   }
 }
 
+/* Celulares pequenos: abas compactas mostrando só o ícone. */
 @media (max-width: 480px) {
   .tabs-scroll-container {
     gap: 0.5rem;
