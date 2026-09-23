@@ -1,15 +1,18 @@
 /* src/styles/App.css - ATUALIZADO */
+/* ===== RESET GLOBAL ===== */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
+/* Altura total da árvore para o layout ocupar a tela toda */
 html, body, #root {
   height: 100%;
   overflow-x: hidden; /* Impede scroll horizontal */
 }
 
+/* ===== CONTAINER DA APLICAÇÃO ===== */
 .app-container {
   min-height: 100vh;
   background: linear-gradient(135deg, #1A0F00 0%, #2D1B00 100%);
@@ -23,6 +26,7 @@ html, body, #root {
   padding-top: 80px; /* Espaço para o banner fixo */
 }
 
+/* ===== CONTAINER DE PÁGINA ===== */
 .page-container {
   min-height: calc(100vh - 80px); /* Altura total menos o banner fixo */
   padding: 2rem;
@@ -39,6 +43,7 @@ html, body, #root {
   min-height: 100vh;
 }
 
+/* ===== TÍTULOS DE PÁGINA ===== */
 .page-title {
   text-align: center;
   font-size: 2.5rem;
@@ -106,6 +111,7 @@ html, body, #root {
   }
 }
 
+/* Celulares pequenos */
 @media (max-width: 480px) {
   .page-title {
     font-size: 1.8rem;

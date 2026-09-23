@@ -1,4 +1,5 @@
 /* src/styles/carrinhoFlutuante.css */
+/* ===== BOTÃO DO CARRINHO ===== */
 .carrinho-flutuante {
   background: linear-gradient(135deg, #FFD700, #FFA500);
   color: #2D1B00;
@@ -14,6 +15,7 @@
   box-shadow: 0 10px 30px rgba(255, 215, 0, 0.4);
   transition: all 0.3s ease;
   border: 3px solid rgba(255, 255, 255, 0.3);
+  /* Efeito de vidro fosco */
   backdrop-filter: blur(10px);
 }
 
@@ -22,6 +24,7 @@
   box-shadow: 0 15px 40px rgba(255, 215, 0, 0.6);
 }
 
+/* ===== ESTADO VAZIO ===== */
 .carrinho-flutuante--vazio {
   background: rgba(255, 215, 0, 0.3);
   color: rgba(45, 27, 0, 0.6);
@@ -35,6 +38,7 @@
   background: rgba(255, 215, 0, 0.4);
 }
 
+/* ===== ÍCONE, BADGE E PREÇO ===== */
 .carrinho-flutuante__icone-wrapper {
   position: relative;
   display: flex;
@@ -60,6 +64,7 @@
   animation: carrinho-flutuante-pulse 2s infinite;
 }
 
+/* Pulso suave do contador de itens */
 @keyframes carrinho-flutuante-pulse {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.1); }
@@ -80,6 +85,7 @@
   font-size: 0.9rem;
 }
 
+/* ===== RESPONSIVIDADE ===== */
 @media (max-width: 768px) {
   .carrinho-flutuante {
     padding: 0.8rem 1.2rem;
@@ -92,6 +98,7 @@
     padding: 0.7rem 1rem;
   }
 
+  /* Em telas pequenas só o ícone/preço aparece, o texto é ocultado */
   .carrinho-flutuante__texto {
     display: none;
   }

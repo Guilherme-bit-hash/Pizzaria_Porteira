@@ -1,4 +1,5 @@
 /* src/styles/bannerPromocoes.css */
+/* ===== CONTAINER DO BANNER ===== */
 .banner-promocoes {
   background: linear-gradient(135deg, #2D1B00, #4A2F15);
   border-radius: 15px;
@@ -10,6 +11,7 @@
   overflow: hidden;
 }
 
+/* Faixa colorida decorativa no topo do banner */
 .banner-promocoes__faixa-topo {
   position: absolute;
   top: 0;
@@ -19,6 +21,7 @@
   background: linear-gradient(90deg, #FFD700, #FFA500, #FF6B35);
 }
 
+/* ===== TÍTULO E GRADE DE CARDS ===== */
 .banner-promocoes__titulo {
   color: #FFD700;
   text-align: center;
@@ -32,6 +35,7 @@
   gap: 1.5rem;
 }
 
+/* ===== CARD DE PROMOÇÃO ===== */
 .banner-promocoes__card {
   background: rgba(255, 255, 255, 0.05);
   border-radius: 12px;
@@ -58,6 +62,7 @@
   font-size: 1rem;
 }
 
+/* Código do cupom no estilo ticket (borda tracejada) */
 .banner-promocoes__codigo {
   display: inline-block;
   background: rgba(255, 215, 0, 0.1);
@@ -69,6 +74,7 @@
   font-size: 1.1rem;
 }
 
+/* ===== RODAPÉ E BOTÃO ===== */
 .banner-promocoes__rodape {
   text-align: center;
   margin-top: 2rem;

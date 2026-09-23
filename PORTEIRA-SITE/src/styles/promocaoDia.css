@@ -1,15 +1,19 @@
 /* src/styles/promocaoDia.css */
+/* ===== BANNER FIXO ===== */
 .promocao-dia {
   position: fixed;
   top: 20px;
   left: 50%;
   transform: translateX(-50%);
+  /* z-index abaixo da navbar (1000) e acima do conteúdo */
   z-index: 999;
   width: 90%;
   max-width: 600px;
+  /* Entrada deslizando de cima com leve efeito elástico (cubic-bezier) */
   animation: promocao-dia-slide-down 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
+/* ===== CARD (COR DINÂMICA) ===== */
 /* --promo-cor é o único valor genuinamente dinâmico (muda por dia da semana);
    todo o resto do visual fica só aqui no CSS. */
 .promocao-dia__card {
@@ -40,6 +44,7 @@
     0 0 80px color-mix(in srgb, var(--promo-cor) 20%, transparent);
 }
 
+/* ===== BRILHO E CONTEÚDO ===== */
 .promocao-dia__brilho {
   position: absolute;
   top: -50%;
@@ -48,6 +53,7 @@
   height: 200%;
   background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.15), transparent);
   transform: rotate(30deg);
+  /* Reflexo diagonal que varre o card continuamente */
   animation: promocao-dia-brilho 4s ease-in-out infinite;
 }
 
@@ -57,6 +63,7 @@
   justify-content: space-between;
   gap: 20px;
   position: relative;
+  /* Mantém o texto acima do brilho */
   z-index: 2;
 }
 
@@ -71,6 +78,7 @@
   margin-bottom: 8px;
 }
 
+/* ===== TEXTOS E ÍCONES ===== */
 .promocao-dia__emoji {
   font-size: 2rem;
 }
@@ -100,10 +108,12 @@
 
 .promocao-dia__icone-lateral {
   font-size: 2.8rem;
+  /* Ícone lateral pulsando */
   animation: promocao-dia-bounce 2.5s ease-in-out infinite;
   flex-shrink: 0;
 }
 
+/* ===== BADGE DE HORÁRIO E BOTÃO FECHAR ===== */
 .promocao-dia__badge-horario {
   position: absolute;
   top: -1px;
@@ -142,6 +152,7 @@
   background: rgba(255, 255, 255, 0.35);
 }
 
+/* ===== ANIMAÇÕES ===== */
 @keyframes promocao-dia-slide-down {
   from {
     transform: translateX(-50%) translateY(-130%);
@@ -163,6 +174,7 @@
   100% { transform: rotate(30deg) translateX(100%); }
 }
 
+/* ===== RESPONSIVIDADE ===== */
 @media (max-width: 640px) {
   .promocao-dia__conteudo {
     flex-direction: column;

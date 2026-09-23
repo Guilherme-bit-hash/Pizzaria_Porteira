@@ -1,8 +1,10 @@
 /* src/styles/sidebar.css */
+/* ===== OVERLAY E PAINEL ===== */
 .sidebar-overlay {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.6);
+  /* z-index acima da navbar (1000) e do botão de menu (1001) */
   z-index: 1002;
   animation: sidebar-fade-in 0.3s ease;
 }
@@ -21,6 +23,7 @@
   background: linear-gradient(135deg, #2D1B00 0%, #3A240F 60%, #4A2F15 100%);
   border-right: 3px solid rgba(255, 215, 0, 0.4);
   box-shadow: 10px 0 40px rgba(0, 0, 0, 0.6);
+  /* z-index acima do overlay */
   z-index: 1003;
   display: flex;
   flex-direction: column;
@@ -29,11 +32,13 @@
   overflow-y: auto;
 }
 
+/* Painel entra deslizando da esquerda */
 @keyframes sidebar-slide-in {
   from { transform: translateX(-100%); }
   to { transform: translateX(0); }
 }
 
+/* ===== CABEÇALHO DA SIDEBAR ===== */
 .sidebar__topo {
   display: flex;
   align-items: center;
@@ -68,6 +73,7 @@
   background: rgba(255, 255, 255, 0.2);
 }
 
+/* ===== ITENS DE NAVEGAÇÃO ===== */
 .sidebar__lista {
   display: flex;
   flex-direction: column;
@@ -98,6 +104,7 @@
   font-size: 1.4rem;
 }
 
+/* ===== ITEM ATIVO POR CATEGORIA ===== */
 .sidebar__item--ativo.sidebar__item--pizzas {
   background: linear-gradient(135deg, #FF6B35, #FF6B35CC);
   border-color: rgba(255, 255, 255, 0.3);
@@ -128,6 +135,7 @@
   color: #2D1B00;
 }
 
+/* ===== RESPONSIVIDADE ===== */
 /* Em desktop a TabsNavigation (.tabs-desktop) assume a navegação */
 @media (min-width: 769px) {
   .sidebar-overlay,

@@ -1,4 +1,5 @@
 /* src/styles/home.css */
+/* ===== PÁGINA INICIAL ===== */
 .home {
   min-height: 100vh;
   background-image: url('/fundo.png');
@@ -12,6 +13,7 @@
   padding: 2rem 0;
 }
 
+/* ===== OVERLAY E CONTEÚDO ===== */
 .home__overlay {
   position: absolute;
   inset: 0;
@@ -20,6 +22,7 @@
 
 .home__conteudo {
   position: relative;
+  /* Camada acima do overlay escuro */
   z-index: 1;
   text-align: center;
   padding: 2rem;
@@ -27,6 +30,7 @@
   max-width: 800px;
 }
 
+/* ===== LOGO ===== */
 .home__logo {
   width: clamp(160px, min(40vw, 32vh), 400px);
   height: clamp(160px, min(40vw, 32vh), 400px);
@@ -38,11 +42,13 @@
   animation: home-float 6s ease-in-out infinite;
 }
 
+/* Flutuação suave da logo */
 @keyframes home-float {
   0%, 100% { transform: translateY(0px); }
   50% { transform: translateY(-15px); }
 }
 
+/* ===== BOTÃO E DICA ===== */
 .home__botao {
   background-color: #5a3e2b;
   color: #ffffff;
@@ -70,6 +76,7 @@
   animation: home-pulse 2s infinite;
 }
 
+/* Pulso de opacidade da dica */
 @keyframes home-pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }

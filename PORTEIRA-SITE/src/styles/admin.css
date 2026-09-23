@@ -1,4 +1,5 @@
 /* src/styles/admin.css - compartilhado entre AdminLogin, AdminPedidos e AdminPromocoes */
+/* ===== PÁGINA E LOGIN ===== */
 .admin-page {
   min-height: 100vh;
   background: linear-gradient(135deg, #2D1B00 0%, #3A240F 30%, #4A2F15 60%, #5A3E2B 100%);
@@ -22,6 +23,7 @@
   border: 2px solid rgba(255, 215, 0, 0.3);
 }
 
+/* ===== CAMPOS DE FORMULÁRIO ===== */
 .admin-form__titulo {
   color: #FFD700;
   font-size: 1.8rem;
@@ -53,6 +55,7 @@
   font-size: 1rem;
 }
 
+/* ===== BOTÕES ===== */
 .admin-botao-primario {
   width: 100%;
   background: linear-gradient(135deg, #FFD700, #FFA500);
@@ -115,6 +118,7 @@
   margin: 0 auto;
 }
 
+/* ===== MENSAGENS ===== */
 .admin-mensagem-erro {
   color: #FF8888;
   margin-bottom: 1.5rem;
@@ -168,6 +172,7 @@
   gap: 0.5rem;
 }
 
+/* ===== BADGES DE STATUS ===== */
 .admin-status-badge {
   padding: 6px 14px;
   border-radius: 20px;
@@ -268,6 +273,7 @@
   margin-bottom: 1rem;
 }
 
+/* Grade responsiva: colunas de no mínimo 220px */
 .admin-form-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
