@@ -23,6 +23,10 @@ type CarrinhoContextType = {
   atualizarQuantidade: (id: string, quantidade: number) => void
   adicionarObservacao: (id: string, observacoes: string) => void
   limparCarrinho: () => void
+  sincronizarComCardapio: (produtos: { nome: string; preco: number }[]) => {
+    removidos: string[]
+    reajustados: string[]
+  }
 }
 
 const CarrinhoContext = createContext<CarrinhoContextType | undefined>(undefined)
@@ -104,6 +108,32 @@ export const CarrinhoProvider = ({ children }: { children: ReactNode }) => {
     setItens([])
   }
 
+  // Alinha o carrinho com o cardápio atual (o admin pode ter mudado preços ou tirado produtos
+  // do ar depois que o cliente adicionou o item). Promoções ficam de fora: não são do cardápio.
+  const sincronizarComCardapio: CarrinhoContextType['sincronizarComCardapio'] = (produtos) => {
+    const precoPorNome = new Map(produtos.map((produto) => [produto.nome, produto.preco]))
+    const removidos: string[] = []
+    const reajustados: string[] = []
+
+    const atualizados = itens.flatMap((item) => {
+      if (item.categoria === 'promocao') return [item]
+
+      const precoAtual = precoPorNome.get(item.nome)
+      if (precoAtual === undefined) {
+        removidos.push(item.nome)
+        return []
+      }
+      if (Math.abs(precoAtual - item.preco) > 0.001) {
+        reajustados.push(item.nome)
+        return [{ ...item, preco: precoAtual }]
+      }
+      return [item]
+    })
+
+    if (removidos.length > 0 || reajustados.length > 0) setItens(atualizados)
+    return { removidos, reajustados }
+  }
+
   return (
     <CarrinhoContext.Provider
       value={{
@@ -114,7 +144,8 @@ export const CarrinhoProvider = ({ children }: { children: ReactNode }) => {
         removerItem,
         atualizarQuantidade,
         adicionarObservacao,
-        limparCarrinho
+        limparCarrinho,
+        sincronizarComCardapio
       }}
     >
       {children}

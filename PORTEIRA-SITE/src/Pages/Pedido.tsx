@@ -18,6 +18,7 @@ import {
   type PagamentoPix,
   type StatusPagamento,
 } from '../services/pagamentoService'
+import { listarCardapio } from '../services/produtoService'
 import { WHATSAPP_NUMBER, formatarWhatsApp } from '../config/whatsapp'
 import '../styles/pedido.css'
 
@@ -28,7 +29,8 @@ export default function Pedidos() {
     quantidadeTotal,
     removerItem,
     atualizarQuantidade,
-    limparCarrinho
+    limparCarrinho,
+    sincronizarComCardapio
   } = useCarrinho()
 
   // Feedback em toast para as ações do carrinho (remover, limpar, mudar quantidade)
@@ -68,6 +70,35 @@ export default function Pedidos() {
   const [pixData, setPixData] = useState<PagamentoPix | null>(null)
   const [statusPagamento, setStatusPagamento] = useState<StatusPagamento>('pendente')
   const [erroPix, setErroPix] = useState('')
+
+  // Ao abrir o carrinho, confere com o cardápio atual: se o admin mudou um preço ou tirou um
+  // produto do ar, o carrinho é corrigido e o cliente é avisado (senão o pedido seria recusado
+  // pelo servidor por divergência de preço).
+  useEffect(() => {
+    listarCardapio()
+      .then((produtos) => {
+        const { removidos, reajustados } = sincronizarComCardapio(produtos)
+        if (removidos.length > 0) {
+          showToast({
+            message: `Removido do carrinho (indisponível): ${removidos.join(', ')}`,
+            type: 'warning',
+            emoji: '⚠️',
+            duration: 5000,
+          })
+        }
+        if (reajustados.length > 0) {
+          showToast({
+            message: `Preço atualizado: ${reajustados.join(', ')}`,
+            type: 'info',
+            emoji: '💲',
+            duration: 5000,
+          })
+        }
+      })
+      .catch(() => {
+        // Sem conexão com o backend não há o que sincronizar; o fluxo segue normalmente.
+      })
+  }, [])
 
   const telefoneDigits = dadosCliente.telefone.replace(/\D/g, '')
   const cupomDesbloqueadoPeloValor = total >= CUPOM_VALOR_MINIMO
