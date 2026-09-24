@@ -53,6 +53,33 @@
   50% { transform: translateY(-15px); }
 }
 
+/* ===== TÍTULO E FRASES DE EFEITO ===== */
+/* Título principal; clamp() ajusta o tamanho à largura da tela e a sombra garante leitura sobre a foto. */
+.home__titulo {
+  color: #ffd700;
+  font-size: clamp(1.8rem, 5vw, 3.2rem);
+  font-weight: 800;
+  line-height: 1.15;
+  margin: 0 0 0.8rem;
+  text-shadow: 0 3px 12px rgba(0, 0, 0, 0.7);
+}
+
+/* Frase que troca sozinha; min-height evita o botão "pular" quando uma frase ocupa mais linhas que outra. */
+.home__frase {
+  color: #ffffff;
+  font-size: clamp(1.05rem, 2.6vw, 1.5rem);
+  min-height: 2.6em;
+  margin: 0 0 1.2rem;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
+  animation: home-frase-entrada 0.6s ease;
+}
+
+/* Entrada da frase: sobe suavemente enquanto aparece. */
+@keyframes home-frase-entrada {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 /* ===== BOTÃO E DICA ===== */
 /* Botão de entrada para o cardápio. */
 .home__botao {
