@@ -412,6 +412,20 @@
 }
 
 /* ===== CONTADOR + GRID DE PRODUTOS ===== */
+/* Linha do botão de menu (três pontinhos): botão à esquerda, logo abaixo da descrição.
+   Só existe no mobile; no desktop as abas (.tabs-desktop) fazem esse papel. */
+.cardapio-barra-menu {
+  display: flex;
+  justify-content: flex-start;
+  margin: 0 0 1rem;
+}
+
+@media (min-width: 769px) {
+  .cardapio-barra-menu {
+    display: none;
+  }
+}
+
 /* Texto com a quantidade de itens da categoria selecionada. */
 .cardapio-contador {
   text-align: center;

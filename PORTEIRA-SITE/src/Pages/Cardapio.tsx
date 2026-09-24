@@ -252,7 +252,6 @@ export default function Cardapio() {
   return (
     <main className="cardapio-page">
       {/* SIDEBAR RESPONSIVA (mobile): botão de menu abre a Sidebar com as mesmas abas */}
-      <MenuButton onClick={() => setSidebarAberta(true)} />
       <Sidebar
         tabs={abas}
         abaAtiva={abaAtiva}
@@ -275,6 +274,11 @@ export default function Cardapio() {
             Deliciosas opções feitas com ingredientes selecionados.
             Clique nas abas para explorar nosso menu completo!
           </p>
+        </div>
+
+        {/* BOTÃO DOS TRÊS PONTINHOS (mobile): fica logo abaixo da descrição, à esquerda, e abre a Sidebar */}
+        <div className="cardapio-barra-menu">
+          <MenuButton onClick={() => setSidebarAberta(true)} />
         </div>
 
         {/* ABAS RESPONSIVAS (desktop - a Sidebar assume o mobile) */}
