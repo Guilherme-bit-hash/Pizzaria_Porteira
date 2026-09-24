@@ -1,10 +1,10 @@
 /* Estilos da landing page. Importado por Pages/Home.tsx. */
 /* src/styles/home.css */
 /* ===== PÁGINA INICIAL ===== */
-/* Tela cheia com a imagem de fundo (/fundo.png) cobrindo toda a área; conteúdo centralizado. */
+/* Tela cheia com a imagem de fundo (/fundo.webp, ~30 KB; o PNG original tinha 1,5 MB) cobrindo toda a área; conteúdo centralizado. */
 .home {
   min-height: 100vh;
-  background-image: url('/fundo.png');
+  background-image: url('/fundo.webp');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
