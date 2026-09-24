@@ -9,8 +9,14 @@ import { Router } from 'express'
 import { pool } from '../db/pool.js'
 import { exigirAdmin } from '../middleware/auth.js'
 import { asyncHandler } from '../middleware/asyncHandler.js'
+import { criarCache } from '../services/cache.js'
+import { limparCachePrecos } from '../services/precos.js'
 
 export const produtosRouter = Router()
+
+// Cardápio público guardado por 60 s (é a rota mais acessada do site). Toda alteração feita
+// pelo painel admin chama cacheCardapio.limpar(), então o cardápio novo aparece na hora.
+const cacheCardapio = criarCache(60 * 1000)
 
 // Categorias permitidas (devem coincidir com o ENUM `categoria` da tabela `produtos`).
 const CATEGORIAS = ['pizza', 'hamburguer', 'bebida', 'sobremesa']
@@ -79,8 +85,11 @@ function tratarNomeDuplicado(error, res) {
 
 // Cardápio público: só produtos ativos (usado pelo site).
 produtosRouter.get('/', asyncHandler(async (req, res) => {
-  const [linhas] = await pool.query('SELECT * FROM produtos WHERE ativo = TRUE ORDER BY ordem, id')
-  res.json(linhas.map(mapLinha))
+  const cardapio = await cacheCardapio.obter(async () => {
+    const [linhas] = await pool.query('SELECT * FROM produtos WHERE ativo = TRUE ORDER BY ordem, id')
+    return linhas.map(mapLinha)
+  })
+  res.json(cardapio)
 }))
 
 // Lista completa, inclusive produtos desativados (painel admin).
@@ -102,6 +111,8 @@ produtosRouter.post('/', exigirAdmin, asyncHandler(async (req, res) => {
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [dados.categoria, dados.nome, dados.descricao, dados.preco, dados.imagemUrl, dados.ativo, dados.ordem]
     )
+    cacheCardapio.limpar()
+    limparCachePrecos()
     res.status(201).json({ id: resultado.insertId, ...dados })
   } catch (error) {
     if (!tratarNomeDuplicado(error, res)) throw error
@@ -125,6 +136,8 @@ produtosRouter.put('/:id', exigirAdmin, asyncHandler(async (req, res) => {
     if (resultado.affectedRows === 0) {
       return res.status(404).json({ erro: 'Produto não encontrado.' })
     }
+    cacheCardapio.limpar()
+    limparCachePrecos()
     res.json({ id: Number(req.params.id), ...dados })
   } catch (error) {
     if (!tratarNomeDuplicado(error, res)) throw error
@@ -137,5 +150,7 @@ produtosRouter.delete('/:id', exigirAdmin, asyncHandler(async (req, res) => {
   if (resultado.affectedRows === 0) {
     return res.status(404).json({ erro: 'Produto não encontrado.' })
   }
+  cacheCardapio.limpar()
+  limparCachePrecos()
   res.status(204).end()
 }))

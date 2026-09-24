@@ -14,6 +14,7 @@ import { asyncHandler } from '../middleware/asyncHandler.js'
 import { getPaymentClient } from '../services/mercadoPago.js'
 import { criarPedidoLimiter, elegibilidadeCupomLimiter } from '../middleware/rateLimit.js'
 import { lojaEstaAberta } from '../services/loja.js'
+import { precosPromocoesValidos, precosCardapio } from '../services/precos.js'
 
 export const pedidosRouter = Router()
 
@@ -66,21 +67,6 @@ async function elegivelCupomPrimeiraCompra(executor, telefone) {
     [telefoneNormalizado]
   )
   return linhas.length === 0
-}
-
-// Preços de promoção mudam de acordo com o dia/edição do admin e nem sempre chegam com o
-// mesmo nome usado no cardápio fixo (a "Promoção do Dia" tem nomes livres). Por isso, para
-// itens de promoção aceitamos qualquer preço que hoje exista de fato na tabela `promocoes`
-// (ou 0, para promoções "combinar no WhatsApp"), em vez de exigir um nome exato.
-async function precosPromocoesValidos() {
-  const [linhas] = await pool.query('SELECT preco FROM promocoes')
-  return new Set(linhas.map((linha) => Number(linha.preco)))
-}
-
-// Catálogo vigente (produtos ativos da tabela `produtos`, editável pelo painel admin).
-async function precosCardapio() {
-  const [linhas] = await pool.query('SELECT nome, preco FROM produtos WHERE ativo = TRUE')
-  return new Map(linhas.map((linha) => [linha.nome, Number(linha.preco)]))
 }
 
 // Nunca confia no preço enviado pelo cliente: itens que batem com um nome do cardápio têm o
@@ -161,12 +147,19 @@ pedidosRouter.post('/', criarPedidoLimiter, asyncHandler(async (req, res) => {
   // GET_LOCK(nome, 5): trava nomeada do MySQL, presa à conexão; espera até 5s e devolve 1 se
   // conseguiu. Por isso usamos UMA conexão dedicada (getConnection) para todo o bloco, e o
   // lock é liberado no finally com RELEASE_LOCK, mesmo que algo dê erro.
+  // A trava só existe para fechar a corrida do cupom; pedido sem cupom não precisa dela
+  // (economiza 2 idas ao banco em cada pedido comum).
   const nomeLock = `pedido:${normalizarTelefone(telefone)}`
+  const precisaTravar = cupom === CUPOM_PRIMEIRA_COMPRA && subtotal >= CUPOM_VALOR_MINIMO
+  let travou = false
   const conn = await pool.getConnection()
   try {
-    const [[lock]] = await conn.query('SELECT GET_LOCK(?, 5) AS obtido', [nomeLock])
-    if (!lock.obtido) {
-      return res.status(503).json({ erro: 'Sistema ocupado processando outro pedido seu. Tente novamente em instantes.' })
+    if (precisaTravar) {
+      const [[lock]] = await conn.query('SELECT GET_LOCK(?, 5) AS obtido', [nomeLock])
+      if (!lock.obtido) {
+        return res.status(503).json({ erro: 'Sistema ocupado processando outro pedido seu. Tente novamente em instantes.' })
+      }
+      travou = true
     }
 
     // O desconto é sempre recalculado aqui, ignorando qualquer valor vindo do cliente:
@@ -247,7 +240,7 @@ pedidosRouter.post('/', criarPedidoLimiter, asyncHandler(async (req, res) => {
     })
   } finally {
     // Sempre libera a trava e devolve a conexão ao pool, com sucesso ou erro.
-    await conn.query('SELECT RELEASE_LOCK(?)', [nomeLock])
+    if (travou) await conn.query('SELECT RELEASE_LOCK(?)', [nomeLock])
     conn.release()
   }
 }))

@@ -19,4 +19,8 @@ export const pool = mysql.createPool({
   waitForConnections: true,
   // Configurável porque MySQL gratuito de hospedagem costuma limitar as conexões (ex: 5).
   connectionLimit: Number(process.env.DB_CONNECTION_LIMIT) || 10,
+  // Fila máxima de consultas esperando conexão livre. Passou disso, a consulta falha na hora
+  // (vira 503 no server.js) em vez de ficar pendurada até o navegador desistir — assim o
+  // servidor continua respondendo mesmo sobrecarregado. 0 = fila sem limite.
+  queueLimit: Number(process.env.DB_QUEUE_LIMIT) || 200,
 })

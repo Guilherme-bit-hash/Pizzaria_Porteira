@@ -9,8 +9,13 @@ import { Router } from 'express'
 import { pool } from '../db/pool.js'
 import { exigirAdmin } from '../middleware/auth.js'
 import { asyncHandler } from '../middleware/asyncHandler.js'
+import { criarCache } from '../services/cache.js'
+import { limparCachePrecos } from '../services/precos.js'
 
 export const promocoesRouter = Router()
+
+// Lista pública guardada por 60 s; o PUT do painel admin limpa o cache na hora.
+const cachePromocoes = criarCache(60 * 1000)
 
 // Valida o corpo enviado pelo painel e devolve os dados limpos (com espaços aparados e
 // tipos garantidos), ou null se algum campo obrigatório estiver inválido.
@@ -51,8 +56,11 @@ function mapLinha(linha) {
 
 // Listar as promoções da semana (público, usado pelo site para mostrar a promoção do dia)
 promocoesRouter.get('/', asyncHandler(async (req, res) => {
-  const [linhas] = await pool.query('SELECT * FROM promocoes ORDER BY dia_semana')
-  res.json(linhas.map(mapLinha))
+  const promocoes = await cachePromocoes.obter(async () => {
+    const [linhas] = await pool.query('SELECT * FROM promocoes ORDER BY dia_semana')
+    return linhas.map(mapLinha)
+  })
+  res.json(promocoes)
 }))
 
 // Criar/atualizar a promoção de um dia da semana (painel admin)
@@ -95,5 +103,7 @@ promocoesRouter.put('/:dia', exigirAdmin, asyncHandler(async (req, res) => {
     ]
   )
 
+  cachePromocoes.limpar()
+  limparCachePrecos()
   res.json({ diaSemana: dia, ...dados })
 }))

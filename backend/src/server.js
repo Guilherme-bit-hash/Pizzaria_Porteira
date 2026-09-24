@@ -46,6 +46,19 @@ if (process.env.NODE_ENV === 'production' && !process.env.CORS_ORIGIN) {
 
 const app = express()
 
+// Atrás do proxy de hospedagem (Render), req.ip seria o IP do proxy — o mesmo para todo
+// mundo — e os limitadores de taxa (rateLimit.js) tratariam todos os clientes como uma
+// pessoa só: 20 pedidos por 15 min para a pizzaria inteira e o login do admin bloqueado
+// por tentativas de outros. TRUST_PROXY = quantos proxies confiar (1 = o do Render); use 0
+// se o servidor ficar exposto direto na internet. O valor errado é perigoso nos dois
+// sentidos, então confira nos logs do Render se aparece algum aviso "ERR_ERL_*".
+const trustProxy = Number(process.env.TRUST_PROXY ?? 1)
+if (!Number.isInteger(trustProxy) || trustProxy < 0) {
+  console.error('TRUST_PROXY deve ser um número inteiro >= 0 (quantidade de proxies confiáveis).')
+  process.exit(1)
+}
+app.set('trust proxy', trustProxy)
+
 // Middlewares globais: funções que rodam em TODA requisição, na ordem em que são
 // registradas, antes de ela chegar à rota final.
 
@@ -85,6 +98,12 @@ app.use('/api/loja', lojaRouter) // status aberta/fechada da loja
 // Recebe qualquer erro lançado nas rotas (via asyncHandler) e responde de forma genérica,
 // sem expor detalhes internos ao cliente; o detalhe fica só no log do servidor.
 app.use((err, req, res, next) => {
+  // Fila de espera do banco cheia (ver queueLimit em db/pool.js): sobrecarga momentânea,
+  // não um bug — responde 503 para o cliente tentar de novo em instantes.
+  if (err?.message === 'Queue limit reached.') {
+    console.error('Fila do banco cheia: servidor sobrecarregado.')
+    return res.status(503).json({ erro: 'Sistema muito ocupado no momento. Tente novamente em instantes.' })
+  }
   console.error(err)
   res.status(500).json({ erro: 'Erro interno do servidor.' })
 })
