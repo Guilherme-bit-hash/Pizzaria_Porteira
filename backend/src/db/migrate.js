@@ -16,6 +16,8 @@ import 'dotenv/config'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 // Lê todo o script SQL de criação do banco/tabelas.
 const schema = readFileSync(path.join(__dirname, 'schema.sql'), 'utf8')
+// Nome do banco vem do .env (padrão: pizzaria_porteira, o usado em desenvolvimento local).
+const DB_NAME = process.env.DB_NAME || 'pizzaria_porteira'
 
 // Colunas de pagamento PIX e de vínculo com o cliente (cliente_id), que bancos criados
 // numa versão anterior do schema.sql podem não ter. Em banco novo, as de pagamento já vêm do
@@ -67,7 +69,17 @@ async function migrate() {
   })
 
   try {
-    // 1) Cria banco, tabelas e as promoções padrão.
+    // 1) Cria o banco (se o usuário tiver permissão), seleciona e cria tabelas e promoções padrão.
+    // Em MySQL hospedado o banco já existe e o usuário não pode criar outros (erro 1044/1227):
+    // nesse caso só seguimos e usamos o que já existe.
+    try {
+      await connection.query(
+        `CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`
+      )
+    } catch (error) {
+      if (error.errno !== 1044 && error.errno !== 1227) throw error
+    }
+    await connection.query(`USE \`${DB_NAME}\``)
     await connection.query(schema)
 
     // 2) Garante as colunas extras em `pedidos`, ignorando as que já existem.
@@ -81,7 +93,6 @@ async function migrate() {
 
     // 3) Cardápio inicial: só carrega se a tabela estiver vazia, para não sobrescrever
     // (nem duplicar) o que o admin já editou. `VALUES ?` insere várias linhas de uma vez.
-    await connection.query('USE pizzaria_porteira')
     const [[{ total }]] = await connection.query('SELECT COUNT(*) AS total FROM produtos')
     if (total === 0) {
       await connection.query(

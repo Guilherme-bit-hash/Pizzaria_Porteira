@@ -44,13 +44,16 @@ A API sobe em `http://localhost:3001` (ou na porta definida em `PORT`).
 |--------|------------------------------------------|------------------------|-----------|
 | GET    | `/api/health`                            | -                       | Healthcheck |
 | POST   | `/api/auth/login`                        | -                       | Login do admin, retorna um token JWT |
-| POST   | `/api/pedidos`                           | -                       | Cria um novo pedido (usado pelo checkout do site) |
+| POST   | `/api/pedidos`                           | -                       | Cria um novo pedido (usado pelo checkout do site); recusa com 403 se a loja estiver fechada |
 | GET    | `/api/pedidos/cupom-primeira-compra/elegivel` | -                  | Verifica se um telefone ainda tem direito ao cupom de primeira compra |
 | POST   | `/api/pedidos/:id/pagamento/pix`         | -                       | Gera a cobrança PIX (QR code) para um pedido já criado |
 | GET    | `/api/pedidos/:id/pagamento/status`      | -                       | Consulta o status atual do pagamento (usado pelo polling no checkout) |
+| GET    | `/api/pedidos/metricas/hoje`             | Admin (Bearer token)    | Números do dia para o dashboard: pedidos, faturamento, ticket médio e contagem por status |
 | GET    | `/api/pedidos`                           | Admin (Bearer token)    | Lista todos os pedidos |
 | GET    | `/api/pedidos/:id`                       | Admin (Bearer token)    | Detalha um pedido |
 | PATCH  | `/api/pedidos/:id/status`                | Admin (Bearer token)    | Atualiza o status do pedido (`recebido`, `preparando`, `saiu_para_entrega`, `entregue`, `cancelado`) |
+| GET    | `/api/loja/status`                       | -                       | Diz se a loja está aceitando pedidos novos |
+| PUT    | `/api/loja/status`                       | Admin (Bearer token)    | Abre/fecha a loja (`{ "aberta": true \| false }`) |
 | GET    | `/api/promocoes`                         | -                       | Lista as promoções da semana |
 | PUT    | `/api/promocoes/:dia`                    | Admin (Bearer token)    | Cria/atualiza a promoção de um dia da semana (0 = domingo … 6 = sábado) |
 | GET    | `/api/produtos`                          | -                       | Cardápio público (só produtos ativos) |
@@ -83,6 +86,12 @@ Para rotas protegidas, envie o header `Authorization: Bearer <token>` obtido no 
 - No painel, em **📧 Campanhas**, envie primeiro um teste para você e depois para todos.
 - Só recebem clientes que marcaram o consentimento no checkout e têm e-mail. Todo e-mail leva um link de descadastro.
 - WhatsApp em massa não está incluído: exige a API oficial do WhatsApp Business (paga, com modelos aprovados).
+
+## Dashboard e loja aberta/fechada
+
+- O painel admin abre agora em **📊 Painel** (`/admin/dashboard`), com o botão de abrir/fechar a loja e o resumo do dia.
+- Com a loja fechada, `POST /api/pedidos` responde 403 — o site mostra um aviso e desabilita os botões de finalizar, mas quem garante de verdade é o backend.
+- O painel de Pedidos também toca um bipe e mostra uma notificação quando um pedido novo chega (detectado no polling de 15s).
 
 ## O que ainda falta / próximos passos
 

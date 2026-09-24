@@ -379,3 +379,89 @@
 .admin-mensagem-status--erro {
   color: #FF8888;
 }
+
+/* Botão primário sem largura total (usado fora de formulários, ex.: "Abrir loja"). */
+.admin-botao-primario--largura-auto {
+  width: auto;
+  padding: 10px 24px;
+}
+
+/* ===== DASHBOARD: LOJA ABERTA/FECHADA ===== */
+/* Cartão de destaque com o status da loja e o botão de abrir/fechar. */
+.admin-loja-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  background: rgba(124, 252, 148, 0.08);
+  border: 2px solid rgba(124, 252, 148, 0.3);
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Mesmo cartão quando a loja está fechada: troca o destaque verde por vermelho. */
+.admin-loja-card--fechada {
+  background: rgba(255, 68, 68, 0.08);
+  border-color: rgba(255, 68, 68, 0.3);
+}
+
+.admin-loja-card__titulo {
+  color: #FFD700;
+  margin: 0 0 0.3rem;
+}
+
+.admin-loja-card__texto {
+  color: #ccc;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+/* ===== DASHBOARD: MÉTRICAS DO DIA ===== */
+/* Grade responsiva dos três números principais (auto-fit: quebra pra 1 coluna em telas estreitas). */
+.admin-metricas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.admin-metrica-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 215, 0, 0.2);
+  border-radius: 16px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.4rem;
+}
+
+.admin-metrica-card__valor {
+  color: #FFD700;
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+.admin-metrica-card__rotulo {
+  color: #ccc;
+  font-size: 0.9rem;
+}
+
+/* Lista "pedidos de hoje por status": cada linha com o rótulo à esquerda e a contagem à direita. */
+.admin-status-resumo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.admin-status-resumo__item {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.6rem 0.8rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  color: #ddd;
+}

@@ -25,6 +25,8 @@ import {
   type StatusPagamento,
 } from '../services/pagamentoService'
 import { listarCardapio } from '../services/produtoService'
+import { consultarStatusLoja } from '../services/lojaService'
+import LojaFechadaBanner from '../components/LojaFechadaBanner'
 import { WHATSAPP_NUMBER, formatarWhatsApp } from '../config/whatsapp'
 import '../styles/pedido.css'
 
@@ -86,6 +88,13 @@ export default function Pedidos() {
   const [pixData, setPixData] = useState<PagamentoPix | null>(null)
   const [statusPagamento, setStatusPagamento] = useState<StatusPagamento>('pendente')
   const [erroPix, setErroPix] = useState('')
+  const [lojaAberta, setLojaAberta] = useState(true)
+
+  // Consulta se a loja está aceitando pedidos, pra avisar e travar os botões de finalizar
+  // antes mesmo de tentar — a checagem que realmente vale é feita de novo no servidor.
+  useEffect(() => {
+    consultarStatusLoja().then(setLojaAberta)
+  }, [])
 
   // Ao abrir o carrinho, confere com o cardápio atual: se o admin mudou um preço ou tirou um
   // produto do ar, o carrinho é corrigido e o cliente é avisado (senão o pedido seria recusado
@@ -347,6 +356,7 @@ export default function Pedidos() {
 
         {/* CONTEÚDO */}
         <div className="pedido-conteudo">
+          {!lojaAberta && <LojaFechadaBanner />}
 
           {/* ETAPA 1: CARRINHO */}
           {etapa === 'carrinho' && (
@@ -619,19 +629,19 @@ export default function Pedidos() {
                   <button
                     type="button"
                     onClick={handleFinalizarPedido}
-                    disabled={enviando}
+                    disabled={enviando || !lojaAberta}
                     className="pedido-botao-finalizar"
                   >
-                    {enviando ? 'Enviando...' : '💬 Finalizar Pedido no WhatsApp'}
+                    {!lojaAberta ? '🔒 Loja fechada' : enviando ? 'Enviando...' : '💬 Finalizar Pedido no WhatsApp'}
                   </button>
                 ) : (
                   <button
                     type="button"
                     onClick={handleGerarPix}
-                    disabled={enviando}
+                    disabled={enviando || !lojaAberta}
                     className="pedido-botao-finalizar pedido-botao-finalizar--pix"
                   >
-                    {enviando ? 'Gerando PIX...' : '⚡ Gerar PIX e Pagar'}
+                    {!lojaAberta ? '🔒 Loja fechada' : enviando ? 'Gerando PIX...' : '⚡ Gerar PIX e Pagar'}
                   </button>
                 )}
               </div>

@@ -23,6 +23,7 @@ import { pagamentosRouter } from './routes/pagamentos.js'
 import { produtosRouter } from './routes/produtos.js'
 import { clientesRouter } from './routes/clientes.js'
 import { campanhasRouter } from './routes/campanhas.js'
+import { lojaRouter } from './routes/loja.js'
 
 // Falha rápido e com mensagem clara no boot se faltar alguma variável obrigatória, em vez de
 // só quebrar de forma confusa no primeiro login (ex: jwt.sign com secret undefined).
@@ -78,6 +79,7 @@ app.use('/api/pagamentos', pagamentosRouter) // webhook do Mercado Pago (PIX)
 app.use('/api/produtos', produtosRouter) // cardápio editável
 app.use('/api/clientes', clientesRouter) // base de clientes (painel admin)
 app.use('/api/campanhas', campanhasRouter) // e-mails promocionais e link de descadastro
+app.use('/api/loja', lojaRouter) // status aberta/fechada da loja
 
 // Tratador global de erros: o Express o reconhece pelos 4 parâmetros (err, req, res, next).
 // Recebe qualquer erro lançado nas rotas (via asyncHandler) e responde de forma genérica,

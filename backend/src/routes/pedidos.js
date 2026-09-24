@@ -13,6 +13,7 @@ import { exigirAdmin } from '../middleware/auth.js'
 import { asyncHandler } from '../middleware/asyncHandler.js'
 import { getPaymentClient } from '../services/mercadoPago.js'
 import { criarPedidoLimiter, elegibilidadeCupomLimiter } from '../middleware/rateLimit.js'
+import { lojaEstaAberta } from '../services/loja.js'
 
 export const pedidosRouter = Router()
 
@@ -119,6 +120,13 @@ function validarItens(itens, precosPromocoes, precosCatalogo) {
 // Fluxo: valida dados -> valida itens/preços -> calcula subtotal -> (com trava por telefone)
 // aplica cupom, grava/atualiza o cliente e grava o pedido.
 pedidosRouter.post('/', criarPedidoLimiter, asyncHandler(async (req, res) => {
+  // Loja fechada: nem chega a validar o resto, pra não deixar passar um pedido que a
+  // pizzaria não vai preparar. Checado no servidor (não só no site) porque é a única
+  // forma de garantir que vale mesmo — o front pode ser contornado.
+  if (!(await lojaEstaAberta())) {
+    return res.status(403).json({ erro: 'A pizzaria está fechada no momento. Tente novamente durante o horário de funcionamento.' })
+  }
+
   const { nome, telefone, endereco, complemento, observacoes, itens, cupom, email, aceitaPromocoes } = req.body || {}
 
   // 1) Validação dos dados do cliente (campos obrigatórios, tamanhos e e-mail opcional).
@@ -363,6 +371,41 @@ pedidosRouter.get('/:id/pagamento/status', asyncHandler(async (req, res) => {
   }
 
   res.json({ status: statusAtual })
+}))
+
+// Métricas do dia para o dashboard do painel admin: quantidade de pedidos, faturamento
+// (soma do total, sem contar cancelados), ticket médio e a contagem por status.
+// DATE(criado_em) = CURDATE() usa o fuso horário configurado no MySQL do servidor.
+pedidosRouter.get('/metricas/hoje', exigirAdmin, asyncHandler(async (req, res) => {
+  const [[linha]] = await pool.query(`
+    SELECT
+      COUNT(*) AS totalHoje,
+      SUM(CASE WHEN status != 'cancelado' THEN 1 ELSE 0 END) AS pedidosValidos,
+      COALESCE(SUM(CASE WHEN status != 'cancelado' THEN total ELSE 0 END), 0) AS faturamentoHoje,
+      SUM(CASE WHEN status = 'recebido' THEN 1 ELSE 0 END) AS recebido,
+      SUM(CASE WHEN status = 'preparando' THEN 1 ELSE 0 END) AS preparando,
+      SUM(CASE WHEN status = 'saiu_para_entrega' THEN 1 ELSE 0 END) AS saiuParaEntrega,
+      SUM(CASE WHEN status = 'entregue' THEN 1 ELSE 0 END) AS entregue,
+      SUM(CASE WHEN status = 'cancelado' THEN 1 ELSE 0 END) AS cancelado
+    FROM pedidos
+    WHERE DATE(criado_em) = CURDATE()
+  `)
+
+  const pedidosValidos = Number(linha.pedidosValidos) || 0
+  const faturamentoHoje = Number(linha.faturamentoHoje) || 0
+
+  res.json({
+    totalHoje: Number(linha.totalHoje) || 0,
+    faturamentoHoje,
+    ticketMedio: pedidosValidos > 0 ? Number((faturamentoHoje / pedidosValidos).toFixed(2)) : 0,
+    porStatus: {
+      recebido: Number(linha.recebido) || 0,
+      preparando: Number(linha.preparando) || 0,
+      saiu_para_entrega: Number(linha.saiuParaEntrega) || 0,
+      entregue: Number(linha.entregue) || 0,
+      cancelado: Number(linha.cancelado) || 0,
+    },
+  })
 }))
 
 // Listar pedidos (painel admin)

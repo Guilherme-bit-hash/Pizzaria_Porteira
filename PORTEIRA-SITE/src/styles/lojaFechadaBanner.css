@@ -1,0 +1,15 @@
+/* src/styles/lojaFechadaBanner.css */
+/* Faixa de aviso "loja fechada". Não é fixa — fica no fluxo normal do conteúdo da página
+   (logo abaixo do espaço reservado pra Navbar fixa), então não precisa repetir o cálculo
+   de padding-top que cada página já faz para a navbar. */
+.loja-fechada-banner {
+  max-width: 1000px;
+  margin: 0 auto 1.5rem;
+  padding: 1rem 1.5rem;
+  background: rgba(255, 68, 68, 0.12);
+  border: 2px solid rgba(255, 68, 68, 0.4);
+  border-radius: 12px;
+  color: #FF8888;
+  font-weight: bold;
+  text-align: center;
+}

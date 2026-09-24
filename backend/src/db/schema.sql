@@ -10,11 +10,8 @@
 -- arredondamento.
 -- =====================================================================================
 
--- Cria o banco (se não existir) com utf8mb4, que suporta acentos e emojis, e o seleciona.
-CREATE DATABASE IF NOT EXISTS pizzaria_porteira
-  CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
-USE pizzaria_porteira;
+-- O banco em si (utf8mb4, que suporta acentos e emojis) é criado/selecionado pelo migrate.js
+-- a partir de DB_NAME, porque em hospedagens de MySQL o banco já vem criado com outro nome.
 
 -- Pedidos feitos pelo checkout do site (usada por routes/pedidos.js).
 CREATE TABLE IF NOT EXISTS pedidos (
@@ -105,6 +102,21 @@ CREATE TABLE IF NOT EXISTS promocoes (
   -- Impede gravar um dia fora do intervalo 0 a 6.
   CONSTRAINT chk_promocoes_dia_semana CHECK (dia_semana BETWEEN 0 AND 6)
 );
+
+-- Configuração da loja: hoje só guarda se está aceitando pedidos ou não (usada por
+-- routes/loja.js e conferida em routes/pedidos.js ao criar um pedido). Tabela de uma
+-- linha só (id sempre 1) em vez de uma tabela chave-valor genérica, porque só existe essa
+-- configuração por enquanto — é mais simples de ler/escrever que inventar um formato genérico.
+CREATE TABLE IF NOT EXISTS loja_config (
+  id TINYINT PRIMARY KEY DEFAULT 1,
+  aberta BOOLEAN NOT NULL DEFAULT TRUE,
+  atualizado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT chk_loja_config_id_unico CHECK (id = 1)
+);
+
+-- Garante que a linha de configuração existe (começa aberta); INSERT IGNORE não sobrescreve
+-- o valor se o admin já tiver fechado/aberto a loja numa migração anterior.
+INSERT IGNORE INTO loja_config (id, aberta) VALUES (1, TRUE);
 
 -- Semente com as promoções padrão de cada dia da semana (0 = domingo ... 6 = sábado).
 -- INSERT IGNORE preserva edições já feitas pelo painel admin em migrações futuras.

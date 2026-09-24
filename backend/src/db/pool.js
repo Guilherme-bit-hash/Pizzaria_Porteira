@@ -17,5 +17,6 @@ export const pool = mysql.createPool({
   database: process.env.DB_NAME || 'pizzaria_porteira',
   // Se as 10 conexões estiverem ocupadas, novas consultas esperam na fila em vez de falhar.
   waitForConnections: true,
-  connectionLimit: 10,
+  // Configurável porque MySQL gratuito de hospedagem costuma limitar as conexões (ex: 5).
+  connectionLimit: Number(process.env.DB_CONNECTION_LIMIT) || 10,
 })

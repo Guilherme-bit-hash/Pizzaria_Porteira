@@ -13,6 +13,7 @@ import Home from './Pages/Home'
 import Cardapio from './Pages/Cardapio'
 import Pedido from './Pages/Pedido'
 import AdminLogin from './Pages/AdminLogin'
+import AdminDashboard from './Pages/AdminDashboard'
 import AdminPedidos from './Pages/AdminPedidos'
 import AdminPromocoes from './Pages/AdminPromocoes'
 import AdminProdutos from './Pages/AdminProdutos'
@@ -46,6 +47,7 @@ function App() {
 
             {/* Rotas do painel administrativo (exigem token, ver AdminLogin) */}
             <Route path="/admin" element={<AdminLogin />} />
+            <Route path="/admin/dashboard" element={<AdminDashboard />} />
             <Route path="/admin/pedidos" element={<AdminPedidos />} />
             <Route path="/admin/promocoes" element={<AdminPromocoes />} />
             <Route path="/admin/produtos" element={<AdminProdutos />} />

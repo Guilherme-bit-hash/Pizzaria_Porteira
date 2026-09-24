@@ -3,7 +3,7 @@
 // Lista os pedidos, permite avançar o status (recebido -> preparando -> entrega -> entregue) ou cancelar.
 // Backend: GET /api/pedidos e PATCH /api/pedidos/:id/status (via services/pedidoService.ts), com token de admin.
 // A lista é atualizada sozinha a cada 15 segundos.
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   atualizarStatusPedido,
@@ -15,6 +15,7 @@ import {
 } from '../services/pedidoService'
 import { showToast } from '../components/Toast'
 import AdminNav from '../components/AdminNav'
+import { tocarSomNovoPedido } from '../utils/somPedido'
 import '../styles/admin.css'
 
 // Texto amigável (com emoji) exibido para cada status do pedido.
@@ -60,6 +61,13 @@ export default function AdminPedidos() {
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState('')
 
+  // IDs de pedidos já vistos numa busca anterior, para detectar quais são novos a cada
+  // polling. `null` = ainda não carregou pela primeira vez — usado pra NÃO tocar o som
+  // nem notificar para os pedidos que já existiam quando a tela abriu, só para os que
+  // chegarem depois. useRef (em vez de useState) porque essa informação não deve, sozinha,
+  // causar um redesenho da tela.
+  const idsConhecidosRef = useRef<Set<number> | null>(null)
+
   // Busca os pedidos no backend e atualiza a tela.
   // useCallback mantém a mesma função entre renderizações (só recria se "navigate" mudar),
   // o que evita que o useEffect abaixo seja reexecutado sem necessidade.
@@ -68,6 +76,24 @@ export default function AdminPedidos() {
       const dados = await listarPedidos()
       setPedidos(dados)
       setErro('')
+
+      // Compara com a busca anterior: qualquer id que não estava lá é um pedido novo.
+      const idsAtuais = new Set(dados.map((pedido) => pedido.id))
+      if (idsConhecidosRef.current) {
+        const pedidosNovos = dados.filter((pedido) => !idsConhecidosRef.current!.has(pedido.id))
+        if (pedidosNovos.length > 0) {
+          tocarSomNovoPedido()
+          pedidosNovos.forEach((pedido) => {
+            showToast({
+              message: `Novo pedido #${pedido.id} — ${pedido.cliente_nome}!`,
+              type: 'success',
+              emoji: '🔔',
+              duration: 5000,
+            })
+          })
+        }
+      }
+      idsConhecidosRef.current = idsAtuais
     } catch (error) {
       // Token inválido/expirado: apaga o token e volta para o login
       if (error instanceof Error && /token/i.test(error.message)) {

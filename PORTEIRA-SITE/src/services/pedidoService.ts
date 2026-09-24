@@ -61,6 +61,14 @@ export interface RespostaNovoPedido {
   status: StatusPedido
 }
 
+// Métricas do dia para o dashboard do painel admin (GET /api/pedidos/metricas/hoje).
+export interface MetricasHoje {
+  totalHoje: number
+  faturamentoHoje: number
+  ticketMedio: number
+  porStatus: Record<StatusPedido, number>
+}
+
 // ---- Token de administrador (guardado no localStorage) ----
 
 // Lê o token salvo no login (null se não estiver logado).
@@ -149,6 +157,15 @@ export async function loginAdmin(usuario: string, senha: string) {
 // Lista todos os pedidos para o painel.
 export async function listarPedidos(): Promise<Pedido[]> {
   const resposta = await fetch(`${API_URL}/pedidos`, {
+    headers: { Authorization: `Bearer ${getAdminToken()}` },
+  })
+  return tratarResposta(resposta)
+}
+
+// GET /api/pedidos/metricas/hoje (rota de admin)
+// Números do dia (pedidos, faturamento, ticket médio e contagem por status) para o dashboard.
+export async function buscarMetricasHoje(): Promise<MetricasHoje> {
+  const resposta = await fetch(`${API_URL}/pedidos/metricas/hoje`, {
     headers: { Authorization: `Bearer ${getAdminToken()}` },
   })
   return tratarResposta(resposta)

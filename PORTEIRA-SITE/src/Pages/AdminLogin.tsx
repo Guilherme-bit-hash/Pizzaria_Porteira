@@ -27,7 +27,7 @@ export default function AdminLogin() {
     try {
       // Chama o backend; em caso de sucesso o token já é salvo no localStorage por loginAdmin
       await loginAdmin(usuario, senha)
-      navigate('/admin/pedidos')
+      navigate('/admin/dashboard')
     } catch (error) {
       // Credenciais erradas ou backend fora do ar: avisa com uma notificação
       showToast({

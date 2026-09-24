@@ -9,11 +9,12 @@ import { useNavigate } from 'react-router-dom'
 import { limparAdminToken } from '../services/pedidoService'
 
 // Nomes válidos de seção: o TypeScript recusa qualquer outro texto em `atual`.
-type SecaoAdmin = 'pedidos' | 'produtos' | 'clientes' | 'promocoes' | 'campanhas'
+type SecaoAdmin = 'dashboard' | 'pedidos' | 'produtos' | 'clientes' | 'promocoes' | 'campanhas'
 
 // Lista das seções do admin: id (para comparar com `atual`), texto do botão e rota.
 // Para criar uma nova seção no menu, basta incluir mais uma linha aqui.
 const SECOES: { id: SecaoAdmin; rotulo: string; rota: string }[] = [
+  { id: 'dashboard', rotulo: '📊 Painel', rota: '/admin/dashboard' },
   { id: 'pedidos', rotulo: '📋 Pedidos', rota: '/admin/pedidos' },
   { id: 'produtos', rotulo: '🍕 Cardápio', rota: '/admin/produtos' },
   { id: 'clientes', rotulo: '👥 Clientes', rota: '/admin/clientes' },

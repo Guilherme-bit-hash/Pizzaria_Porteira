@@ -14,6 +14,8 @@ import Sidebar from '../components/Sidebar'
 import MenuButton from '../components/MenuButton'
 import { WHATSAPP_NUMBER } from '../config/whatsapp'
 import { listarCardapio, type CategoriaProduto, type Produto } from '../services/produtoService'
+import { consultarStatusLoja } from '../services/lojaService'
+import LojaFechadaBanner from '../components/LojaFechadaBanner'
 import '../styles/cardapio.css'
 
 // Identificadores das abas exibidas na tela
@@ -98,6 +100,7 @@ export default function Cardapio() {
   const [sidebarAberta, setSidebarAberta] = useState(false)
   const [paginaAtual, setPaginaAtual] = useState(1)
   const [paginaPromocoes, setPaginaPromocoes] = useState(1)
+  const [lojaAberta, setLojaAberta] = useState(true)
   // Função do contexto do carrinho para adicionar itens
   const { adicionarItem } = useCarrinho()
   // Promoção de hoje e nome do dia (hook que consulta o backend)
@@ -108,6 +111,11 @@ export default function Cardapio() {
   useEffect(() => {
     setPaginaAtual(1)
   }, [abaAtiva])
+
+  // Consulta se a loja está aceitando pedidos, para mostrar o aviso no topo.
+  useEffect(() => {
+    consultarStatusLoja().then(setLojaAberta)
+  }, [])
 
   // Função para gerar imagens placeholder dinâmicas
   // (usada quando o produto não tem imagem cadastrada; cria uma imagem colorida com emoji e nome)
@@ -258,6 +266,8 @@ export default function Cardapio() {
 
       {/* CONTEÚDO PRINCIPAL */}
       <div className="cardapio-conteudo">
+        {!lojaAberta && <LojaFechadaBanner />}
+
         {/* TÍTULO E DESCRIÇÃO */}
         <div className="cardapio-titulo-wrap">
           <h1 className="cardapio-titulo">Nosso Cardápio</h1>
