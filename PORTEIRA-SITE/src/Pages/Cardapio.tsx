@@ -129,16 +129,8 @@ export default function Cardapio() {
       promocoes: 'FFD700'
     }
 
-    // Emoji de cada categoria
-    const emojis = {
-      pizzas: '🍕',
-      hamburgueres: '🍔',
-      bebidas: '🥤',
-      sobremesas: '🍰',
-      promocoes: '🎯'
-    }
-
-    const texto = encodeURIComponent(`${emojis[categoria]} ${nome}`)
+    // Só o nome: o serviço de imagem (placehold.co) não desenha emoji e mostrava um quadradinho (▯)
+    const texto = encodeURIComponent(nome)
     return `https://placehold.co/600x400/${cores[categoria]}/white?text=${texto}&font=montserrat`
   }
 

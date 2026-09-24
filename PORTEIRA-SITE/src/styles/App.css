@@ -8,6 +8,27 @@
   box-sizing: border-box;
 }
 
+/* ===== MEDIDAS COMPARTILHADAS (fluidas: acompanham a largura da tela) =====
+   --navbar-logo: tamanho da logo da navbar (72px em telas estreitas até 120px em telas largas).
+   --navbar-h: altura total da navbar fixa (logo + paddings 24px + borda 3px + área do entalhe
+   do iPhone). TODAS as páginas usam esta variável no padding-top, então o conteúdo nunca
+   fica escondido embaixo da navbar, em nenhum tamanho de tela. */
+:root {
+  --navbar-logo: clamp(72px, 20vw, 120px);
+  --navbar-h: calc(var(--navbar-logo) + 27px + env(safe-area-inset-top, 0px));
+}
+
+/* iPhone/Safari: impede o aumento automático de fonte ao girar a tela e quebra palavras
+   muito longas em vez de deixá-las estourar a largura ou serem cortadas. */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  overflow-wrap: break-word;
+}
+
 /* Altura total da árvore para o layout ocupar a tela toda */
 /* Faz toda a árvore (raiz do React incluída) ocupar 100% da altura da janela. */
 html, body, #root {
@@ -19,6 +40,8 @@ html, body, #root {
 /* Fundo em degradê marrom escuro, cor e fonte padrão do site; envolve todas as rotas no App.tsx. */
 .app-container {
   min-height: 100vh;
+  /* dvh = altura real visível no celular (desconta a barra de endereço que aparece/some) */
+  min-height: 100dvh;
   background: linear-gradient(135deg, #1A0F00 0%, #2D1B00 100%);
   color: #FFD700;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -44,10 +67,11 @@ html, body, #root {
 }
 
 /* Páginas simples que ficam direto sob a Navbar (sem .main-content) */
-/* Variante das páginas que ficam direto sob a Navbar: padding-top alto (180px) para compensar a barra fixa. */
+/* Variante das páginas que ficam direto sob a Navbar: padding-top = altura fluida da barra fixa (--navbar-h). */
 .page-container--com-navbar {
-  padding-top: 180px;
+  padding-top: calc(var(--navbar-h) + 2rem);
   min-height: 100vh;
+  min-height: 100dvh;
 }
 
 /* ===== TÍTULOS DE PÁGINA ===== */
@@ -114,6 +138,10 @@ html, body, #root {
     padding: 1rem;
     min-height: calc(100vh - 60px);
   }
+
+  .page-container--com-navbar {
+    padding-top: calc(var(--navbar-h) + 1.5rem);
+  }
   
   .page-title {
     font-size: 2rem;
@@ -133,5 +161,9 @@ html, body, #root {
   
   .page-container {
     padding: 0.5rem;
+  }
+
+  .page-container--com-navbar {
+    padding: calc(var(--navbar-h) + 1rem) 1rem 1rem;
   }
 }

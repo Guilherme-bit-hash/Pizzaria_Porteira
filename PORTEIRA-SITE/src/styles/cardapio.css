@@ -5,6 +5,7 @@
 /* Fundo da página inteira; background-attachment: fixed mantém o degradê parado enquanto o conteúdo rola; overflow-x: hidden evita rolagem horizontal. */
 .cardapio-page {
   min-height: 100vh;
+  min-height: 100dvh;
   background: linear-gradient(135deg, #2D1B00 0%, #3A240F 30%, #4A2F15 60%, #5A3E2B 100%);
   background-attachment: fixed;
   color: white;
@@ -15,10 +16,11 @@
   overflow-x: hidden;
 }
 
-/* Área principal; padding-top de 180px compensa a Navbar fixa (reduzido nos @media ao final do arquivo). */
+/* Área principal; o padding-top acompanha a altura fluida da Navbar fixa (--navbar-h, em App.css). */
 .cardapio-conteudo {
-  padding-top: 180px;
-  padding-bottom: 40px;
+  padding-top: calc(var(--navbar-h) + 1.5rem);
+  /* espaço extra embaixo: o botão flutuante do carrinho não cobre o fim da página */
+  padding-bottom: calc(90px + env(safe-area-inset-bottom, 0px));
   width: 100%;
   margin: 0;
 }
@@ -418,6 +420,8 @@
   display: flex;
   justify-content: flex-start;
   margin: 0 0 1rem;
+  /* mesma margem lateral dos cards (20px), sem colar na borda da tela */
+  padding: 0 max(20px, env(safe-area-inset-right, 0px)) 0 max(20px, env(safe-area-inset-left, 0px));
 }
 
 @media (min-width: 769px) {
@@ -481,7 +485,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem 1.5rem;
 }
 
 /* Botões Anterior e Próxima. */
@@ -844,23 +849,15 @@
 }
 
 /* ===== RESPONSIVIDADE GERAL ===== */
-/* Tablet/celular: menos espaço no topo (a Navbar fica mais baixa) e emoji menor. */
+/* Tablet/celular: emoji menor. */
 @media (max-width: 768px) {
-  .cardapio-conteudo {
-    padding-top: 130px;
-  }
-
   .cardapio-semana__card-emoji {
     font-size: 2rem;
   }
 }
 
-/* Celular pequeno: topo ainda mais curto e fontes menores. */
+/* Celular pequeno: fontes menores. */
 @media (max-width: 480px) {
-  .cardapio-conteudo {
-    padding-top: 110px;
-  }
-
   .cardapio-card__nome {
     font-size: 1.4rem;
   }

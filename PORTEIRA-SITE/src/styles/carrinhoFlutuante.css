@@ -103,8 +103,8 @@
   }
 }
 
-/* Celulares: botão compacto. */
-@media (max-width: 480px) {
+/* Celulares (até 600px): botão compacto. */
+@media (max-width: 600px) {
   .carrinho-flutuante {
     padding: 0.7rem 1rem;
   }

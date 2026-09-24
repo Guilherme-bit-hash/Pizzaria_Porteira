@@ -4,6 +4,7 @@
 /* Tela cheia com a imagem de fundo (/fundo.webp, ~30 KB; o PNG original tinha 1,5 MB) cobrindo toda a área; conteúdo centralizado. */
 .home {
   min-height: 100vh;
+  min-height: 100dvh;
   background-image: url('/fundo.webp');
   background-size: cover;
   background-position: center;

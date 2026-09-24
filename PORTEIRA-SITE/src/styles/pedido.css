@@ -6,6 +6,7 @@
 /* Tela de carrinho vazio (tela cheia, conteúdo centralizado). */
 .pedido-vazio-page {
   min-height: 100vh;
+  min-height: 100dvh;
   background: linear-gradient(135deg, #2D1B00 0%, #3A240F 30%, #4A2F15 60%, #5A3E2B 100%);
   color: white;
   font-family: 'Montserrat', sans-serif;
@@ -18,23 +19,10 @@
      por cima do conteúdo normal da página. Sem esse espaço reservado no topo, o cartão de
      "carrinho vazio" nascia parcialmente escondido atrás dela. Os valores abaixo espelham
      os mesmos usados em cardapio.css para a mesma navbar. */
-  padding-top: 180px;
+  padding-top: calc(var(--navbar-h) + 1.5rem);
   text-align: center;
 }
 
-/* Tablet/celular: menos espaço no topo (Navbar mais baixa). */
-@media (max-width: 768px) {
-  .pedido-vazio-page {
-    padding-top: 130px;
-  }
-}
-
-/* Celular pequeno: ainda menos espaço no topo. */
-@media (max-width: 480px) {
-  .pedido-vazio-page {
-    padding-top: 110px;
-  }
-}
 
 /* Cartão central da mensagem de carrinho vazio. */
 .pedido-vazio-card {
@@ -76,12 +64,13 @@
 /* Página do pedido com itens; padding-top compensa a Navbar fixa. */
 .pedido-page {
   min-height: 100vh;
+  min-height: 100dvh;
   background: linear-gradient(135deg, #2D1B00 0%, #3A240F 30%, #4A2F15 60%, #5A3E2B 100%);
   color: white;
   font-family: 'Montserrat', sans-serif;
   padding: 20px;
   /* Mesma compensação da navbar fixa explicada em .pedido-vazio-page acima. */
-  padding-top: 180px;
+  padding-top: calc(var(--navbar-h) + 1.5rem);
 }
 
 /* Cabeçalho com título e indicador de etapas. */
@@ -90,19 +79,6 @@
   margin-bottom: 3rem;
 }
 
-/* Reduz o padding-top da página (Navbar mais baixa). */
-@media (max-width: 768px) {
-  .pedido-page {
-    padding-top: 130px;
-  }
-}
-
-/* Reduz ainda mais o padding-top no celular pequeno. */
-@media (max-width: 480px) {
-  .pedido-page {
-    padding-top: 110px;
-  }
-}
 
 /* Título da página de pedido. */
 .pedido-cabecalho__titulo {
@@ -629,7 +605,10 @@
 /* Celulares: reduz paddings e fontes e empilha os itens do carrinho. */
 @media (max-width: 640px) {
   .pedido-page {
-    padding: 12px;
+    /* só as laterais/base: o topo continua reservado para a navbar (padding-top da regra base) */
+    padding-left: 12px;
+    padding-right: 12px;
+    padding-bottom: 12px;
   }
 
   .pedido-cabecalho {

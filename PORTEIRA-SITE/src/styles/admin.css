@@ -4,6 +4,7 @@
 /* Fundo e tipografia de toda tela do admin; padding de 20px nas bordas. */
 .admin-page {
   min-height: 100vh;
+  min-height: 100dvh;
   background: linear-gradient(135deg, #2D1B00 0%, #3A240F 30%, #4A2F15 60%, #5A3E2B 100%);
   color: white;
   font-family: 'Montserrat', sans-serif;

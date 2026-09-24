@@ -3,8 +3,9 @@
 /* Coluna fixa no canto inferior direito; position: fixed a mantém visível ao rolar; z-index 999 a deixa acima do conteúdo. */
 .botoes-flutuantes {
   position: fixed;
-  bottom: 20px;
-  right: 20px;
+  /* env(safe-area-inset-*): recuo da barra de gestos/cantos do iPhone (0 nos outros aparelhos) */
+  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  right: calc(20px + env(safe-area-inset-right, 0px));
   z-index: 999;
   display: flex;
   flex-direction: column;
@@ -15,8 +16,8 @@
 /* Celulares: aproxima da borda e reduz o espaço entre os botões. */
 @media (max-width: 480px) {
   .botoes-flutuantes {
-    bottom: 15px;
-    right: 15px;
+    bottom: calc(15px + env(safe-area-inset-bottom, 0px));
+    right: calc(15px + env(safe-area-inset-right, 0px));
     gap: 10px;
   }
 }
