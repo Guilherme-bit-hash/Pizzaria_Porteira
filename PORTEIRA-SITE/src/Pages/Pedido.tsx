@@ -101,7 +101,7 @@ export default function Pedidos() {
   // pelo servidor por divergência de preço).
   // Roda uma única vez, quando a página abre (lista de dependências vazia).
   useEffect(() => {
-    listarCardapio()
+    listarCardapio({ forcar: true })
       .then((produtos) => {
         const { removidos, reajustados } = sincronizarComCardapio(produtos)
         if (removidos.length > 0) {

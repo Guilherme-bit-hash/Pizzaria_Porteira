@@ -2,6 +2,7 @@
 // Camada de acesso ao backend para o CARDÁPIO / PRODUTOS (endpoints /api/produtos/*).
 // Usado por Pages/Cardapio.tsx (leitura pública) e Pages/AdminProdutos.tsx (edição, exige token de admin).
 import { getAdminToken } from './pedidoService'
+import { urlImagemProduto } from '../utils/imagemProduto'
 
 // Endereço base do backend (vem do .env; se não existir, usa o backend local)
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
@@ -45,10 +46,47 @@ function cabecalhosAdmin() {
   }
 }
 
+// Guarda em memória a última busca do cardápio por 30 s. Assim, a busca iniciada na landing
+// page (prefetchCardapio) é aproveitada pela página do cardápio, que abre já com os dados.
+// A promessa fica guardada, não só o resultado: se o cardápio abrir enquanto a busca ainda
+// está em andamento, ele espera a mesma requisição em vez de disparar outra.
+const VALIDADE_CACHE_MS = 30 * 1000
+let cacheCardapio: { promessa: Promise<Produto[]>; criadoEm: number } | null = null
+
 // GET /api/produtos
 // Cardápio público (só produtos ativos). Lança erro se o backend estiver fora do ar.
-export async function listarCardapio(): Promise<Produto[]> {
-  return tratarResposta(await fetch(`${API_URL}/produtos`))
+// `forcar: true` ignora o que está em memória (usado ao conferir preços do carrinho, que
+// precisam ser os atuais).
+export function listarCardapio(opcoes: { forcar?: boolean } = {}): Promise<Produto[]> {
+  const agora = Date.now()
+  if (!opcoes.forcar && cacheCardapio && agora - cacheCardapio.criadoEm < VALIDADE_CACHE_MS) {
+    return cacheCardapio.promessa
+  }
+
+  const promessa = fetch(`${API_URL}/produtos`).then(tratarResposta) as Promise<Produto[]>
+  cacheCardapio = { promessa, criadoEm: agora }
+  // Falha não fica guardada: o "Tentar novamente" precisa fazer uma busca nova de verdade.
+  promessa.catch(() => {
+    if (cacheCardapio?.promessa === promessa) cacheCardapio = null
+  })
+  return promessa
+}
+
+// Adianta o carregamento do cardápio enquanto o cliente ainda está na landing page: já busca
+// os produtos (o que também "acorda" o backend do Render, que dorme quando fica parado) e
+// baixa as imagens das 3 primeiras pizzas, que são as primeiras que aparecem no cardápio.
+// Erros são ignorados aqui — se falhar, o cardápio simplesmente busca de novo ao abrir.
+export function prefetchCardapio(): void {
+  listarCardapio()
+    .then((produtos) => {
+      produtos
+        .filter((produto) => produto.categoria === 'pizza')
+        .slice(0, 3)
+        .forEach((produto) => {
+          new Image().src = urlImagemProduto(produto)
+        })
+    })
+    .catch(() => {})
 }
 
 // GET /api/produtos/admin — todos os produtos, inclusive os inativos.

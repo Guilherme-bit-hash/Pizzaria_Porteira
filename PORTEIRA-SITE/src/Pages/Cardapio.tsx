@@ -15,6 +15,7 @@ import MenuButton from '../components/MenuButton'
 import { WHATSAPP_NUMBER } from '../config/whatsapp'
 import { listarCardapio, type CategoriaProduto, type Produto } from '../services/produtoService'
 import { consultarStatusLoja } from '../services/lojaService'
+import { urlImagemProduto } from '../utils/imagemProduto'
 import LojaFechadaBanner from '../components/LojaFechadaBanner'
 import '../styles/cardapio.css'
 
@@ -117,23 +118,6 @@ export default function Cardapio() {
     consultarStatusLoja().then(setLojaAberta)
   }, [])
 
-  // Função para gerar imagens placeholder dinâmicas
-  // (usada quando o produto não tem imagem cadastrada; cria uma imagem colorida com emoji e nome)
-  const getPlaceholderImage = (nome: string, categoria: TabType) => {
-    // Cor de fundo de cada categoria
-    const cores = {
-      pizzas: 'FF6B35',
-      hamburgueres: '8B4513',
-      bebidas: '4A90E2',
-      sobremesas: 'C2185B',
-      promocoes: 'FFD700'
-    }
-
-    // Só o nome: o serviço de imagem (placehold.co) não desenha emoji e mostrava um quadradinho (▯)
-    const texto = encodeURIComponent(nome)
-    return `https://placehold.co/600x400/${cores[categoria]}/white?text=${texto}&font=montserrat`
-  }
-
   // Cardápio vindo da API (editável no painel admin), agrupado por aba
   const [produtos, setProdutos] = useState<Produto[]>([])
   const [carregandoCardapio, setCarregandoCardapio] = useState(true)
@@ -168,7 +152,7 @@ export default function Cardapio() {
         nome: produto.nome,
         descricao: produto.descricao,
         preco: produto.preco,
-        imagem: produto.imagemUrl || getPlaceholderImage(produto.nome, aba)
+        imagem: urlImagemProduto(produto)
       }))
 
   // Itens já agrupados por aba, prontos para exibir

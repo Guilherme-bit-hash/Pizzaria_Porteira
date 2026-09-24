@@ -1,10 +1,12 @@
 // src/Pages/Home.tsx
 // Página inicial (landing page), servida na rota "/" (definida em App.tsx).
-// Só mostra a logo e um botão que leva ao cardápio; não usa estado nem chama o backend.
+// Mostra a logo, frases de efeito e um botão que leva ao cardápio. Ao abrir, já começa a
+// carregar o cardápio em segundo plano (prefetchCardapio) para ele abrir instantâneo.
 // Estilos em src/styles/home.css.
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import PromocoesLandingToast from '../components/PromocoesLandingToast'
+import { prefetchCardapio } from '../services/produtoService'
 import '../styles/home.css'
 
 // Frases de efeito que se revezam abaixo do título (uma a cada 3,5 segundos).
@@ -20,6 +22,11 @@ const FRASES = [
 export default function Home() {
   // Índice da frase exibida agora; o setInterval avança para a próxima em ciclo.
   const [indiceFrase, setIndiceFrase] = useState(0)
+
+  // Ao abrir a landing page, adianta o carregamento do cardápio (enquanto o cliente lê e clica).
+  useEffect(() => {
+    prefetchCardapio()
+  }, [])
 
   useEffect(() => {
     const intervalo = setInterval(() => {
