@@ -26,6 +26,30 @@ const CUPOM_PRIMEIRA_COMPRA = 'BEMVINDO10'
 const CUPOM_PERCENTUAL = 0.1
 const CUPOM_VALOR_MINIMO = 80
 
+// Encomenda: antecedência mínima (em minutos) e máxima (em dias) para agendar um pedido.
+const ENCOMENDA_MIN_MINUTOS = 60
+const ENCOMENDA_MAX_DIAS = 30
+// Sinal cobrado antecipadamente quando o cliente escolhe não pagar o total da encomenda.
+const ENCOMENDA_SINAL_PERCENTUAL = 0.5
+
+// Converte o `agendadoPara` recebido (texto ISO) em Date validando a janela permitida.
+// Devolve { data: null } quando não há agendamento e { erro } quando a data é inválida.
+function validarAgendamento(agendadoPara) {
+  if (agendadoPara === undefined || agendadoPara === null || agendadoPara === '') return { data: null }
+  const data = new Date(agendadoPara)
+  if (typeof agendadoPara !== 'string' || Number.isNaN(data.getTime())) {
+    return { erro: 'Data da encomenda inválida.' }
+  }
+  const agora = Date.now()
+  if (data.getTime() < agora + ENCOMENDA_MIN_MINUTOS * 60 * 1000) {
+    return { erro: `Encomendas precisam de pelo menos ${ENCOMENDA_MIN_MINUTOS} minutos de antecedência.` }
+  }
+  if (data.getTime() > agora + ENCOMENDA_MAX_DIAS * 24 * 60 * 60 * 1000) {
+    return { erro: `Só é possível encomendar com até ${ENCOMENDA_MAX_DIAS} dias de antecedência.` }
+  }
+  return { data }
+}
+
 // Deixa só os dígitos do telefone ("(11) 99999-9999" -> "11999999999"), para comparar
 // telefones escritos de formas diferentes.
 function normalizarTelefone(telefone) {
@@ -106,14 +130,21 @@ function validarItens(itens, precosPromocoes, precosCatalogo) {
 // Fluxo: valida dados -> valida itens/preços -> calcula subtotal -> (com trava por telefone)
 // aplica cupom, grava/atualiza o cliente e grava o pedido.
 pedidosRouter.post('/', criarPedidoLimiter, asyncHandler(async (req, res) => {
+  const { nome, telefone, endereco, complemento, observacoes, itens, cupom, email, aceitaPromocoes, agendadoPara, pagarSinal } = req.body || {}
+
+  // Encomenda: pedido para uma data futura. Pode ser feito com a loja fechada, já que só
+  // será preparado no dia combinado.
+  const agendamento = validarAgendamento(agendadoPara)
+  if (agendamento.erro) {
+    return res.status(400).json({ erro: agendamento.erro })
+  }
+
   // Loja fechada: nem chega a validar o resto, pra não deixar passar um pedido que a
   // pizzaria não vai preparar. Checado no servidor (não só no site) porque é a única
   // forma de garantir que vale mesmo — o front pode ser contornado.
-  if (!(await lojaEstaAberta())) {
+  if (!agendamento.data && !(await lojaEstaAberta())) {
     return res.status(403).json({ erro: 'A pizzaria está fechada no momento. Tente novamente durante o horário de funcionamento.' })
   }
-
-  const { nome, telefone, endereco, complemento, observacoes, itens, cupom, email, aceitaPromocoes } = req.body || {}
 
   // 1) Validação dos dados do cliente (campos obrigatórios, tamanhos e e-mail opcional).
   if (!nome || !telefone || !endereco) {
@@ -176,6 +207,10 @@ pedidosRouter.post('/', criarPedidoLimiter, asyncHandler(async (req, res) => {
     }
 
     const total = Number((subtotal - desconto).toFixed(2))
+    // Sinal só existe em encomenda; o valor é calculado aqui, nunca vindo do navegador.
+    const sinal = agendamento.data && pagarSinal === true
+      ? Number((total * ENCOMENDA_SINAL_PERCENTUAL).toFixed(2))
+      : 0
 
     // 4) Cliente: guarda/atualiza o cliente (chave: telefone normalizado). O consentimento para receber
     // promoções só é ligado, nunca desligado, por um pedido: a caixa desmarcada num pedido
@@ -213,8 +248,8 @@ pedidosRouter.post('/', criarPedidoLimiter, asyncHandler(async (req, res) => {
     // 5) Grava o pedido ligado ao cliente; `itens` vai como JSON (coluna JSON) e os valores
     // de subtotal/desconto/total são os calculados aqui, não os enviados pelo navegador.
     const [resultado] = await conn.query(
-      `INSERT INTO pedidos (cliente_id, cliente_nome, cliente_telefone, endereco, complemento, observacoes, itens, subtotal, desconto, cupom, total)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO pedidos (cliente_id, cliente_nome, cliente_telefone, endereco, complemento, observacoes, itens, subtotal, desconto, cupom, total, agendado_para, sinal)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         clienteResultado.insertId,
         nome,
@@ -227,11 +262,15 @@ pedidosRouter.post('/', criarPedidoLimiter, asyncHandler(async (req, res) => {
         desconto,
         cupomAplicado,
         total,
+        agendamento.data,
+        sinal,
       ]
     )
 
     res.status(201).json({
+      sinal,
       id: resultado.insertId,
+      agendadoPara: agendamento.data ? agendamento.data.toISOString() : null,
       subtotal,
       desconto,
       cupom: cupomAplicado,
@@ -279,9 +318,9 @@ function mapearStatusPagamento(statusMp) {
 pedidosRouter.post('/:id/pagamento/pix', asyncHandler(async (req, res) => {
   const { email } = req.body || {}
 
-  // O valor cobrado vem do banco (total do pedido), nunca do navegador.
+  // O valor cobrado vem do banco (total ou sinal do pedido), nunca do navegador.
   const [linhas] = await pool.query(
-    'SELECT id, cliente_nome, total, forma_pagamento, pagamento_status FROM pedidos WHERE id = ?',
+    'SELECT id, cliente_nome, total, sinal, forma_pagamento, pagamento_status FROM pedidos WHERE id = ?',
     [req.params.id]
   )
   if (linhas.length === 0) {
@@ -302,7 +341,8 @@ pedidosRouter.post('/:id/pagamento/pix', asyncHandler(async (req, res) => {
   // Sem e-mail válido do cliente, usa um e-mail fictício, pois o Mercado Pago exige um.
   const resultado = await client.create({
     body: {
-      transaction_amount: Number(pedido.total),
+      // Encomenda com sinal: cobra só o sinal agora; o resto é pago na entrega.
+      transaction_amount: Number(pedido.sinal) > 0 ? Number(pedido.sinal) : Number(pedido.total),
       description: `Pedido #${pedido.id} - Pizzaria Porteira`,
       payment_method_id: 'pix',
       external_reference: String(pedido.id),

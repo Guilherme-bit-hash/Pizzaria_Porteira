@@ -18,6 +18,11 @@ export const CUPOM_PRIMEIRA_COMPRA = 'BEMVINDO10'
 export const CUPOM_PERCENTUAL = 0.1
 export const CUPOM_VALOR_MINIMO = 80
 
+// Regras de encomenda (espelham backend/src/routes/pedidos.js; o servidor é quem valida).
+export const ENCOMENDA_MIN_MINUTOS = 60
+export const ENCOMENDA_MAX_DIAS = 30
+export const ENCOMENDA_SINAL_PERCENTUAL = 0.5
+
 // Etapas pelas quais um pedido passa, na ordem do fluxo da cozinha/entrega.
 export type StatusPedido = 'recebido' | 'preparando' | 'saiu_para_entrega' | 'entregue' | 'cancelado'
 
@@ -34,6 +39,9 @@ export interface Pedido {
   status: StatusPedido
   forma_pagamento: 'whatsapp' | 'pix'
   pagamento_status: 'pendente' | 'aprovado' | 'recusado' | 'expirado' | null
+  // Encomenda: data/hora combinada (null = pedido para agora) e sinal cobrado no PIX (0 = total)
+  agendado_para: string | null
+  sinal: string
   criado_em: string
   atualizado_em: string
 }
@@ -49,6 +57,9 @@ export interface DadosNovoPedido {
   cupom?: string
   email?: string
   aceitaPromocoes?: boolean
+  // Encomenda: data/hora futura (ISO) e, opcionalmente, pagar só o sinal de 50% agora
+  agendadoPara?: string
+  pagarSinal?: boolean
 }
 
 // Confirmação devolvida pelo backend: valores já calculados no servidor (subtotal, desconto, total).
@@ -58,6 +69,8 @@ export interface RespostaNovoPedido {
   desconto: number
   cupom: string | null
   total: number
+  sinal: number
+  agendadoPara: string | null
   status: StatusPedido
 }
 

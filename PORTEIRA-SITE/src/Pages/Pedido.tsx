@@ -17,6 +17,9 @@ import {
   CUPOM_PRIMEIRA_COMPRA,
   CUPOM_PERCENTUAL,
   CUPOM_VALOR_MINIMO,
+  ENCOMENDA_MIN_MINUTOS,
+  ENCOMENDA_MAX_DIAS,
+  ENCOMENDA_SINAL_PERCENTUAL,
 } from '../services/pedidoService'
 import {
   criarPagamentoPix,
@@ -89,6 +92,11 @@ export default function Pedidos() {
   const [statusPagamento, setStatusPagamento] = useState<StatusPagamento>('pendente')
   const [erroPix, setErroPix] = useState('')
   const [lojaAberta, setLojaAberta] = useState(true)
+  // Encomenda: pedido para data/hora futura. Exige PIX antecipado (total ou sinal de 50%).
+  const [encomenda, setEncomenda] = useState(false)
+  // Valor do campo datetime-local ("AAAA-MM-DDTHH:mm", horário local do cliente)
+  const [dataEncomenda, setDataEncomenda] = useState('')
+  const [pagarSinal, setPagarSinal] = useState(false)
 
   // Consulta se a loja está aceitando pedidos, pra avisar e travar os botões de finalizar
   // antes mesmo de tentar — a checagem que realmente vale é feita de novo no servidor.
@@ -159,6 +167,26 @@ export default function Pedidos() {
   const cupomConfirmado = cupomDesbloqueadoPeloValor && cupomElegivel === true
   const descontoPrevisto = cupomConfirmado ? Number((total * CUPOM_PERCENTUAL).toFixed(2)) : 0
   const totalComDesconto = Number((total - descontoPrevisto).toFixed(2))
+
+  // Encomenda: sinal previsto e valor que será cobrado no PIX agora
+  const sinalPrevisto = encomenda && pagarSinal ? Number((totalComDesconto * ENCOMENDA_SINAL_PERCENTUAL).toFixed(2)) : 0
+  const valorPix = sinalPrevisto > 0 ? sinalPrevisto : totalComDesconto
+  // Encomenda só é paga por PIX (não há como "combinar no WhatsApp" sem garantir o pagamento)
+  const formaEfetiva = encomenda ? 'pix' : formaPagamento
+  // Encomenda pode ser feita com a loja fechada; pedido para agora, não
+  const podeFinalizar = lojaAberta || encomenda
+
+  // Limites do campo de data (formato exigido pelo input datetime-local, em horário local)
+  const paraInputDataHora = (data: Date) => {
+    const local = new Date(data.getTime() - data.getTimezoneOffset() * 60000)
+    return local.toISOString().slice(0, 16)
+  }
+  const dataMinima = paraInputDataHora(new Date(Date.now() + ENCOMENDA_MIN_MINUTOS * 60000))
+  const dataMaxima = paraInputDataHora(new Date(Date.now() + ENCOMENDA_MAX_DIAS * 86400000))
+  const dataEncomendaValida = dataEncomenda !== '' && dataEncomenda >= dataMinima && dataEncomenda <= dataMaxima
+  // ISO (UTC) enviado ao backend; undefined quando o pedido não é encomenda
+  const agendadoPara = encomenda && dataEncomendaValida ? new Date(dataEncomenda).toISOString() : undefined
+  const dataEncomendaFormatada = dataEncomenda ? new Date(dataEncomenda).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : ''
 
   // Enquanto aprovado, o pagamento PIX esvazia o carrinho — sem essa exceção, a tela de
   // sucesso seria substituída pela de "carrinho vazio" assim que isso acontecesse.
@@ -293,8 +321,17 @@ export default function Pedidos() {
   // Diferente do fluxo por WhatsApp, aqui o pedido só avança se o backend confirmar —
   // sem um id de pedido real não há como cobrar o PIX.
   const handleGerarPix = async () => {
-    setEnviando(true)
     setErroPix('')
+
+    // Encomenda sem data válida: avisa antes de gastar uma requisição
+    if (encomenda && !dataEncomendaValida) {
+      setErroPix(
+        `Escolha uma data e hora para a encomenda, com pelo menos ${ENCOMENDA_MIN_MINUTOS} minutos de antecedência e até ${ENCOMENDA_MAX_DIAS} dias.`
+      )
+      return
+    }
+
+    setEnviando(true)
 
     try {
       const resultado = await criarPedido({
@@ -307,6 +344,8 @@ export default function Pedidos() {
         cupom: cupomDesbloqueadoPeloValor ? CUPOM_PRIMEIRA_COMPRA : undefined,
         email: emailCliente.trim() || undefined,
         aceitaPromocoes,
+        agendadoPara,
+        pagarSinal: encomenda ? pagarSinal : undefined,
       })
 
       // Sem id de pedido não há como cobrar: mostra erro e para
@@ -356,7 +395,7 @@ export default function Pedidos() {
 
         {/* CONTEÚDO */}
         <div className="pedido-conteudo">
-          {!lojaAberta && <LojaFechadaBanner />}
+          {!lojaAberta && !(encomenda && etapa !== 'carrinho') && <LojaFechadaBanner />}
 
           {/* ETAPA 1: CARRINHO */}
           {etapa === 'carrinho' && (
@@ -597,7 +636,62 @@ export default function Pedidos() {
                 </div>
               </div>
 
-              {/* FORMA DE PAGAMENTO (escolha entre WhatsApp e PIX) */}
+              {/* ENCOMENDA: agendar o pedido para outra data, com pagamento antecipado */}
+              <div className="pedido-encomenda">
+                <label className="pedido-consentimento">
+                  <input
+                    type="checkbox"
+                    checked={encomenda}
+                    onChange={(e) => setEncomenda(e.target.checked)}
+                  />
+                  <span>📅 Quero fazer uma <strong>encomenda</strong> (para outro dia/horário)</span>
+                </label>
+
+                {encomenda && (
+                  <>
+                    <div className="pedido-campo">
+                      <label className="pedido-label">Data e hora da entrega/retirada *</label>
+                      <input
+                        type="datetime-local"
+                        value={dataEncomenda}
+                        min={dataMinima}
+                        max={dataMaxima}
+                        onChange={(e) => setDataEncomenda(e.target.value)}
+                        className="pedido-input"
+                      />
+                      <p className="pedido-consentimento__nota">
+                        Antecedência mínima de {ENCOMENDA_MIN_MINUTOS} minutos e máxima de {ENCOMENDA_MAX_DIAS} dias.
+                      </p>
+                    </div>
+
+                    <div className="pedido-forma-pagamento__opcoes">
+                      <button
+                        type="button"
+                        onClick={() => setPagarSinal(false)}
+                        className={`pedido-forma-pagamento__opcao${!pagarSinal ? ' pedido-forma-pagamento__opcao--ativa' : ''}`}
+                      >
+                        💰 Pagar o valor total
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPagarSinal(true)}
+                        className={`pedido-forma-pagamento__opcao${pagarSinal ? ' pedido-forma-pagamento__opcao--ativa' : ''}`}
+                      >
+                        🪙 Pagar sinal de {(ENCOMENDA_SINAL_PERCENTUAL * 100).toFixed(0)}%
+                      </button>
+                    </div>
+
+                    <p className="pedido-consentimento__nota">
+                      A encomenda só é confirmada após o pagamento via PIX.
+                      {pagarSinal &&
+                        ` Você paga R$ ${sinalPrevisto.toFixed(2).replace('.', ',')} agora e o restante (R$ ${(totalComDesconto - sinalPrevisto).toFixed(2).replace('.', ',')}) na entrega.`}
+                    </p>
+                  </>
+                )}
+              </div>
+
+              {/* FORMA DE PAGAMENTO (escolha entre WhatsApp e PIX) — encomenda é sempre PIX */}
+              {!encomenda && (
               <div className="pedido-forma-pagamento">
                 <h3 className="pedido-resumo__titulo">Como você quer pagar?</h3>
                 <div className="pedido-forma-pagamento__opcoes">
@@ -618,6 +712,7 @@ export default function Pedidos() {
                 </div>
 
               </div>
+              )}
 
               {/* BOTÕES DE AÇÃO: voltar e finalizar (o botão muda conforme a forma de pagamento) */}
               <div className="pedido-acoes">
@@ -625,11 +720,11 @@ export default function Pedidos() {
                   ← Voltar ao Carrinho
                 </button>
 
-                {formaPagamento === 'whatsapp' ? (
+                {formaEfetiva === 'whatsapp' ? (
                   <button
                     type="button"
                     onClick={handleFinalizarPedido}
-                    disabled={enviando || !lojaAberta}
+                    disabled={enviando || !podeFinalizar}
                     className="pedido-botao-finalizar"
                   >
                     {!lojaAberta ? '🔒 Loja fechada' : enviando ? 'Enviando...' : '💬 Finalizar Pedido no WhatsApp'}
@@ -638,10 +733,16 @@ export default function Pedidos() {
                   <button
                     type="button"
                     onClick={handleGerarPix}
-                    disabled={enviando || !lojaAberta}
+                    disabled={enviando || !podeFinalizar}
                     className="pedido-botao-finalizar pedido-botao-finalizar--pix"
                   >
-                    {!lojaAberta ? '🔒 Loja fechada' : enviando ? 'Gerando PIX...' : '⚡ Gerar PIX e Pagar'}
+                    {!podeFinalizar
+                      ? '🔒 Loja fechada'
+                      : enviando
+                        ? 'Gerando PIX...'
+                        : encomenda
+                          ? `⚡ Gerar PIX de R$ ${valorPix.toFixed(2).replace('.', ',')}`
+                          : '⚡ Gerar PIX e Pagar'}
                   </button>
                 )}
               </div>
@@ -653,7 +754,9 @@ export default function Pedidos() {
 
               {/* Aviso explicando o que acontece ao finalizar */}
               <p className="pedido-aviso-whatsapp">
-                {formaPagamento === 'whatsapp'
+                {encomenda
+                  ? '📅 Assim que o PIX for confirmado, sua encomenda fica reservada para a data escolhida.'
+                  : formaPagamento === 'whatsapp'
                   ? '⚠️ Ao clicar em "Finalizar Pedido", você será redirecionado para o WhatsApp para confirmar seu pedido e combinar a forma de pagamento.'
                   : '⚡ Você vai receber um QR code PIX pra pagar na hora. Assim que o pagamento for confirmado, o pedido já entra como pago.'}
               </p>
@@ -704,9 +807,12 @@ export default function Pedidos() {
 
                   <div className="pedido-resumo">
                     <div className="pedido-resumo__total">
-                      <span>Total:</span>
-                      <span>R$ {totalComDesconto.toFixed(2).replace('.', ',')}</span>
+                      <span>{sinalPrevisto > 0 ? 'Sinal a pagar:' : 'Total:'}</span>
+                      <span>R$ {valorPix.toFixed(2).replace('.', ',')}</span>
                     </div>
+                    {agendadoPara && (
+                      <p className="pedido-consentimento__nota">📅 Encomenda para {dataEncomendaFormatada}</p>
+                    )}
                   </div>
                 </>
               )}
@@ -715,7 +821,11 @@ export default function Pedidos() {
               {statusPagamento === 'aprovado' && (
                 <div className="pedido-pix__resultado">
                   <h2 className="pedido-card__titulo">✅ Pagamento confirmado!</h2>
-                  <p>Seu pedido #{pedidoId} foi pago com sucesso. Já vamos começar a preparar!</p>
+                  <p>
+                    {agendadoPara
+                      ? `Sua encomenda #${pedidoId} está confirmada para ${dataEncomendaFormatada}.${sinalPrevisto > 0 ? ' O restante é pago na entrega.' : ''}`
+                      : `Seu pedido #${pedidoId} foi pago com sucesso. Já vamos começar a preparar!`}
+                  </p>
                   <a
                     href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(`Olá! Acabei de pagar o pedido #${pedidoId} via PIX no site. 🍕`)}`}
                     target="_blank"

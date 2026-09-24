@@ -199,6 +199,11 @@ export default function AdminPedidos() {
                 </p>
               </div>
               <div className="admin-pedido-card__badges">
+                {pedido.agendado_para && (
+                  <span className="admin-status-badge admin-status-badge--alerta">
+                    📅 Encomenda: {new Date(pedido.agendado_para).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}
+                  </span>
+                )}
                 <span className="admin-status-badge">{STATUS_LABEL[pedido.status]}</span>
                 <span className={`admin-status-badge ${pagamentoBadge(pedido).classe}`}>
                   {pagamentoBadge(pedido).texto}
@@ -227,6 +232,12 @@ export default function AdminPedidos() {
             <div className="admin-pedido-card__rodape">
               <strong className="admin-pedido-card__total">
                 Total: R$ {Number(pedido.total).toFixed(2).replace('.', ',')}
+                {Number(pedido.sinal) > 0 && (
+                  <>
+                    {' '}· Sinal: R$ {Number(pedido.sinal).toFixed(2).replace('.', ',')}
+                    {' '}· Restante na entrega: R$ {(Number(pedido.total) - Number(pedido.sinal)).toFixed(2).replace('.', ',')}
+                  </>
+                )}
               </strong>
 
               <div className="admin-pedido-card__acoes">

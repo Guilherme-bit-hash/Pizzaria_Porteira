@@ -37,6 +37,11 @@ CREATE TABLE IF NOT EXISTS pedidos (
   forma_pagamento ENUM('whatsapp', 'pix') NOT NULL DEFAULT 'whatsapp',
   pagamento_status ENUM('pendente', 'aprovado', 'recusado', 'expirado') NULL,
   mp_payment_id VARCHAR(50) NULL,
+  -- Encomenda: data/hora combinada para entrega ou retirada. NULL = pedido para agora.
+  agendado_para DATETIME NULL,
+  -- Valor cobrado no PIX quando o cliente paga só um sinal (o restante é pago na entrega).
+  -- 0 = cobra o total.
+  sinal DECIMAL(10, 2) NOT NULL DEFAULT 0,
   -- Datas: criação e última alteração (esta se atualiza sozinha a cada UPDATE).
   criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   atualizado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP

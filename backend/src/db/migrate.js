@@ -30,6 +30,10 @@ const COLUNAS_PIX = [
   `ALTER TABLE pedidos ADD COLUMN pagamento_status ENUM('pendente', 'aprovado', 'recusado', 'expirado') NULL`,
   `ALTER TABLE pedidos ADD COLUMN mp_payment_id VARCHAR(50) NULL`,
   `ALTER TABLE pedidos ADD COLUMN cliente_id INT NULL`,
+  // Encomendas: data/hora futura combinada (NULL = pedido para agora).
+  `ALTER TABLE pedidos ADD COLUMN agendado_para DATETIME NULL`,
+  // Sinal cobrado no PIX da encomenda (0 = cobra o total).
+  `ALTER TABLE pedidos ADD COLUMN sinal DECIMAL(10, 2) NOT NULL DEFAULT 0`,
 ]
 
 // Cardápio original do site, usado só para popular a tabela `produtos` na primeira migração.
