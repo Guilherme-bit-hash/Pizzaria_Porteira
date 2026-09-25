@@ -91,6 +91,10 @@ export default function Pedidos() {
   const [pixData, setPixData] = useState<PagamentoPix | null>(null)
   const [statusPagamento, setStatusPagamento] = useState<StatusPagamento>('pendente')
   const [erroPix, setErroPix] = useState('')
+  // Pedido já criado no servidor por um clique anterior em "Gerar PIX", guardado junto com uma
+  // "assinatura" (o JSON dos dados enviados). Se o PIX falhar e o cliente tentar de novo com os
+  // mesmos dados, reaproveitamos esse pedido em vez de criar outro igual (duplicado no painel).
+  const [pedidoCriado, setPedidoCriado] = useState<{ id: number; assinatura: string } | null>(null)
   const [lojaAberta, setLojaAberta] = useState(true)
   // Encomenda: pedido para data/hora futura. Exige PIX antecipado (total ou sinal de 50%).
   const [encomenda, setEncomenda] = useState(false)
@@ -334,7 +338,7 @@ export default function Pedidos() {
     setEnviando(true)
 
     try {
-      const resultado = await criarPedido({
+      const dadosPedido = {
         nome: dadosCliente.nome,
         telefone: dadosCliente.telefone,
         endereco: dadosCliente.endereco,
@@ -346,17 +350,29 @@ export default function Pedidos() {
         aceitaPromocoes,
         agendadoPara,
         pagarSinal: encomenda ? pagarSinal : undefined,
-      })
+      }
+      const assinatura = JSON.stringify(dadosPedido)
 
-      // Sem id de pedido não há como cobrar: mostra erro e para
-      if (!resultado) {
-        setErroPix('Não foi possível registrar o pedido agora. Tente novamente ou finalize pelo WhatsApp.')
-        return
+      // Segunda tentativa com os mesmos dados (o PIX falhou antes): reaproveita o pedido já
+      // criado. Se o cliente mudou algo (itens, endereço, data...), cria um pedido novo.
+      let idDoPedido: number
+      if (pedidoCriado && pedidoCriado.assinatura === assinatura) {
+        idDoPedido = pedidoCriado.id
+      } else {
+        const resultado = await criarPedido(dadosPedido)
+
+        // Sem id de pedido não há como cobrar: mostra erro e para
+        if (!resultado) {
+          setErroPix('Não foi possível registrar o pedido agora. Tente novamente ou finalize pelo WhatsApp.')
+          return
+        }
+        idDoPedido = resultado.id
+        setPedidoCriado({ id: resultado.id, assinatura })
       }
 
       // Guarda o id, pede o QR code PIX e avança para a etapa de pagamento
-      setPedidoId(resultado.id)
-      const pix = await criarPagamentoPix(resultado.id, emailCliente || undefined)
+      setPedidoId(idDoPedido)
+      const pix = await criarPagamentoPix(idDoPedido, emailCliente || undefined)
       setPixData(pix)
       setStatusPagamento(pix.status)
       setEtapa('pagamento')
