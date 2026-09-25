@@ -24,7 +24,10 @@ export default function PromocaoDiaToast() {
       // Mostrar toast apenas uma vez por sessão
       const toastMostrado = sessionStorage.getItem('promocao-toast-mostrado')
       if (!toastMostrado) {
-        // Aguardar um pouco para a página carregar completamente
+        // Aguardar um pouco para a página carregar completamente. Na landing page espera mais
+        // (3,8 s): o título e as frases de efeito aparecem primeiro e este aviso entra logo
+        // depois do grupo de PromocoesLandingToast (que começa aos 3 s).
+        const atrasoMs = location.pathname === '/' ? 3800 : 800
         const timer = setTimeout(() => {
           showToast({
             message: `${promocaoAtual.nome}\n${promocaoAtual.descricao}`,
@@ -41,13 +44,13 @@ export default function PromocaoDiaToast() {
 
           // Marca como já mostrado nesta sessão.
           sessionStorage.setItem('promocao-toast-mostrado', 'true')
-        }, 800)
+        }, atrasoMs)
 
-        // Cleanup: se o componente sair da tela antes dos 800 ms, cancela o agendamento.
+        // Cleanup: se a página mudar ou sair da tela antes do atraso, cancela o agendamento.
         return () => clearTimeout(timer)
       }
     }
-  }, [promocaoAtual, isAdmin])
+  }, [promocaoAtual, isAdmin, location.pathname])
 
   // Este componente não renderiza nada visualmente
   return null

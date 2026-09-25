@@ -5,6 +5,9 @@
 .home {
   min-height: 100vh;
   min-height: 100dvh;
+  /* Sem seleção de texto: arrastar para cima abre a porteira em vez de selecionar o que estiver sob o mouse. */
+  -webkit-user-select: none;
+  user-select: none;
   background-image: url('/fundo.webp');
   background-size: cover;
   background-position: center;
@@ -65,12 +68,22 @@
   text-shadow: 0 3px 12px rgba(0, 0, 0, 0.7);
 }
 
-/* Frase que troca sozinha; min-height evita o botão "pular" quando uma frase ocupa mais linhas que outra. */
+/* Segunda frase de efeito, logo abaixo do título. */
+.home__subtitulo {
+  color: #ffffff;
+  font-size: clamp(1.05rem, 3.2vw, 1.7rem);
+  font-style: italic;
+  margin: 0 0 1rem;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+}
+
+/* Frase de apoio que troca sozinha; min-height evita o botão "pular" quando uma frase ocupa mais linhas que outra. */
 .home__frase {
   color: #ffffff;
-  font-size: clamp(1.05rem, 2.6vw, 1.5rem);
+  font-size: clamp(0.95rem, 2.2vw, 1.25rem);
+  color: rgba(255, 255, 255, 0.85);
   min-height: 2.6em;
-  margin: 0 0 1.2rem;
+  margin: 0 0 1rem;
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
   animation: home-frase-entrada 0.6s ease;
 }
@@ -116,4 +129,20 @@
 @keyframes home-pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }
+}
+
+/* Telas baixas (celulares pequenos/deitados): esconde a frase de apoio e compacta a logo para
+   tudo caber na tela sem rolagem — o deslize para abrir a porteira depende disso. */
+@media (max-height: 700px) {
+  .home__frase {
+    display: none;
+  }
+
+  .home__logo {
+    margin-bottom: 1rem;
+  }
+
+  .home__dica {
+    margin-top: 1rem;
+  }
 }

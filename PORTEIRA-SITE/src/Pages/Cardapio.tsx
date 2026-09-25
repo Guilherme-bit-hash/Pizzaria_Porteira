@@ -4,7 +4,7 @@
 // "Promoção do Dia". O botão "Adicionar" coloca o item no carrinho (contexts/CarrinhoContexts.tsx).
 // Backend: GET /api/produtos (services/produtoService.ts) e GET /api/promocoes (via hooks/usePromocaoDoDia.ts).
 import { useState, useEffect, useCallback } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useCarrinho } from '../contexts/CarrinhoContexts'
 import Navbar from '../components/Navbar'
 import TabsNavigation from '../components/TabsNavigation'
@@ -17,6 +17,7 @@ import { listarCardapio, type CategoriaProduto, type Produto } from '../services
 import { consultarStatusLoja } from '../services/lojaService'
 import { urlImagemProduto } from '../utils/imagemProduto'
 import LojaFechadaBanner from '../components/LojaFechadaBanner'
+import PorteiraTransicao from '../components/PorteiraTransicao'
 import '../styles/cardapio.css'
 
 // Identificadores das abas exibidas na tela
@@ -102,6 +103,19 @@ export default function Cardapio() {
   const [paginaAtual, setPaginaAtual] = useState(1)
   const [paginaPromocoes, setPaginaPromocoes] = useState(1)
   const [lojaAberta, setLojaAberta] = useState(true)
+
+  // Veio da landing page? Então as portas da porteira começam fechadas e se abrem revelando o
+  // cardápio (a Home manda { abrirPorteira: true } ao navegar). O estado do histórico é limpo
+  // logo em seguida para a animação não repetir ao recarregar a página.
+  const location = useLocation()
+  const navigate = useNavigate()
+  const [portaAbrindo, setPortaAbrindo] = useState(
+    () => Boolean((location.state as { abrirPorteira?: boolean } | null)?.abrirPorteira)
+  )
+  useEffect(() => {
+    if (portaAbrindo) navigate(location.pathname, { replace: true, state: null })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
   // Função do contexto do carrinho para adicionar itens
   const { adicionarItem } = useCarrinho()
   // Promoção de hoje e nome do dia (hook que consulta o backend)
@@ -227,6 +241,9 @@ export default function Cardapio() {
 
   return (
     <main className="cardapio-page">
+      {/* PORTAS: se abrem ao chegar da landing page */}
+      {portaAbrindo && <PorteiraTransicao modo="abrir" onFim={() => setPortaAbrindo(false)} />}
+
       {/* SIDEBAR RESPONSIVA (mobile): botão de menu abre a Sidebar com as mesmas abas */}
       <Sidebar
         tabs={abas}

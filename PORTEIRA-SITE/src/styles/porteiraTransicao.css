@@ -1,0 +1,106 @@
+/* Estilos do PorteiraTransicao (components/PorteiraTransicao.tsx), usado em Pages/Home.tsx e Pages/Cardapio.tsx. */
+/* src/styles/porteiraTransicao.css */
+/* ===== CAMADA QUE COBRE A TELA ===== */
+/* Cobre tudo (acima da navbar 1000, da sidebar 1003 e dos toasts, que usam 9999); overflow: hidden esconde as portas quando estão fora da tela. */
+.porteira {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  overflow: hidden;
+  /* Ao abrir, o cardápio já pode receber cliques por baixo das portas */
+  pointer-events: none;
+}
+
+/* Ao fechar, bloqueia cliques para o cliente não disparar nada no meio da transição. */
+.porteira--fechar {
+  pointer-events: auto;
+}
+
+/* ===== AS PORTAS ===== */
+/* Cada porta ocupa metade da tela: madeira escura com tábuas verticais e frisos dourados. */
+.porteira__porta {
+  width: 50%;
+  height: 100%;
+  background:
+    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.28) 0 2px, transparent 2px 44px),
+    linear-gradient(180deg, #5a3e2b 0%, #3a240f 55%, #2D1B00 100%);
+  box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.55);
+  position: relative;
+  will-change: transform;
+}
+
+/* Friso dourado na borda de encontro das duas portas (a "fresta" do meio). */
+.porteira__porta--esq {
+  border-right: 4px solid #FFD700;
+}
+
+.porteira__porta--dir {
+  border-left: 4px solid #FFD700;
+}
+
+/* Puxador redondo dourado, perto do meio de cada porta. */
+.porteira__porta::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 26px;
+  height: 26px;
+  margin-top: -13px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #FFF3A0, #FFD700 55%, #B8860B);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.6);
+}
+
+.porteira__porta--esq::after {
+  right: 18px;
+}
+
+.porteira__porta--dir::after {
+  left: 18px;
+}
+
+/* ===== FECHAR (landing page): as portas entram pelos lados e se encontram no meio ===== */
+.porteira--fechar .porteira__porta--esq {
+  animation: porteira-fecha-esq 0.55s cubic-bezier(0.6, 0, 0.4, 1) both;
+}
+
+.porteira--fechar .porteira__porta--dir {
+  animation: porteira-fecha-dir 0.55s cubic-bezier(0.6, 0, 0.4, 1) both;
+}
+
+@keyframes porteira-fecha-esq {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes porteira-fecha-dir {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+/* ===== ABRIR (cardápio): começam fechadas e se abrem para os lados, revelando a página ===== */
+.porteira--abrir .porteira__porta--esq {
+  animation: porteira-abre-esq 0.8s 0.15s cubic-bezier(0.3, 0, 0.2, 1) both;
+}
+
+.porteira--abrir .porteira__porta--dir {
+  animation: porteira-abre-dir 0.8s 0.15s cubic-bezier(0.3, 0, 0.2, 1) both;
+}
+
+@keyframes porteira-abre-esq {
+  from { transform: translateX(0); }
+  to { transform: translateX(-100%); }
+}
+
+@keyframes porteira-abre-dir {
+  from { transform: translateX(0); }
+  to { transform: translateX(100%); }
+}
+
+/* Quem prefere menos movimento (configuração do sistema) não vê a animação. */
+@media (prefers-reduced-motion: reduce) {
+  .porteira {
+    display: none;
+  }
+}
