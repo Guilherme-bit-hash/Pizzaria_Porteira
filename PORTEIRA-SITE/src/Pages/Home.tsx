@@ -2,7 +2,7 @@
 // Página inicial (landing page), servida na rota "/" (definida em App.tsx).
 // Mostra a logo, frases de efeito e um botão que leva ao cardápio. Também dá para "abrir a
 // porteira" deslizando/arrastando para cima, girando o mouse ou apertando a seta para baixo:
-// as portas se fecham (PorteiraTransicao) e o cardápio abre com elas se abrindo.
+// a porteira sobe cobrindo a tela (PorteiraTransicao) e continua subindo no cardápio.
 // Ao abrir, já começa a carregar o cardápio em segundo plano (prefetchCardapio).
 // Estilos em src/styles/home.css.
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -43,7 +43,7 @@ export default function Home() {
     setAbrindo(true)
   }, [navigate])
 
-  // Quando as portas terminam de fechar, vai ao cardápio (que as abre de volta ao chegar).
+  // Quando a porteira termina de cobrir a tela, vai ao cardápio (onde ela continua subindo e sai).
   const irParaCardapio = useCallback(() => {
     navigate('/cardapio', { state: { abrirPorteira: true } })
   }, [navigate])
@@ -102,11 +102,11 @@ export default function Home() {
   }, [])
 
   return (
-    <main className="home">
+    <main className={`home${abrindo ? ' home--abrindo' : ''}`}>
       {/* Aviso flutuante com as promoções da semana */}
       <PromocoesLandingToast />
 
-      {/* PORTAS: aparecem só durante a transição para o cardápio */}
+      {/* PORTEIRA: aparece só durante a transição para o cardápio */}
       {abrindo && <PorteiraTransicao modo="fechar" onFim={irParaCardapio} />}
 
       {/* OVERLAY ESCURO (camada sobre a imagem de fundo, para dar contraste ao texto) */}

@@ -146,3 +146,14 @@
     margin-top: 1rem;
   }
 }
+
+/* Enquanto a porteira sobe cobrindo a tela, o conteúdo da landing page também "levanta" e esmaece,
+   acompanhando o movimento para cima. */
+.home__conteudo {
+  transition: transform 0.6s ease-in, opacity 0.6s ease-in;
+}
+
+.home--abrindo .home__conteudo {
+  transform: translateY(-44px);
+  opacity: 0.35;
+}

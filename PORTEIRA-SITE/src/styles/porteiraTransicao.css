@@ -1,14 +1,13 @@
 /* Estilos do PorteiraTransicao (components/PorteiraTransicao.tsx), usado em Pages/Home.tsx e Pages/Cardapio.tsx. */
 /* src/styles/porteiraTransicao.css */
 /* ===== CAMADA QUE COBRE A TELA ===== */
-/* Cobre tudo (acima da navbar 1000, da sidebar 1003 e dos toasts, que usam 9999); overflow: hidden esconde as portas quando estão fora da tela. */
+/* Cobre tudo (acima da navbar 1000, da sidebar 1003 e dos toasts, que usam 9999); overflow: hidden esconde a porteira quando está fora da tela. */
 .porteira {
   position: fixed;
   inset: 0;
   z-index: 10000;
-  display: flex;
   overflow: hidden;
-  /* Ao abrir, o cardápio já pode receber cliques por baixo das portas */
+  /* Ao abrir, o cardápio já pode receber cliques por baixo da porteira */
   pointer-events: none;
 }
 
@@ -17,85 +16,92 @@
   pointer-events: auto;
 }
 
-/* ===== AS PORTAS ===== */
-/* Cada porta ocupa metade da tela: madeira escura com tábuas verticais e frisos dourados. */
-.porteira__porta {
-  width: 50%;
-  height: 100%;
+/* ===== O PAINEL DE MADEIRA ===== */
+/* Painel do tamanho da tela: tábuas horizontais, duas travessas de porteira (::before/::after)
+   e um friso dourado com brilho na borda de cima — a "frente" que sobe revelando a página. */
+.porteira__painel {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
   background:
-    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.28) 0 2px, transparent 2px 44px),
-    linear-gradient(180deg, #5a3e2b 0%, #3a240f 55%, #2D1B00 100%);
-  box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.55);
-  position: relative;
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.26) 0 2px, transparent 2px 58px),
+    linear-gradient(180deg, #6d4c3a 0%, #4a2f15 45%, #2D1B00 100%);
+  border-top: 6px solid #FFD700;
+  /* Brilho dourado que "vaza" acima da borda enquanto a porteira sobe */
+  box-shadow: 0 -22px 50px rgba(255, 215, 0, 0.55), inset 0 40px 80px rgba(0, 0, 0, 0.35);
   will-change: transform;
 }
 
-/* Friso dourado na borda de encontro das duas portas (a "fresta" do meio). */
-.porteira__porta--esq {
-  border-right: 4px solid #FFD700;
-}
-
-.porteira__porta--dir {
-  border-left: 4px solid #FFD700;
-}
-
-/* Puxador redondo dourado, perto do meio de cada porta. */
-.porteira__porta::after {
+/* Duas travessas horizontais, como numa porteira de fazenda (uma no alto, outra embaixo). */
+.porteira__painel::before,
+.porteira__painel::after {
   content: '';
   position: absolute;
-  top: 50%;
-  width: 26px;
-  height: 26px;
-  margin-top: -13px;
+  left: 0;
+  right: 0;
+  height: clamp(22px, 4vh, 34px);
+  background: linear-gradient(180deg, #8a6446 0%, #5a3e2b 55%, #3a240f 100%);
+  border-top: 2px solid rgba(255, 215, 0, 0.55);
+  border-bottom: 2px solid rgba(0, 0, 0, 0.5);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.45);
+}
+
+.porteira__painel::before {
+  top: 14%;
+}
+
+.porteira__painel::after {
+  bottom: 14%;
+}
+
+/* ===== EMBLEMA NO CENTRO ===== */
+/* Logo redonda com anel dourado e brilho; fica acima das travessas (z-index maior). */
+.porteira__logo {
+  position: relative;
+  z-index: 1;
+  width: clamp(110px, 30vw, 170px);
+  height: clamp(110px, 30vw, 170px);
+  object-fit: cover;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #FFF3A0, #FFD700 55%, #B8860B);
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.6);
+  border: 4px solid #FFD700;
+  box-shadow: 0 0 0 8px rgba(255, 215, 0, 0.18), 0 12px 40px rgba(0, 0, 0, 0.6), 0 0 50px rgba(255, 215, 0, 0.45);
 }
 
-.porteira__porta--esq::after {
-  right: 18px;
+.porteira__texto {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  color: #FFD700;
+  font-family: 'Montserrat', sans-serif;
+  font-size: clamp(1rem, 4.2vw, 1.4rem);
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
 }
 
-.porteira__porta--dir::after {
-  left: 18px;
+/* ===== SUBIR E COBRIR (landing page): entra por baixo e para cobrindo a tela ===== */
+.porteira--fechar .porteira__painel {
+  animation: porteira-sobe-cobre 0.65s cubic-bezier(0.7, 0, 0.3, 1) both;
 }
 
-/* ===== FECHAR (landing page): as portas entram pelos lados e se encontram no meio ===== */
-.porteira--fechar .porteira__porta--esq {
-  animation: porteira-fecha-esq 0.55s cubic-bezier(0.6, 0, 0.4, 1) both;
+@keyframes porteira-sobe-cobre {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
 }
 
-.porteira--fechar .porteira__porta--dir {
-  animation: porteira-fecha-dir 0.55s cubic-bezier(0.6, 0, 0.4, 1) both;
+/* ===== CONTINUAR SUBINDO E SAIR (cardápio): começa cobrindo e sai pelo topo ===== */
+/* O atraso de 0,3 s mantém a logo à mostra um instante, dando tempo ao cardápio de aparecer por baixo. */
+.porteira--abrir .porteira__painel {
+  animation: porteira-sobe-sai 0.9s 0.3s cubic-bezier(0.6, 0, 0.2, 1) both;
 }
 
-@keyframes porteira-fecha-esq {
-  from { transform: translateX(-100%); }
-  to { transform: translateX(0); }
-}
-
-@keyframes porteira-fecha-dir {
-  from { transform: translateX(100%); }
-  to { transform: translateX(0); }
-}
-
-/* ===== ABRIR (cardápio): começam fechadas e se abrem para os lados, revelando a página ===== */
-.porteira--abrir .porteira__porta--esq {
-  animation: porteira-abre-esq 0.8s 0.15s cubic-bezier(0.3, 0, 0.2, 1) both;
-}
-
-.porteira--abrir .porteira__porta--dir {
-  animation: porteira-abre-dir 0.8s 0.15s cubic-bezier(0.3, 0, 0.2, 1) both;
-}
-
-@keyframes porteira-abre-esq {
-  from { transform: translateX(0); }
-  to { transform: translateX(-100%); }
-}
-
-@keyframes porteira-abre-dir {
-  from { transform: translateX(0); }
-  to { transform: translateX(100%); }
+@keyframes porteira-sobe-sai {
+  from { transform: translateY(0); }
+  to { transform: translateY(-100%); }
 }
 
 /* Quem prefere menos movimento (configuração do sistema) não vê a animação. */

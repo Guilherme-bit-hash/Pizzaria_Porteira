@@ -104,8 +104,8 @@ export default function Cardapio() {
   const [paginaPromocoes, setPaginaPromocoes] = useState(1)
   const [lojaAberta, setLojaAberta] = useState(true)
 
-  // Veio da landing page? Então as portas da porteira começam fechadas e se abrem revelando o
-  // cardápio (a Home manda { abrirPorteira: true } ao navegar). O estado do histórico é limpo
+  // Veio da landing page? Então a porteira começa cobrindo a tela e continua subindo até sair
+  // pelo topo, revelando o cardápio (a Home manda { abrirPorteira: true } ao navegar). O estado do histórico é limpo
   // logo em seguida para a animação não repetir ao recarregar a página.
   const location = useLocation()
   const navigate = useNavigate()
@@ -241,7 +241,7 @@ export default function Cardapio() {
 
   return (
     <main className="cardapio-page">
-      {/* PORTAS: se abrem ao chegar da landing page */}
+      {/* PORTEIRA: continua subindo e sai pelo topo ao chegar da landing page */}
       {portaAbrindo && <PorteiraTransicao modo="abrir" onFim={() => setPortaAbrindo(false)} />}
 
       {/* SIDEBAR RESPONSIVA (mobile): botão de menu abre a Sidebar com as mesmas abas */}
