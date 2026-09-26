@@ -687,3 +687,64 @@
   font-size: 0.8rem;
   opacity: 0.7;
 }
+
+/* ===== QUANDO RECEBER (aba no carrinho): pedir agora ou encomenda programada ===== */
+.pedido-quando {
+  margin-bottom: 1.5rem;
+}
+
+/* Data e hora lado a lado; em telas estreitas empilham (auto-fit). */
+.pedido-quando__campos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.8rem 1rem;
+}
+
+/* Legenda pequena dentro do botão da aba (ex.: "fechado no momento"). */
+.pedido-quando__aviso {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.72rem;
+  font-weight: 400;
+  opacity: 0.8;
+}
+
+/* "Continuar" desativado enquanto a encomenda não tem data e hora válidas. */
+.pedido-botao-continuar:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ===== ENCOMENDA NA ETAPA DE ENTREGA: resumo com atalho para alterar ===== */
+.pedido-encomenda__resumo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  padding: 0.9rem 1.1rem;
+  margin-bottom: 1rem;
+  background: rgba(255, 215, 0, 0.1);
+  border: 1px dashed #FFD700;
+  border-radius: 12px;
+  color: #FFD700;
+}
+
+.pedido-encomenda__alterar,
+.pedido-encomenda__link {
+  background: none;
+  border: none;
+  color: #FFD700;
+  font-family: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.pedido-encomenda__link {
+  display: block;
+  width: 100%;
+  margin: 0 0 1.5rem;
+  padding: 0.6rem 0;
+  font-size: 0.9rem;
+  text-align: center;
+}

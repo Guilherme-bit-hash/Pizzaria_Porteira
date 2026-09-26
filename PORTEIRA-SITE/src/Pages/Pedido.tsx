@@ -98,8 +98,11 @@ export default function Pedidos() {
   const [lojaAberta, setLojaAberta] = useState(true)
   // Encomenda: pedido para data/hora futura. Exige PIX antecipado (total ou sinal de 50%).
   const [encomenda, setEncomenda] = useState(false)
-  // Valor do campo datetime-local ("AAAA-MM-DDTHH:mm", horário local do cliente)
-  const [dataEncomenda, setDataEncomenda] = useState('')
+  // Data ("AAAA-MM-DD") e hora ("HH:mm") da encomenda, em campos separados (horário local do cliente).
+  // `dataEncomenda` junta os dois no formato "AAAA-MM-DDTHH:mm" usado nas validações e no envio.
+  const [diaEncomenda, setDiaEncomenda] = useState('')
+  const [horaEncomenda, setHoraEncomenda] = useState('')
+  const dataEncomenda = diaEncomenda && horaEncomenda ? `${diaEncomenda}T${horaEncomenda}` : ''
   const [pagarSinal, setPagarSinal] = useState(false)
 
   // Consulta se a loja está aceitando pedidos, pra avisar e travar os botões de finalizar
@@ -188,6 +191,14 @@ export default function Pedidos() {
   const dataMinima = paraInputDataHora(new Date(Date.now() + ENCOMENDA_MIN_MINUTOS * 60000))
   const dataMaxima = paraInputDataHora(new Date(Date.now() + ENCOMENDA_MAX_DIAS * 86400000))
   const dataEncomendaValida = dataEncomenda !== '' && dataEncomenda >= dataMinima && dataEncomenda <= dataMaxima
+  // Limites de cada campo: a data vai do dia mínimo ao máximo; a hora só tem limite no primeiro
+  // e no último dia (ex.: hoje, a hora mínima é "agora + antecedência mínima").
+  const diaMinimo = dataMinima.slice(0, 10)
+  const diaMaximo = dataMaxima.slice(0, 10)
+  const horaMinima = diaEncomenda !== '' && diaEncomenda === diaMinimo ? dataMinima.slice(11, 16) : undefined
+  const horaMaxima = diaEncomenda !== '' && diaEncomenda === diaMaximo ? dataMaxima.slice(11, 16) : undefined
+  // Data e hora preenchidas, mas fora da janela permitida
+  const dataEncomendaInvalida = encomenda && dataEncomenda !== '' && !dataEncomendaValida
   // ISO (UTC) enviado ao backend; undefined quando o pedido não é encomenda
   const agendadoPara = encomenda && dataEncomendaValida ? new Date(dataEncomenda).toISOString() : undefined
   const dataEncomendaFormatada = dataEncomenda ? new Date(dataEncomenda).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : ''
@@ -411,7 +422,7 @@ export default function Pedidos() {
 
         {/* CONTEÚDO */}
         <div className="pedido-conteudo">
-          {!lojaAberta && !(encomenda && etapa !== 'carrinho') && <LojaFechadaBanner />}
+          {!lojaAberta && !encomenda && <LojaFechadaBanner />}
 
           {/* ETAPA 1: CARRINHO */}
           {etapa === 'carrinho' && (
@@ -474,6 +485,72 @@ export default function Pedidos() {
                   ))}
                 </div>
 
+                {/* QUANDO RECEBER: pedir agora ou encomenda programada (data e hora) */}
+                <div className="pedido-quando">
+                  <h3 className="pedido-resumo__titulo">Quando você quer receber?</h3>
+                  <div className="pedido-forma-pagamento__opcoes">
+                    <button
+                      type="button"
+                      onClick={() => setEncomenda(false)}
+                      className={`pedido-forma-pagamento__opcao${!encomenda ? ' pedido-forma-pagamento__opcao--ativa' : ''}`}
+                    >
+                      🍕 Pedir agora
+                      {!lojaAberta && <small className="pedido-quando__aviso">fechado no momento</small>}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEncomenda(true)}
+                      className={`pedido-forma-pagamento__opcao${encomenda ? ' pedido-forma-pagamento__opcao--ativa' : ''}`}
+                    >
+                      📅 Encomenda programada
+                      <small className="pedido-quando__aviso">escolha data e hora</small>
+                    </button>
+                  </div>
+
+                  {encomenda && (
+                    <>
+                      <div className="pedido-quando__campos">
+                        <div className="pedido-campo">
+                          <label className="pedido-label" htmlFor="encomenda-dia">📆 Data *</label>
+                          <input
+                            id="encomenda-dia"
+                            type="date"
+                            value={diaEncomenda}
+                            min={diaMinimo}
+                            max={diaMaximo}
+                            onChange={(e) => setDiaEncomenda(e.target.value)}
+                            className="pedido-input"
+                          />
+                        </div>
+                        <div className="pedido-campo">
+                          <label className="pedido-label" htmlFor="encomenda-hora">🕒 Hora *</label>
+                          <input
+                            id="encomenda-hora"
+                            type="time"
+                            value={horaEncomenda}
+                            min={horaMinima}
+                            max={horaMaxima}
+                            onChange={(e) => setHoraEncomenda(e.target.value)}
+                            className="pedido-input"
+                          />
+                        </div>
+                      </div>
+                      <p className="pedido-consentimento__nota">
+                        Antecedência mínima de {ENCOMENDA_MIN_MINUTOS} minutos e máxima de {ENCOMENDA_MAX_DIAS} dias.
+                        A encomenda é confirmada após o pagamento via PIX (valor total ou sinal de {(ENCOMENDA_SINAL_PERCENTUAL * 100).toFixed(0)}%).
+                      </p>
+                      {dataEncomendaInvalida && (
+                        <p className="pedido-cupom-feedback pedido-cupom-feedback--indisponivel">
+                          ⚠️ Escolha uma data e hora com pelo menos {ENCOMENDA_MIN_MINUTOS} minutos de antecedência e até {ENCOMENDA_MAX_DIAS} dias.
+                        </p>
+                      )}
+                      {dataEncomendaValida && (
+                        <p className="pedido-cupom-feedback">✅ Encomenda para {dataEncomendaFormatada}</p>
+                      )}
+                    </>
+                  )}
+                </div>
+
                 {/* CUPOM DE PRIMEIRA COMPRA */}
                 {cupomDesbloqueadoPeloValor && (
                   <div className="pedido-cupom-banner">
@@ -502,8 +579,12 @@ export default function Pedidos() {
                 </div>
 
                 {/* Avança para a etapa 2 */}
-                <button onClick={() => setEtapa('entrega')} className="pedido-botao-continuar">
-                  Continuar para Entrega →
+                <button
+                  onClick={() => setEtapa('entrega')}
+                  disabled={encomenda && !dataEncomendaValida}
+                  className="pedido-botao-continuar"
+                >
+                  {encomenda && !dataEncomendaValida ? 'Escolha data e hora para continuar' : 'Continuar para Entrega →'}
                 </button>
               </div>
 
@@ -653,58 +734,48 @@ export default function Pedidos() {
               </div>
 
               {/* ENCOMENDA: agendar o pedido para outra data, com pagamento antecipado */}
-              <div className="pedido-encomenda">
-                <label className="pedido-consentimento">
-                  <input
-                    type="checkbox"
-                    checked={encomenda}
-                    onChange={(e) => setEncomenda(e.target.checked)}
-                  />
-                  <span>📅 Quero fazer uma <strong>encomenda</strong> (para outro dia/horário)</span>
-                </label>
+              {encomenda ? (
+                <div className="pedido-encomenda">
+                  {/* A data e a hora são escolhidas no carrinho; aqui só o resumo e um atalho para alterar */}
+                  <div className="pedido-encomenda__resumo">
+                    <span>📅 Encomenda para <strong>{dataEncomendaFormatada}</strong></span>
+                    <button type="button" className="pedido-encomenda__alterar" onClick={() => setEtapa('carrinho')}>
+                      Alterar
+                    </button>
+                  </div>
 
-                {encomenda && (
-                  <>
-                    <div className="pedido-campo">
-                      <label className="pedido-label">Data e hora da entrega/retirada *</label>
-                      <input
-                        type="datetime-local"
-                        value={dataEncomenda}
-                        min={dataMinima}
-                        max={dataMaxima}
-                        onChange={(e) => setDataEncomenda(e.target.value)}
-                        className="pedido-input"
-                      />
-                      <p className="pedido-consentimento__nota">
-                        Antecedência mínima de {ENCOMENDA_MIN_MINUTOS} minutos e máxima de {ENCOMENDA_MAX_DIAS} dias.
-                      </p>
-                    </div>
+                  <div className="pedido-forma-pagamento__opcoes">
+                    <button
+                      type="button"
+                      onClick={() => setPagarSinal(false)}
+                      className={`pedido-forma-pagamento__opcao${!pagarSinal ? ' pedido-forma-pagamento__opcao--ativa' : ''}`}
+                    >
+                      💰 Pagar o valor total
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPagarSinal(true)}
+                      className={`pedido-forma-pagamento__opcao${pagarSinal ? ' pedido-forma-pagamento__opcao--ativa' : ''}`}
+                    >
+                      🪙 Pagar sinal de {(ENCOMENDA_SINAL_PERCENTUAL * 100).toFixed(0)}%
+                    </button>
+                  </div>
 
-                    <div className="pedido-forma-pagamento__opcoes">
-                      <button
-                        type="button"
-                        onClick={() => setPagarSinal(false)}
-                        className={`pedido-forma-pagamento__opcao${!pagarSinal ? ' pedido-forma-pagamento__opcao--ativa' : ''}`}
-                      >
-                        💰 Pagar o valor total
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setPagarSinal(true)}
-                        className={`pedido-forma-pagamento__opcao${pagarSinal ? ' pedido-forma-pagamento__opcao--ativa' : ''}`}
-                      >
-                        🪙 Pagar sinal de {(ENCOMENDA_SINAL_PERCENTUAL * 100).toFixed(0)}%
-                      </button>
-                    </div>
-
-                    <p className="pedido-consentimento__nota">
-                      A encomenda só é confirmada após o pagamento via PIX.
-                      {pagarSinal &&
-                        ` Você paga R$ ${sinalPrevisto.toFixed(2).replace('.', ',')} agora e o restante (R$ ${(totalComDesconto - sinalPrevisto).toFixed(2).replace('.', ',')}) na entrega.`}
-                    </p>
-                  </>
-                )}
-              </div>
+                  <p className="pedido-consentimento__nota">
+                    A encomenda só é confirmada após o pagamento via PIX.
+                    {pagarSinal &&
+                      ` Você paga R$ ${sinalPrevisto.toFixed(2).replace('.', ',')} agora e o restante (R$ ${(totalComDesconto - sinalPrevisto).toFixed(2).replace('.', ',')}) na entrega.`}
+                  </p>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  className="pedido-encomenda__link"
+                  onClick={() => { setEncomenda(true); setEtapa('carrinho') }}
+                >
+                  📅 Prefere agendar para outro dia ou horário? Escolha "Encomenda programada"
+                </button>
+              )}
 
               {/* FORMA DE PAGAMENTO (escolha entre WhatsApp e PIX) — encomenda é sempre PIX */}
               {!encomenda && (
