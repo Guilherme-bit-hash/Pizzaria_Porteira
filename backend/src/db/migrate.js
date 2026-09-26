@@ -60,6 +60,34 @@ const PRODUTOS_INICIAIS = [
   ['sobremesa', 'Cheesecake', 'Cheesecake de frutas vermelhas', 14],
 ]
 
+// Bancos hospedados (ex.: Clever Cloud) já vêm criados com charset utf8 de 3 bytes, que não
+// guarda emoji nem outros caracteres de 4 bytes: um pedido com emoji no nome/observação
+// falharia com "Incorrect string value", e o emoji das promoções virava "?". Esta função
+// põe o banco e todas as tabelas existentes em utf8mb4. É idempotente: tabelas que já estão
+// em utf8mb4 são ignoradas, então rodar de novo não faz nada. Devolve quantas converteu.
+async function garantirUtf8mb4(connection) {
+  try {
+    await connection.query(
+      `ALTER DATABASE \`${DB_NAME}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`
+    )
+  } catch (error) {
+    // Sem permissão para alterar o banco (1044/1227): tudo bem, as tabelas são convertidas abaixo.
+    if (error.errno !== 1044 && error.errno !== 1227) throw error
+  }
+
+  const [tabelas] = await connection.query(
+    `SELECT TABLE_NAME AS nome FROM information_schema.TABLES
+     WHERE TABLE_SCHEMA = ? AND TABLE_TYPE = 'BASE TABLE' AND TABLE_COLLATION NOT LIKE 'utf8mb4%'`,
+    [DB_NAME]
+  )
+  for (const { nome } of tabelas) {
+    await connection.query(
+      `ALTER TABLE \`${nome}\` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`
+    )
+  }
+  return tabelas.length
+}
+
 // Executa a migração completa. Usa uma conexão direta (e não o pool) porque o banco
 // pode ainda não existir, então não dá para se conectar já apontando para ele.
 async function migrate() {
@@ -70,6 +98,9 @@ async function migrate() {
     password: process.env.DB_PASSWORD || '',
     // Necessário para executar o schema.sql inteiro (vários comandos SQL) de uma só vez.
     multipleStatements: true,
+    // utf8mb4: as promoções padrão têm emojis (4 bytes), que com o utf8 de 3 bytes do mysql2
+    // viravam "?" no banco.
+    charset: 'utf8mb4',
   })
 
   try {
@@ -84,6 +115,11 @@ async function migrate() {
       if (error.errno !== 1044 && error.errno !== 1227) throw error
     }
     await connection.query(`USE \`${DB_NAME}\``)
+
+    // Tabelas de versões antigas primeiro: o schema.sql abaixo grava promoções com emoji.
+    const convertidas = await garantirUtf8mb4(connection)
+    if (convertidas > 0) console.log(`Tabelas convertidas para utf8mb4: ${convertidas}.`)
+
     await connection.query(schema)
 
     // 2) Garante as colunas extras em `pedidos`, ignorando as que já existem.

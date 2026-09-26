@@ -28,7 +28,8 @@ Backend em **Node.js + Express + MySQL** responsável por registrar os pedidos f
    ```bash
    npm run db:migrate
    ```
-   Esse comando é seguro de rodar de novo a qualquer momento (usa `IF NOT EXISTS` / `INSERT IGNORE`) — inclusive depois de atualizações que adicionam colunas novas, como as de pagamento PIX.
+   Esse comando é seguro de rodar de novo a qualquer momento — inclusive depois de atualizações que adicionam colunas novas (PIX, encomendas). **Rode-o sempre que atualizar o código**: pedidos e outras rotas falham se o banco estiver sem as colunas novas.
+   Ele também converte tabelas antigas para `utf8mb4` (necessário para emojis e caracteres especiais; bancos hospedados costumam vir em `utf8` de 3 bytes) e repara promoções que perderam o emoji por causa disso.
 
 ## Rodando localmente
 
@@ -44,7 +45,7 @@ A API sobe em `http://localhost:3001` (ou na porta definida em `PORT`).
 |--------|------------------------------------------|------------------------|-----------|
 | GET    | `/api/health`                            | -                       | Healthcheck |
 | POST   | `/api/auth/login`                        | -                       | Login do admin, retorna um token JWT |
-| POST   | `/api/pedidos`                           | -                       | Cria um novo pedido (usado pelo checkout do site); recusa com 403 se a loja estiver fechada |
+| POST   | `/api/pedidos`                           | -                       | Cria um novo pedido (usado pelo checkout do site); recusa com 403 se a loja estiver fechada, exceto encomendas (`agendadoPara`, `pagarSinal`) |
 | GET    | `/api/pedidos/cupom-primeira-compra/elegivel` | -                  | Verifica se um telefone ainda tem direito ao cupom de primeira compra |
 | POST   | `/api/pedidos/:id/pagamento/pix`         | -                       | Gera a cobrança PIX (QR code) para um pedido já criado |
 | GET    | `/api/pedidos/:id/pagamento/status`      | -                       | Consulta o status atual do pagamento (usado pelo polling no checkout) |
@@ -87,6 +88,27 @@ Para rotas protegidas, envie o header `Authorization: Bearer <token>` obtido no 
 - Só recebem clientes que marcaram o consentimento no checkout e têm e-mail. Todo e-mail leva um link de descadastro.
 - WhatsApp em massa não está incluído: exige a API oficial do WhatsApp Business (paga, com modelos aprovados).
 
+## Encomendas programadas
+
+- No carrinho o cliente escolhe **Pedir agora** ou **Encomenda programada** (data e hora). O site envia `agendadoPara` (ISO) e, opcionalmente, `pagarSinal: true`.
+- Regras validadas no servidor: antecedência mínima de 60 minutos e máxima de 30 dias; data inválida é recusada com 400.
+- Com `pagarSinal`, o sinal é **50% do total** (calculado no servidor) e é o valor cobrado no PIX; o restante é pago na entrega. Fica em `pedidos.sinal`; a data em `pedidos.agendado_para`.
+- Encomendas são aceitas mesmo com a loja fechada. O painel admin mostra a data e o sinal de cada uma.
+
+## Desempenho e resiliência
+
+- **Cache em memória** (60 s) do cardápio, das promoções e dos preços usados para conferir pedidos, e (5 s) do status da loja. Toda edição feita no painel limpa o cache na hora, então o cliente nunca vê um preço velho.
+- **Pool de conexões** configurável (`DB_CONNECTION_LIMIT`) e fila limitada (`DB_QUEUE_LIMIT`): sobrecarga responde `503` em vez de deixar o cliente pendurado.
+- **Limites de requisição** por cliente (login, criar pedido, cupom). Atrás de proxy (Render), `TRUST_PROXY=1` faz cada cliente contar separado.
+- Cabeçalhos de segurança com `helmet`.
+
+## Produção (Render + Clever Cloud)
+
+1. MySQL (ex.: Clever Cloud DEV, grátis): rode `npm run db:migrate` apontando para ele (`DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME` como variáveis de ambiente) **a cada atualização do código**.
+2. Web Service no Render com **Root Directory** `backend`, build `npm install`, start `npm start` e as variáveis do `.env.example`. Obrigatórias: `JWT_SECRET`, `ADMIN_USER`, `ADMIN_PASSWORD_HASH`, `CORS_ORIGIN` (URL do site) e as `DB_*`; use `DB_CONNECTION_LIMIT=3` no plano gratuito do Clever Cloud.
+3. **Troque a senha de teste do admin** antes de divulgar o site: gere o hash com `node -e "console.log(require('bcryptjs').hashSync('SUA_SENHA', 10))"` e coloque em `ADMIN_PASSWORD_HASH`.
+4. Plano gratuito do Render "dorme" após ~15 min sem uso; um monitor (ex.: UptimeRobot em `/api/health` a cada 5 min) evita a demora da primeira visita.
+
 ## Dashboard e loja aberta/fechada
 
 - O painel admin abre agora em **📊 Painel** (`/admin/dashboard`), com o botão de abrir/fechar a loja e o resumo do dia.
@@ -95,5 +117,4 @@ Para rotas protegidas, envie o header `Authorization: Bearer <token>` obtido no 
 
 ## O que ainda falta / próximos passos
 
-- Deploy em produção (hoje pensado para rodar localmente)
 - Trocar o `MP_ACCESS_TOKEN` de teste pelo de produção quando for cobrar de verdade

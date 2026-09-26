@@ -15,6 +15,9 @@ export const pool = mysql.createPool({
   user: process.env.DB_USER || 'root',
   password: process.env.DB_PASSWORD || '',
   database: process.env.DB_NAME || 'pizzaria_porteira',
+  // utf8mb4 na conexão: sem isso o mysql2 usa utf8 de 3 bytes e emojis (4 bytes) viram "?" ao
+  // gravar e ao ler — ex.: o emoji do nome de uma promoção editada no painel admin.
+  charset: 'utf8mb4',
   // Se as 10 conexões estiverem ocupadas, novas consultas esperam na fila em vez de falhar.
   waitForConnections: true,
   // Configurável porque MySQL gratuito de hospedagem costuma limitar as conexões (ex: 5).

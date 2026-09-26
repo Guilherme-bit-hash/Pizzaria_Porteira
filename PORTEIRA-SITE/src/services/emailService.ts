@@ -108,7 +108,7 @@ export async function copyToClipboard(text: string) {
   try {
     await navigator.clipboard.writeText(text)
     showToast({
-      message: '✅ Copiad para clipboard!',
+      message: '✅ Copiado para a área de transferência!',
       type: 'success',
       emoji: '📋',
       duration: 2000

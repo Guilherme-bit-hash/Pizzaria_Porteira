@@ -6,16 +6,20 @@ Feito com **React + TypeScript + Vite**.
 
 ## Funcionalidades
 
-- Cardápio de pizzas, hambúrgueres, combos, bebidas e sobremesas (`src/Pages/Cardapio.tsx`)
+- Landing page com frases de efeito: dá para "abrir a porteira" deslizando/arrastando para cima, girando o mouse, com a seta para baixo ou pelo botão "Ver Cardápio". A porteira de madeira sobe cobrindo a tela e continua subindo no cardápio (`src/components/PorteiraTransicao.tsx`; respeita "reduzir movimento")
+- Cardápio editável pelo painel admin, em abas (pizzas, hambúrgueres, bebidas, sobremesas) e menu lateral no celular (`src/Pages/Cardapio.tsx`); começa a carregar já na landing page
+- Layout responsivo em qualquer tela, inclusive iPhone (área do entalhe, `100dvh`)
 - Carrinho de compras persistido no navegador (`localStorage`) — não se perde ao recarregar a página
 - Checkout em etapas (carrinho → dados de entrega → pagamento) que registra o pedido no [backend](../backend)
   - **WhatsApp**: finaliza o pedido combinando o pagamento por mensagem, como antes
   - **PIX**: gera um QR code na hora via Mercado Pago; o checkout acompanha a confirmação automaticamente
+- **Encomenda programada**: no carrinho, aba "Encomenda programada" com data e hora (60 min a 30 dias de antecedência), paga por PIX (valor total ou sinal de 50%)
 - Cupom de 10% OFF na primeira compra (`BEMVINDO10`), validado pelo backend por telefone
 - Promoção do dia, com dados vindos do backend (editáveis pelo painel admin) e fallback local se a API estiver fora do ar; envio por email (Formspree) ou WhatsApp
 - Painel administrativo (`/admin`):
-  - `/admin/pedidos`: acompanha e atualiza o status dos pedidos e o status do pagamento PIX em tempo real
-  - `/admin/promocoes`: edita a promoção de cada dia da semana
+  - `/admin/dashboard`: métricas do dia e botão de abrir/fechar a loja
+  - `/admin/pedidos`: acompanha e atualiza o status dos pedidos, o pagamento PIX e as encomendas; toca um aviso sonoro a cada pedido novo
+  - `/admin/promocoes`, `/admin/produtos`, `/admin/clientes`, `/admin/campanhas`: promoções, cardápio, base de clientes e campanhas por e-mail
 
 ## Pré-requisitos
 
@@ -68,6 +72,7 @@ src/
   config/        # Configuração compartilhada (ex: número de WhatsApp)
   contexts/      # Estado global do carrinho
   hooks/         # Hooks customizados (ex: promoção do dia)
+  utils/         # Funções de apoio (ex.: som de pedido novo, imagem dos produtos)
   services/      # Integração com a API do backend (pedidos, pagamento, promoções), email e WhatsApp
   styles/        # Estilos por página/componente
 ```

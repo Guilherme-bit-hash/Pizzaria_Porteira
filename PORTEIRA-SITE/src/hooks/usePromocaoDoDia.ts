@@ -29,7 +29,7 @@ export const promocoesPadrao: Record<number, Promocao> = {
     cor: '#FF6B35',
     whatsappMessage: '🍕 PROMOÇÃO DOMINGO EM FAMÍLIA! 👨‍👩‍👧‍👦\n\n2 Pizzas Grandes + Refri 2L por R$ 89,90\n\nVenha aproveitar esta oferta especial! 😋\n\nPizzaria Porteira\n📞 (11) 99999-9999',
     emailSubject: 'Promoção Domingo em Família - Pizzaria Porteira 🍕',
-    emailBody: 'Olá! Este domingo aproveite nossa promoção especial:\n\n2 Pizzas Grandes + Refri 2L por R$ 89,90\n\nIdeall para reunir a família! Aproveite!'
+    emailBody: 'Olá! Este domingo aproveite nossa promoção especial:\n\n2 Pizzas Grandes + Refri 2L por R$ 89,90\n\nIdeal para reunir a família! Aproveite!'
   },
   1: {
     nome: '🎯 Segunda da Pizza',
@@ -69,7 +69,7 @@ export const promocoesPadrao: Record<number, Promocao> = {
     cor: '#2196F3',
     whatsappMessage: '🥤 QUINTA DA BEBIDA! 🍹\n\nRefrigerante 2L por R$ 8,90\n\nAcompanhe sua pizza ou hambúrguer com nossas bebidas especiais! 😋\n\nPizzaria Porteira\n📞 (11) 99999-9999',
     emailSubject: 'Quinta da Bebida - Refrigerante com Desconto 🥤',
-    emailBody: 'Toda quinta-feira aproveite nossas bebidas em promoção:\n\nRefrigerante 2L por R$ 8,90\n\nPerfecto para acompanhar seus pedidos!'
+    emailBody: 'Toda quinta-feira aproveite nossas bebidas em promoção:\n\nRefrigerante 2L por R$ 8,90\n\nPerfeito para acompanhar seus pedidos!'
   },
   5: {
     nome: '🎉 Sexta Feliz',
@@ -79,7 +79,7 @@ export const promocoesPadrao: Record<number, Promocao> = {
     cor: '#FF9800',
     whatsappMessage: '🎉 SEXTA FELIZ! 💑\n\nCombo Casal: Pizza + 2 Refris por R$ 59,90\n\nBeijo na testa e aproveite nosso combo perfeito! 😘\n\nPizzaria Porteira\n📞 (11) 99999-9999',
     emailSubject: 'Sexta Feliz - Combo Casal Especial 🎉',
-    emailBody: 'Toda sexta-feira temos a Sexta Feliz:\n\nCombo Casal: Pizza + 2 Refris por R$ 59,90\n\nPerfecto para começar o fim de semana com a pessoa especial!'
+    emailBody: 'Toda sexta-feira temos a Sexta Feliz:\n\nCombo Casal: Pizza + 2 Refris por R$ 59,90\n\nPerfeito para começar o fim de semana com a pessoa especial!'
   },
   6: {
     nome: '🌟 Sábado Especial',

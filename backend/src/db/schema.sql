@@ -10,8 +10,10 @@
 -- arredondamento.
 -- =====================================================================================
 
--- O banco em si (utf8mb4, que suporta acentos e emojis) é criado/selecionado pelo migrate.js
--- a partir de DB_NAME, porque em hospedagens de MySQL o banco já vem criado com outro nome.
+-- O banco em si é criado/selecionado pelo migrate.js a partir de DB_NAME, porque em hospedagens
+-- de MySQL o banco já vem criado com outro nome (e, às vezes, com charset utf8 de 3 bytes).
+-- Por isso TODA tabela declara utf8mb4 explicitamente: suporta acentos e emojis (4 bytes)
+-- independentemente do padrão do banco. Tabelas antigas são convertidas pelo migrate.js.
 
 -- Pedidos feitos pelo checkout do site (usada por routes/pedidos.js).
 CREATE TABLE IF NOT EXISTS pedidos (
@@ -45,7 +47,7 @@ CREATE TABLE IF NOT EXISTS pedidos (
   -- Datas: criação e última alteração (esta se atualiza sozinha a cada UPDATE).
   criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   atualizado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
+) DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 -- Cardápio editável pelo painel admin. Os produtos iniciais são inseridos pelo migrate.js
 -- (só quando a tabela está vazia), para uma renomeação feita no painel não ser desfeita.
@@ -64,7 +66,7 @@ CREATE TABLE IF NOT EXISTS produtos (
   atualizado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   -- Não permite dois produtos com o mesmo nome (o nome identifica o item nos pedidos).
   UNIQUE KEY uq_produtos_nome (nome)
-);
+) DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 -- Base de clientes, criada/atualizada automaticamente a cada pedido. `aceita_promocoes` só
 -- vira TRUE quando o cliente marca o consentimento no checkout (LGPD) — é ele que deve
@@ -87,7 +89,7 @@ CREATE TABLE IF NOT EXISTS clientes (
   -- Garante um único cliente por telefone; é o que permite o ON DUPLICATE KEY UPDATE
   -- do INSERT de clientes em routes/pedidos.js.
   UNIQUE KEY uq_clientes_telefone (telefone_normalizado)
-);
+) DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 -- Promoção de cada dia da semana (usada por routes/promocoes.js). A chave primária é o
 -- próprio dia, então há no máximo uma promoção por dia.
@@ -106,7 +108,7 @@ CREATE TABLE IF NOT EXISTS promocoes (
   atualizado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   -- Impede gravar um dia fora do intervalo 0 a 6.
   CONSTRAINT chk_promocoes_dia_semana CHECK (dia_semana BETWEEN 0 AND 6)
-);
+) DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 -- Configuração da loja: hoje só guarda se está aceitando pedidos ou não (usada por
 -- routes/loja.js e conferida em routes/pedidos.js ao criar um pedido). Tabela de uma
@@ -117,21 +119,24 @@ CREATE TABLE IF NOT EXISTS loja_config (
   aberta BOOLEAN NOT NULL DEFAULT TRUE,
   atualizado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   CONSTRAINT chk_loja_config_id_unico CHECK (id = 1)
-);
+) DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 -- Garante que a linha de configuração existe (começa aberta); INSERT IGNORE não sobrescreve
 -- o valor se o admin já tiver fechado/aberto a loja numa migração anterior.
 INSERT IGNORE INTO loja_config (id, aberta) VALUES (1, TRUE);
 
 -- Semente com as promoções padrão de cada dia da semana (0 = domingo ... 6 = sábado).
--- INSERT IGNORE preserva edições já feitas pelo painel admin em migrações futuras.
-INSERT IGNORE INTO promocoes
+-- Uma promoção que o admin já editou NUNCA é sobrescrita. A única exceção é o reparo de dados
+-- estragados por uma versão antiga da conexão (utf8 de 3 bytes), que trocava o emoji do início
+-- do nome por "?": nesses casos (nome começando com "?") a linha volta para o texto padrão.
+-- Por isso `nome` é atribuído por último: as demais colunas ainda enxergam o nome original.
+INSERT INTO promocoes
   (dia_semana, nome, descricao, preco, destaque, cor, whatsapp_message, email_subject, email_body)
 VALUES
   (0, '🍕 Domingo em Família', '2 Pizzas Grandes + Refri 2L por R$ 89,90', 89.90, TRUE, '#FF6B35',
    '🍕 PROMOÇÃO DOMINGO EM FAMÍLIA! 👨‍👩‍👧‍👦\n\n2 Pizzas Grandes + Refri 2L por R$ 89,90\n\nVenha aproveitar esta oferta especial! 😋\n\nPizzaria Porteira\n📞 (11) 99999-9999',
    'Promoção Domingo em Família - Pizzaria Porteira 🍕',
-   'Olá! Este domingo aproveite nossa promoção especial:\n\n2 Pizzas Grandes + Refri 2L por R$ 89,90\n\nIdeall para reunir a família! Aproveite!'),
+   'Olá! Este domingo aproveite nossa promoção especial:\n\n2 Pizzas Grandes + Refri 2L por R$ 89,90\n\nIdeal para reunir a família! Aproveite!'),
   (1, '🎯 Segunda da Pizza', 'Todas as pizzas com 20% OFF', 0, TRUE, '#4A90E2',
    '🍕 SEGUNDA DA PIZZA! 🎯\n\n20% OFF em TODAS as pizzas\n\nNão perca! Aproveite os melhores sabores com desconto especial 🔥\n\nPizzaria Porteira\n📞 (11) 99999-9999',
    'Segunda da Pizza - 20% OFF em Todas as Pizzas 🍕',
@@ -147,12 +152,21 @@ VALUES
   (4, '🥤 Quinta da Bebida', 'Refrigerante 2L por R$ 8,90', 8.90, TRUE, '#2196F3',
    '🥤 QUINTA DA BEBIDA! 🍹\n\nRefrigerante 2L por R$ 8,90\n\nAcompanhe sua pizza ou hambúrguer com nossas bebidas especiais! 😋\n\nPizzaria Porteira\n📞 (11) 99999-9999',
    'Quinta da Bebida - Refrigerante com Desconto 🥤',
-   'Toda quinta-feira aproveite nossas bebidas em promoção:\n\nRefrigerante 2L por R$ 8,90\n\nPerfecto para acompanhar seus pedidos!'),
+   'Toda quinta-feira aproveite nossas bebidas em promoção:\n\nRefrigerante 2L por R$ 8,90\n\nPerfeito para acompanhar seus pedidos!'),
   (5, '🎉 Sexta Feliz', 'Combo Casal: Pizza + 2 Refris por R$ 59,90', 59.90, TRUE, '#FF9800',
    '🎉 SEXTA FELIZ! 💑\n\nCombo Casal: Pizza + 2 Refris por R$ 59,90\n\nBeijo na testa e aproveite nosso combo perfeito! 😘\n\nPizzaria Porteira\n📞 (11) 99999-9999',
    'Sexta Feliz - Combo Casal Especial 🎉',
-   'Toda sexta-feira temos a Sexta Feliz:\n\nCombo Casal: Pizza + 2 Refris por R$ 59,90\n\nPerfecto para começar o fim de semana com a pessoa especial!'),
+   'Toda sexta-feira temos a Sexta Feliz:\n\nCombo Casal: Pizza + 2 Refris por R$ 59,90\n\nPerfeito para começar o fim de semana com a pessoa especial!'),
   (6, '🌟 Sábado Especial', 'Promoção surpresa! Pergunte no WhatsApp', 0, TRUE, '#FFD700',
    '🌟 SÁBADO ESPECIAL! 🎊\n\nPromoção SURPRESA este sábado! 🎁\n\nEntre em contato conosco e descubra a oferta exclusiva de hoje! 🔥\n\nPizzaria Porteira\n📞 (11) 99999-9999',
    'Sábado Especial - Promoção Surpresa 🌟',
-   'Este sábado temos uma promoção SURPRESA para você!\n\nEntre em contato conosco pelo WhatsApp para descobrir a oferta exclusiva!');
+   'Este sábado temos uma promoção SURPRESA para você!\n\nEntre em contato conosco pelo WhatsApp para descobrir a oferta exclusiva!')
+ON DUPLICATE KEY UPDATE
+  descricao = IF(nome LIKE '?%', VALUES(descricao), descricao),
+  preco = IF(nome LIKE '?%', VALUES(preco), preco),
+  destaque = IF(nome LIKE '?%', VALUES(destaque), destaque),
+  cor = IF(nome LIKE '?%', VALUES(cor), cor),
+  whatsapp_message = IF(nome LIKE '?%', VALUES(whatsapp_message), whatsapp_message),
+  email_subject = IF(nome LIKE '?%', VALUES(email_subject), email_subject),
+  email_body = IF(nome LIKE '?%', VALUES(email_body), email_body),
+  nome = IF(nome LIKE '?%', VALUES(nome), nome);
