@@ -40,15 +40,6 @@
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
 }
 
-/* Texto explicativo abaixo do título. */
-.cardapio-subtitulo {
-  color: #ccc;
-  font-size: clamp(0.95rem, 2vw, 1.2rem);
-  max-width: 600px;
-  margin: 0 auto;
-  line-height: 1.6;
-}
-
 /* Navegação de categorias: TabsNavigation em telas largas (Sidebar assume o mobile) */
 /* Envolve a TabsNavigation. */
 .tabs-desktop {
@@ -419,6 +410,8 @@
 .cardapio-barra-menu {
   display: flex;
   justify-content: flex-start;
+  align-items: center;
+  gap: 0.9rem;
   margin: 0 0 1rem;
   /* mesma margem lateral dos cards (20px), sem colar na borda da tela */
   padding: 0 max(20px, env(safe-area-inset-right, 0px)) 0 max(20px, env(safe-area-inset-left, 0px));
@@ -427,6 +420,52 @@
 @media (min-width: 769px) {
   .cardapio-barra-menu {
     display: none;
+  }
+}
+
+/* Texto ao lado dos três pontinhos: título dourado + lista das categorias. É um botão (também abre a Sidebar). */
+.cardapio-barra-menu__texto {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+  min-width: 0;
+  padding: 0;
+  background: none;
+  border: none;
+  color: inherit;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.cardapio-barra-menu__titulo {
+  color: #FFD700;
+  font-size: clamp(0.95rem, 4vw, 1.1rem);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+/* Setinha apontando para o botão dos três pontinhos, com um leve vai-e-vem para chamar atenção. */
+.cardapio-barra-menu__seta {
+  display: inline-block;
+  animation: cardapio-seta-vai-e-vem 1.6s ease-in-out infinite;
+}
+
+@keyframes cardapio-seta-vai-e-vem {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(-5px); }
+}
+
+.cardapio-barra-menu__categorias {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: clamp(0.72rem, 3vw, 0.85rem);
+  line-height: 1.3;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cardapio-barra-menu__seta {
+    animation: none;
   }
 }
 

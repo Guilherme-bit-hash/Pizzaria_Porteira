@@ -263,15 +263,21 @@ export default function Cardapio() {
         {/* TÍTULO E DESCRIÇÃO */}
         <div className="cardapio-titulo-wrap">
           <h1 className="cardapio-titulo">Nosso Cardápio</h1>
-          <p className="cardapio-subtitulo">
-            Deliciosas opções feitas com ingredientes selecionados.
-            Clique nas abas para explorar nosso menu completo!
-          </p>
         </div>
 
-        {/* BOTÃO DOS TRÊS PONTINHOS (mobile): fica logo abaixo da descrição, à esquerda, e abre a Sidebar */}
+        {/* BOTÃO DOS TRÊS PONTINHOS (mobile): fica logo abaixo do título, à esquerda, e abre a Sidebar.
+            O texto ao lado explica o que ele faz (só o ícone não deixava claro que há mais categorias)
+            e também abre a Sidebar ao ser tocado. */}
         <div className="cardapio-barra-menu">
           <MenuButton onClick={() => setSidebarAberta(true)} />
+          <button type="button" className="cardapio-barra-menu__texto" onClick={() => setSidebarAberta(true)}>
+            <span className="cardapio-barra-menu__titulo">
+              <span className="cardapio-barra-menu__seta" aria-hidden="true">◂</span> Mais opções do cardápio
+            </span>
+            <span className="cardapio-barra-menu__categorias">
+              Pizzas · Hambúrgueres · Bebidas · Sobremesas · Promoção do Dia
+            </span>
+          </button>
         </div>
 
         {/* ABAS RESPONSIVAS (desktop - a Sidebar assume o mobile) */}
